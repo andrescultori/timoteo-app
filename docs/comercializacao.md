@@ -25,6 +25,7 @@ O preço de entrada vale para todo novo assinante, sempre (um indicador por usu�
 | Linha do tempo | ❌ | ✅ | ✅ |
 | Genealogia | ❌ | ✅ (em expansão: fases 1 e 2 prontas; reis de Judá, dinastias do norte e sacerdotes por vir) | ✅ |
 | Favoritos (livros, capítulos, personagens, lugares) e "continuar de onde parei" | ✅ sem limite; no aparelho sem cadastro, em todos os aparelhos com cadastro | ✅ | ✅ |
+| Posição acadêmica (nas fichas e na linha do tempo; hoje a opção "Mostrar a posição acadêmica" das Configurações) | ❌ | ❌ | ✅ quando o Premium for lançado |
 | Leitura gamificada (badges, progresso anual) | em breve | em breve (no Pro) | ✅ |
 | Links externos (BibleProject, concordância) | em breve | em breve (no Pro) | ✅ |
 | IA: 10 conteúdos por mês, em PDF | ❌ | ❌ | ✅ |
@@ -99,6 +100,7 @@ Cada fase vira uma branch e um PR; o merge é do André. O Code diagnostica e es
 - Favorito de conteúdo Pro de quem está no Essencial (ou cujo Pro venceu) continua na lista, aberto como convite ao Pro, nunca como link quebrado.
 
 **Fase 3: conteúdo por plano (o que sai do site público)**
+- **[decidido]** A posição acadêmica é só do Premium. Enquanto o Premium não existir, o app não a mostra para ninguém (a opção "Mostrar a posição acadêmica" das Configurações some e o conteúdo acadêmico fica oculto nas fichas, na linha do tempo, nos Salmos e na Estrutura); só o admin vê, para revisar. O dado continua no repositório. A flag vem da configuração única de planos, como as demais.
 - Definir em **um arquivo de configuração único** o que cada plano inclui (usado pelo app e pela landing, para a tabela ✅/❌ nunca divergir).
 - O pacote público do Essencial contém só o que é do Essencial: fichas sem `map` e sem `structure` (exceto Evangelhos e Pentateuco no mapa, e Salmos na estrutura), os personagens da lista aprovada, sem linha do tempo e sem genealogia.
 - O conteúdo Pro (demais mapas e estruturas, demais personagens, linha do tempo, genealogia) vai para o Supabase por script de publicação (`scripts/`), com RLS por plano; o app o busca após o login.
