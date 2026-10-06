@@ -1,0 +1,31 @@
+// Trecho do src/App.jsx dos temas anteriores (estado, ciclo, botão e useEffect do data-theme), copiado SEM alteração.
+// Não é importado pelo app. Como restaurar: docs/archive/temas/README.md
+
+const THEMES = ['auto', 'dark', 'light', 'parchment'];
+const THEME_LABEL = { auto: 'Auto', dark: '☾', light: '☀', parchment: '📜' };
+
+  const [theme, setTheme] = useState(() => { const v = store.get('theme', 'auto'); return THEMES.includes(v) ? v : 'auto'; }); // auto | dark | light | parchment
+
+  useEffect(() => {
+    const r = document.documentElement;
+    if (theme === 'auto') r.removeAttribute('data-theme'); else r.setAttribute('data-theme', theme);
+    store.set('theme', theme);
+    // As fontes do Pergaminho só são pedidas na primeira vez que o tema é ativado
+    if (theme === 'parchment' && !document.getElementById('parchment-fonts')) {
+      const link = document.createElement('link');
+      link.id = 'parchment-fonts';
+      link.rel = 'stylesheet';
+      link.href = 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap';
+      document.head.appendChild(link);
+    }
+  }, [theme]);
+
+  const cycleTheme = () => setTheme((x) => THEMES[(THEMES.indexOf(x) + 1) % THEMES.length]);
+  const themeName = { auto: t.themeAuto, dark: t.themeDark, light: t.themeLight, parchment: t.themeParchment }[theme];
+
+          <button type="button" className="ghost" onClick={cycleTheme} aria-label={`${t.toggleTheme}: ${themeName}`} title={`${t.toggleTheme}: ${themeName}`}>
+            {THEME_LABEL[theme]}
+          </button>
+
+            {theme === 'parchment' && <a className="logo" href={hrefs.home} aria-hidden="true" tabIndex={-1}><Logo size={36} /></a>}
+            <a href={hrefs.home}>{theme === 'parchment' ? <span className="wordmark">{t.title.split(' ')[0]}</span> : t.title}</a>

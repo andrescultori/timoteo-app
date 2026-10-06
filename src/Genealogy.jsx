@@ -97,7 +97,7 @@ export default function Genealogy({ lang, t, treeId, focusNode, onOpenBook, onOp
                     d={`M${l.source.x},${l.source.y + H} V${(l.source.y + H + l.target.y) / 2} H${l.target.x} V${l.target.y}`} />
                 ))}
                 {Object.entries(branchStart).map(([b, n]) => (
-                  <text key={b} className="gn-branch" x={n.x} y={n.y - 7} textAnchor="middle" fill={COLOR[b]}>{pick(tr.branches[b], lang)}</text>
+                  <text key={b} className="gn-branch" x={n.x} y={n.y - 7} textAnchor="middle">{pick(tr.branches[b], lang)}</text>
                 ))}
                 {layout.all.map((n) => {
                   const id = n.data.id;

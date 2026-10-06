@@ -1,57 +1,29 @@
-/* Layout: cabeçalho enxuto, controles, seções com grade de tiles (estilo tabela periódica), modal em folha. */
+/* Timóteo App: tema único, Pergaminho escuro. Tokens no :root; detalhes em docs/tema-pergaminho-escuro.md.
+   Os temas anteriores (auto, claro, escuro, Pergaminho claro) estão em docs/archive/temas/ e na tag/branch themes-archive-2026-10. */
 :root {
-  --bg: #f4f5f3; --panel: #ffffff; --fg: #1c2321; --muted: #5b6763; --line: #d9ddda; --accent: #2f6f6b;
-  --s-lei: #e58fb3; --s-historicos: #dd5b52; --s-poesia: #7cc45a; --s-profMaiores: #3f9a4a; --s-profMenores: #e8c93a;
-  --s-evangelhos: #f0a13a; --s-atos: #4fc3b0; --s-paulo: #7ab8ea; --s-outras: #4f8fd6; --s-profecia: #9aa3a0;
-  --sea: #dfe8ee; --land: #f8f7f2; --coast: #b9c2bf; --halo: #f8f7f2;
-  --f-display: 'Bricolage Grotesque', system-ui, sans-serif;
-  --f-body: 'Figtree', system-ui, sans-serif;
-  --f-read: 'Literata', Georgia, serif;
-  /* ganchos dos temas: nos temas atuais valem o que já existia (nada muda); o Pergaminho os redefine */
-  --panel-2: var(--panel); --line-soft: var(--line); --on-accent: #fff; --accent-2: var(--accent); --accent-hover: var(--accent);
-  --fs-map-label: 12.5px; --fs-water: 11px;
-  color-scheme: light;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']):not([data-theme='parchment']) {
-    --bg: #111615; --panel: #192120; --fg: #e6ebe9; --muted: #9aa8a3; --line: #2b3633; --accent: #6fc2bb;
-    --s-lei: #c7739a; --s-historicos: #c44b44; --s-poesia: #66a84a; --s-profMaiores: #36853f; --s-profMenores: #cbb030;
-    --s-evangelhos: #d48b2b; --s-atos: #3da593; --s-paulo: #5f9fd0; --s-outras: #4278bd; --s-profecia: #7d8683;
-    --sea: #14222b; --land: #222d2a; --coast: #3c4a46; --halo: #111615;
-    color-scheme: dark;
-  }
-}
-:root[data-theme='dark'] {
-  --sea: #14222b; --land: #222d2a; --coast: #3c4a46; --halo: #111615;
-  --bg: #111615; --panel: #192120; --fg: #e6ebe9; --muted: #9aa8a3; --line: #2b3633; --accent: #6fc2bb;
-  --s-lei: #c7739a; --s-historicos: #c44b44; --s-poesia: #66a84a; --s-profMaiores: #36853f; --s-profMenores: #cbb030;
-  --s-evangelhos: #d48b2b; --s-atos: #3da593; --s-paulo: #5f9fd0; --s-outras: #4278bd; --s-profecia: #7d8683;
-  color-scheme: dark;
-}
-
-/* Pergaminho: tema claro (nunca escuro), com serifa no app todo. Detalhes em docs/tema-pergaminho.md */
-:root[data-theme='parchment'] {
-  --bg: #fbf9f3; --panel: #fffdf8; --panel-2: #f6f1e4;
-  --fg: #1f2320; --muted: #54492f; --line: #dccba6; --line-soft: #e6d8b8;
-  --accent: #0f2d24; --on-accent: #f8f7f2; --accent-2: #3f5a4e; --accent-hover: #1f4a3b; --green-soft: #6b8f7e;
-  --s-lei: #d8a3a0; --s-historicos: #c9776a; --s-poesia: #b8c38a; --s-profMaiores: #869c6e; --s-profMenores: #e0c27a;
-  --s-evangelhos: #d9a060; --s-atos: #8fb5a6; --s-paulo: #a7bcca; --s-outras: #8199b5; --s-profecia: #b3a894;
-  --sea: #d3d6c4; --land: #f1e5c8; --coast: #a68c66; --halo: #f1e5c8;
+  --bg: #17130e; --panel: #1f1a13; --panel-2: #2a2319;
+  --line: #4a3f2e; --line-soft: #352d21; --line-strong: #8a7957;
+  --fg: #efe6d2; --muted: #b8aa8c;
+  --accent: #a9cdbb; --accent-hover: #c6e0d2; --accent-2: #8fb5a6; --on-accent: #0f2d24;
+  --focus: #c6e0d2; --danger: #e39a8b;
+  --on-section: #14100b; /* texto sobre as cores de seção */
+  --s-lei: #c58f8c; --s-historicos: #bc7266; --s-poesia: #a3ae76; --s-profMaiores: #75905f; --s-profMenores: #cbae63;
+  --s-evangelhos: #c98e4d; --s-atos: #7aa494; --s-paulo: #92a9ba; --s-outras: #7087a5; --s-profecia: #a09581;
+  --sea: #111a17; --land: #2f281a; --coast: #8a7957; --halo: #2f281a; --sea-label: #9fb3a8;
+  --shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px;
+  --radius-chip: 5px; --radius-card: 8px; --radius-panel: 12px; --radius-pill: 999px;
   --f-display: 'Cormorant Garamond', Georgia, serif;
   --f-body: 'EB Garamond', Georgia, serif;
   --f-read: 'EB Garamond', Georgia, serif;
-  --fs-content: 17px;   /* texto de conteúdo: ficha, leitor, mapa, linha do tempo, personagens */
-  --fs-sub: 19px;       /* subtítulo da grade, em itálico */
-  --fs-map-label: 18px; /* nomes dos lugares no mapa */
-  --fs-water: 18px;     /* nome do mar */
-  color-scheme: light;
+  --fs-content: 17px; --fs-sub: 19px; /* tamanhos do conteúdo e do subtítulo */
+  color-scheme: dark;
 }
-:root[data-theme='parchment'] body { font-size: 17px; line-height: 1.55; }
 
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 var(--f-body); padding-inline: 16px; padding-block: 20px 40px; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 17px/1.55 var(--f-body); font-variant-numeric: lining-nums; padding-inline: 16px; padding-block: 20px 40px; }
 button, input, select { font: inherit; color: inherit; }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 
 .top, main { max-width: 1040px; margin-inline: auto; }
 .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
@@ -73,7 +45,7 @@ input[type='search'] { flex: 1 1 200px; min-width: 0; border: 1px solid var(--li
 .group h2 i { width: 12px; height: 12px; border-radius: 3px; background: var(--c); display: block; }
 .group h2 span { color: var(--muted); font: 500 0.8rem var(--f-body); }
 .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
-.tile { position: relative; text-align: left; border: 0; border-radius: 8px; padding: 22px 7px 7px; min-height: 76px; cursor: pointer; background: var(--c); color: #141a18;
+.tile { position: relative; text-align: left; border: 0; border-radius: 8px; padding: 22px 7px 7px; min-height: 76px; cursor: pointer; background: var(--c); color: var(--on-section);
   display: flex; flex-direction: column; justify-content: flex-end; transition: transform 0.12s; }
 .tile:hover { transform: translateY(-2px); }
 .tile .num { position: absolute; top: 6px; left: 8px; font-size: 0.68rem; font-variant-numeric: tabular-nums; opacity: 0.7; }
@@ -84,10 +56,10 @@ input[type='search'] { flex: 1 1 200px; min-width: 0; border: 1px solid var(--li
 
 /* modal */
 .modal { border: 0; padding: 0; background: transparent; color: var(--fg); width: min(640px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); margin: auto; }
-.modal::backdrop { background: rgb(10 14 13 / 0.55); }
+.modal::backdrop { background: rgb(0 0 0 / 0.6); }
 .sheet { background: var(--panel); border-radius: 14px; border-top: 6px solid var(--c); padding: 16px; display: flex; flex-direction: column; gap: 14px; max-height: calc(100dvh - 24px); }
 .head { display: flex; gap: 12px; align-items: center; }
-.badge { width: 64px; height: 64px; border-radius: 10px; background: var(--c); color: #141a18; display: flex; flex-direction: column; justify-content: space-between; padding: 6px 8px; flex: none; }
+.badge { width: 64px; height: 64px; border-radius: 10px; background: var(--c); color: var(--on-section); display: flex; flex-direction: column; justify-content: space-between; padding: 6px 8px; flex: none; }
 .badge span { font-size: 0.7rem; font-variant-numeric: tabular-nums; opacity: 0.7; }
 .badge b { font: 700 1.5rem/1 var(--f-display); }
 .ttl { flex: 1; min-width: 0; }
@@ -135,7 +107,7 @@ input[type='search'] { flex: 1 1 200px; min-width: 0; border: 1px solid var(--li
 .mapbox .lbl { font: 600 12.5px var(--f-body); fill: var(--fg); paint-order: stroke; stroke: var(--halo); stroke-width: 3.5px; stroke-linejoin: round; pointer-events: none; }
 .mplaces { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
 .place { all: unset; box-sizing: border-box; cursor: pointer; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; display: block; }
-.place:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.place:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .place[aria-current='true'] { border-color: var(--fg); }
 .place b { font: 700 1rem var(--f-display); display: block; }
 .place span { color: var(--muted); font-size: 0.85rem; display: block; margin-top: 2px; }
@@ -149,7 +121,7 @@ input[type='search'] { flex: 1 1 200px; min-width: 0; border: 1px solid var(--li
 .credit a { color: inherit; }
 
 .mapzoom { position: absolute; bottom: 8px; right: 8px; z-index: 1; font: 600 0.75rem var(--f-body); color: var(--fg); background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; cursor: pointer; }
-.mapzoom:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mapzoom:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .mapzoom[aria-pressed='true'] { background: var(--fg); color: var(--bg); }
 .maplegend { list-style: none; display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 0; margin: 8px 0 0; font-size: 0.8rem; color: var(--muted); }
 .maplegend li { display: flex; align-items: center; gap: 5px; }
@@ -232,7 +204,7 @@ input[type='search'] { flex: 1 1 200px; min-width: 0; border: 1px solid var(--li
 .ps-legend { margin: 8px 0; }
 .ps-legend .tl-chip[aria-pressed='true'] { background: var(--fg); color: var(--bg); }
 .ps-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(42px, 1fr)); gap: 4px; margin: 10px 0; }
-.ps-tile { border: 0; border-radius: 6px; background: var(--c); color: #141a18; font-weight: 600; font-variant-numeric: tabular-nums; padding: 9px 0; cursor: pointer; transition: opacity 0.15s; }
+.ps-tile { border: 0; border-radius: 6px; background: var(--c); color: var(--on-section); font-weight: 600; font-variant-numeric: tabular-nums; padding: 9px 0; cursor: pointer; transition: opacity 0.15s; }
 .ps-tile[aria-pressed='true'] { outline: 3px solid var(--fg); outline-offset: 1px; }
 .ps-detail { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 10px; }
 .ps-detail h3 { margin: 0 0 6px; font: 700 1.2rem var(--f-display); }
@@ -252,7 +224,7 @@ input[type='search'] { flex: 1 1 200px; min-width: 0; border: 1px solid var(--li
 
 /* nome de personagem na ficha do livro: link para a página da pessoa */
 .sheetinfo a.plink { color: inherit; text-decoration: underline; text-decoration-color: var(--c, currentColor); text-decoration-thickness: 2px; text-underline-offset: 3px; }
-.sheetinfo a.plink:hover { color: var(--c, inherit); }
+.sheetinfo a.plink:hover { color: var(--accent-hover); }
 
 /* leitor: o rótulo "Capítulo" e o seletor andam juntos e quebram de linha como um bloco só */
 .reader .pair { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
@@ -300,48 +272,96 @@ h1 a { color: inherit; text-decoration: none; }
 .gn-dot-i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); align-self: center; margin-left: 4px; }
 .tl-chip[aria-pressed='true'] { background: var(--fg); color: var(--bg); }
 
-/* Pergaminho: regras específicas (só valem com data-theme='parchment') */
-:root[data-theme='parchment'] h1 { font: 600 2rem/1.1 var(--f-display); letter-spacing: 0.08em; color: var(--accent); }
-:root[data-theme='parchment'] .wordmark { text-transform: uppercase; }
-:root[data-theme='parchment'] .logo { display: inline-flex; color: var(--accent); }
-:root[data-theme='parchment'] .brand p { font-size: var(--fs-sub); font-style: italic; color: var(--muted); }
-:root[data-theme='parchment'] .ttl h2 { font-size: 40px; font-weight: 700; }
-:root[data-theme='parchment'] #pp-title { font-size: 44px; }
-:root[data-theme='parchment'] .group h2 { font-size: 28px; font-weight: 700; }
-:root[data-theme='parchment'] .group h2 span { font-size: 15px; }
-:root[data-theme='parchment'] .tl-detail h3, :root[data-theme='parchment'] .ps-detail h3 { font-size: 28px; font-weight: 700; }
-:root[data-theme='parchment'] .gn-panel h3 { font-size: 24px; }
-:root[data-theme='parchment'] .pp-group { font-size: 24px; }
-:root[data-theme='parchment'] .tl-etitle b { font: 700 19px/1.3 var(--f-display); }
+
+/* ===== Regras que eram do Pergaminho claro, agora do tema único ===== */
+h1 { font: 600 2rem/1.1 var(--f-display); letter-spacing: 0.08em; color: var(--accent); }
+.wordmark { text-transform: uppercase; }
+.logo { display: inline-flex; color: var(--accent); }
+.brand p { font-size: var(--fs-sub); font-style: italic; color: var(--muted); }
+.ttl h2 { font-size: 40px; font-weight: 700; }
+#pp-title { font-size: 44px; }
+.group h2 { font-size: 28px; font-weight: 700; }
+.group h2 span { font-size: 15px; }
+.tl-detail h3, .ps-detail h3 { font-size: 28px; font-weight: 700; }
+.gn-panel h3 { font-size: 24px; }
+.pp-group { font-size: 24px; }
+.tl-etitle b { font: 700 19px/1.3 var(--f-display); }
 /* texto de conteúdo */
-:root[data-theme='parchment'] .sheetinfo p, :root[data-theme='parchment'] .sheetinfo li, :root[data-theme='parchment'] .facts dd, :root[data-theme='parchment'] .place span, :root[data-theme='parchment'] .tl-events p, :root[data-theme='parchment'] .tl-detail p,
-:root[data-theme='parchment'] .pp-bio p, :root[data-theme='parchment'] .st-reading p, :root[data-theme='parchment'] .ps-detail p, :root[data-theme='parchment'] .tl-events small, :root[data-theme='parchment'] .pp-books span { font-size: var(--fs-content); line-height: 1.55; }
-:root[data-theme='parchment'] .pp-summary { font-size: var(--fs-content); font-style: italic; }
-:root[data-theme='parchment'] .tl-warn, :root[data-theme='parchment'] .note, :root[data-theme='parchment'] .mapnote, :root[data-theme='parchment'] .credit, :root[data-theme='parchment'] .maplegend, :root[data-theme='parchment'] .tl-scalenote, :root[data-theme='parchment'] .tl-legend, :root[data-theme='parchment'] .cfg-row small, :root[data-theme='parchment'] .assinatura { font-size: 15px; }
-:root[data-theme='parchment'] .tl-chip, :root[data-theme='parchment'] .tl-place, :root[data-theme='parchment'] .gn-item, :root[data-theme='parchment'] .st-ref { font-size: 15px; }
+.sheetinfo p, .sheetinfo li, .facts dd, .place span, .tl-events p, .tl-detail p,
+.pp-bio p, .st-reading p, .ps-detail p, .tl-events small, .pp-books span { font-size: var(--fs-content); line-height: 1.55; }
+.pp-summary { font-size: var(--fs-content); font-style: italic; }
+.tl-warn, .note, .mapnote, .credit, .maplegend, .tl-scalenote, .tl-legend, .cfg-row small, .assinatura { font-size: 15px; }
+.tl-chip, .tl-place, .gn-item, .st-ref { font-size: 15px; }
 /* leitor */
-:root[data-theme='parchment'] .text { font-size: 17px; line-height: 1.75; max-width: 62ch; }
-:root[data-theme='parchment'] .text sup { font: 600 12px var(--f-body); color: var(--accent-2); }
-:root[data-theme='parchment'] .pager span { font: 700 28px/1.1 var(--f-display); letter-spacing: 0.04em; color: var(--accent); }
+.text { font-size: 17px; line-height: 1.75; max-width: 62ch; }
+.text sup { font: 600 12px var(--f-body); color: var(--accent-2); }
+.pager span { font: 700 28px/1.1 var(--f-display); letter-spacing: 0.04em; color: var(--accent); }
 /* superfícies internas, ativos e links */
-:root[data-theme='parchment'] .seg, :root[data-theme='parchment'] .ghost, :root[data-theme='parchment'] input[type='search'], :root[data-theme='parchment'] select, :root[data-theme='parchment'] .reader select, :root[data-theme='parchment'] .tl-chip, :root[data-theme='parchment'] .tl-place, :root[data-theme='parchment'] .tl-period,
-:root[data-theme='parchment'] .pp-card, :root[data-theme='parchment'] .st-part, :root[data-theme='parchment'] .place, :root[data-theme='parchment'] .mapzoom, :root[data-theme='parchment'] .gn-item { background: var(--panel-2); }
-:root[data-theme='parchment'] .seg button[aria-pressed='true'], :root[data-theme='parchment'] .tl-chip[aria-pressed='true'], :root[data-theme='parchment'] .tl-period[aria-pressed='true'],
-:root[data-theme='parchment'] .mapzoom[aria-pressed='true'], :root[data-theme='parchment'] .ps-legend .tl-chip[aria-pressed='true'] { background: var(--accent); color: var(--on-accent); }
-:root[data-theme='parchment'] a { color: var(--accent); }
-:root[data-theme='parchment'] a:hover { color: var(--accent-hover); }
-:root[data-theme='parchment'] a.ghost, :root[data-theme='parchment'] h1 a, :root[data-theme='parchment'] a.plink, :root[data-theme='parchment'] .homelink { color: inherit; }
-:root[data-theme='parchment'] .place small { color: var(--accent-2); }
+.seg, .ghost, input[type='search'], select, .reader select, .tl-chip, .tl-place, .tl-period,
+.pp-card, .st-part, .place, .mapzoom, .gn-item { background: var(--panel-2); }
+.seg button[aria-pressed='true'], .tl-chip[aria-pressed='true'], .tl-period[aria-pressed='true'],
+.mapzoom[aria-pressed='true'], .ps-legend .tl-chip[aria-pressed='true'] { background: var(--accent); color: var(--on-accent); }
+a { color: var(--accent); }
+a:hover { color: var(--accent-hover); }
+a.ghost, h1 a, a.plink, .homelink { color: inherit; }
+.place small { color: var(--accent-2); }
 /* cartões e chips de sigla */
-:root[data-theme='parchment'] .tile, :root[data-theme='parchment'] .badge, :root[data-theme='parchment'] .ps-tile { border: 1px solid rgba(31, 35, 32, 0.22); }
-:root[data-theme='parchment'] .tile .ab { font-size: 1.7rem; }
-:root[data-theme='parchment'] .tile .nm { font-size: 0.72rem; line-height: 1.15; }
-:root[data-theme='parchment'] .badge b { font-size: 1.8rem; }
+.tile .ab { font-size: 1.7rem; }
+.tile .nm { font-size: 0.72rem; line-height: 1.15; }
+.badge b { font-size: 1.8rem; }
 /* mapa */
-:root[data-theme='parchment'] .mapbox .lbl { font-size: var(--fs-map-label); stroke-width: 4px; }
-:root[data-theme='parchment'] .mapbox .water { font-size: var(--fs-water); font-style: italic; text-transform: none; letter-spacing: 3px; fill: #5e6b5c; opacity: 1; }
-:root[data-theme='parchment'] .mapbox .pin { fill: #0f2d24; stroke: var(--panel); }
-:root[data-theme='parchment'] .tile .num, :root[data-theme='parchment'] .badge span { opacity: 1; } /* nº do livro sobre o chip: contraste ≥ 4,5:1 */
-:root[data-theme='parchment'] .tl-period b { font-size: 15px; }
-:root[data-theme='parchment'] .tl-period span, :root[data-theme='parchment'] .tl-dates, :root[data-theme='parchment'] .tl-blabel { font-size: 14px; }
-:root[data-theme='parchment'] .tile .ab, :root[data-theme='parchment'] .badge b, :root[data-theme='parchment'] .ps-tile, :root[data-theme='parchment'] .ttl h2, :root[data-theme='parchment'] .group h2, :root[data-theme='parchment'] .pager span, :root[data-theme='parchment'] h1 { font-variant-numeric: lining-nums; font-feature-settings: 'lnum' 1; } /* Cormorant usa algarismos antigos por padrão: "1Sm" ficaria "ɪSm" */
+.mapbox .lbl { font-size: 18px; stroke-width: 4px; }
+.mapbox .water { font-size: 18px; font-style: italic; text-transform: none; letter-spacing: 3px; opacity: 1; }
+.tile .num, .badge span { opacity: 1; } /* nº do livro sobre o chip: contraste ≥ 4,5:1 */
+.tl-period b { font-size: 15px; }
+.tl-period span, .tl-dates, .tl-blabel { font-size: 14px; }
+.tile .ab, .badge b, .ps-tile, .ttl h2, .group h2, .pager span, h1 { font-variant-numeric: lining-nums; font-feature-settings: 'lnum' 1; } /* Cormorant usa algarismos antigos por padrão: "1Sm" ficaria "ɪSm" */
+
+
+
+/* ===== Tema único: ajustes do design aprovado (valem sobre as regras acima) ===== */
+html { background: var(--bg); }
+h1 { font: 600 22px/1.1 var(--f-display); letter-spacing: 0.08em; color: var(--accent); }
+.brand p { font-size: var(--fs-sub); font-style: italic; color: var(--muted); }
+.ttl h2 { font: 700 40px/42px var(--f-display); }
+#pp-title { font-size: 44px; line-height: 46px; }
+.group h2, .tl-detail h3, .ps-detail h3 { font: 700 30px/34px var(--f-display); }
+.group h2 span { font: 500 14.5px var(--f-body); }
+.place b, .tl-etitle b { font: 700 19px/23px var(--f-display); }
+.pager span { font: 600 28px/1.1 var(--f-display); letter-spacing: 0.04em; color: var(--accent); }
+.tile .ab, .badge b { font: 700 27px/1 var(--f-display); }
+.tile .nm { font-size: 12px; }
+/* botões, abas, campos e seletores */
+.ghost, .seg button, input[type='search'], select, .mapzoom { font-size: 16px; font-weight: 500; }
+.seg, .ghost, input[type='search'], select, .mapzoom, .close { border-color: var(--line-strong); }
+.tl-chip, .gn-item { border-top-color: var(--line-strong); border-right-color: var(--line-strong); border-bottom-color: var(--line-strong); border-radius: var(--radius-chip); }
+.tl-place { border-color: var(--line-strong); }
+.tl-period { border-right-color: var(--line-strong); border-bottom-color: var(--line-strong); border-left-color: var(--line-strong); }
+.sheet { border-radius: var(--radius-panel); }
+.pp-card, .place, .st-part, .facts div { border-radius: var(--radius-card); }
+.tile, .badge, .ps-tile { border: 1px solid rgba(20, 16, 11, 0.4); border-radius: var(--radius-chip); }
+/* separadores de lista */
+.assinatura { border-top-color: var(--line-soft); }
+.tl-events li, .gn-list { border-left-color: var(--line-soft); }
+/* rótulos em maiúsculas */
+.facts dt, .sheetinfo h3, .tl-detail h4, .mevents h4, .st-readings h4, .ps-detail h4, .tl-blabel, .tl-dates i { font-size: 13px; font-weight: 600; letter-spacing: 0.14em; color: var(--muted); }
+/* legendas e créditos */
+.tl-warn, .note, .mapnote, .credit, .maplegend, .tl-scalenote, .tl-legend, .cfg-row small, .assinatura { font-size: 14.5px; color: var(--muted); }
+/* leitor */
+.text sup { font: 600 12px var(--f-body); color: var(--accent-2); }
+/* mapa: o tamanho dos rótulos (18px) vem de src/MapView.jsx */
+.mapbox .land { stroke-width: 1.2; }
+.mapbox .lbl { font-weight: 600; fill: var(--fg); }
+.mapbox .water { fill: var(--sea-label); }
+.mapbox .pin { fill: var(--accent); stroke: var(--panel); stroke-width: 2; }
+.mapbox .pin.unc { fill: var(--sea); stroke: var(--accent); stroke-dasharray: 3 2; }
+.mapbox .spot:focus-visible .pin { stroke: var(--focus); }
+.gn-branch { fill: var(--accent-2); }
+.maplegend .lg-pin { fill: var(--accent); stroke: var(--panel); stroke-width: 2; }
+.maplegend .lg-pin.unc { fill: var(--sea); stroke: var(--accent); stroke-dasharray: 3 2; }
+body, h1, h2, h3, h4, .tile .ab, .badge b, .ps-tile, .pager span, .place b, .tl-etitle b, .tl-period { font-variant-numeric: lining-nums; font-feature-settings: 'lnum' 1; } /* Cormorant usa algarismos antigos por padrão; o shorthand font: acima zera isso */
+@media (max-width: 520px) {
+  .ttl h2 { font-size: 32px; line-height: 34px; overflow-wrap: break-word; }
+  #pp-title { font-size: 34px; line-height: 36px; }
+  .group h2, .tl-detail h3, .ps-detail h3 { font-size: 26px; line-height: 30px; }
+}
