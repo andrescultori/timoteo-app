@@ -83,7 +83,7 @@ export default function App() {
   const [lang, setLang] = useState(() => store.get('lang', navigator.language?.startsWith('en') ? 'en' : 'pt'));
   // 'light' (ou 'parchment', como o Pergaminho claro se chamava antes) = claro; qualquer outro valor (auto, escuro antigo, inválido) = escuro
   // preferência guardada: auto | dark | light ('parchment', o nome antigo do Pergaminho claro, vira light; valor inválido vira auto)
-  const [theme, setTheme] = useState(() => { const v = store.get('theme', 'auto'); return v === 'parchment' ? 'light' : THEMES.includes(v) ? v : 'auto'; });
+  const [theme, setTheme] = useState(() => { const v = store.get('theme', 'light'); return v === 'parchment' ? 'light' : THEMES.includes(v) ? v : 'light'; });
   const [filter, setFilter] = useState('all');
   const [query, setQuery] = useState('');
   const [route, setRoute] = useState(parseHash);

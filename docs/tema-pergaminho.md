@@ -1,13 +1,13 @@
 # Temas Pergaminho (escuro e claro)
 
 O app tem **dois temas**, os dois do design Pergaminho:
-- **Pergaminho escuro** (padrão): tokens no `:root` de `src/styles.css`, `color-scheme: dark`.
+- **Pergaminho escuro**: tokens no `:root` de `src/styles.css`, `color-scheme: dark`.
 - **Pergaminho claro**: `:root[data-theme='light']`, só troca os tokens de cor; tipografia, tamanhos e regras são os mesmos.
 
-O botão do cabeçalho percorre **Auto → ☾ (escuro) → ☀ (claro) → Auto**. A preferência fica em `localStorage.theme` (`auto`, `dark` ou `light`; padrão `auto`).
+O botão do cabeçalho percorre **Auto → ☾ (escuro) → ☀ (claro) → Auto**. A preferência fica em `localStorage.theme` (`auto`, `dark` ou `light`; padrão `light`: quem abre pela primeira vez vê o Pergaminho claro, mesmo com o sistema em escuro; quem já tem valor guardado, inclusive `auto`, mantém).
 - **Auto** segue o sistema (`prefers-color-scheme`): escuro → Pergaminho escuro, claro → Pergaminho claro, e acompanha a troca do sistema enquanto o app está aberto.
 - O CSS só conhece `data-theme='dark'|'light'`: `src/App.jsx` grava em `<html>` o tema já resolvido (no auto, o do sistema). O `:root` sem atributo é o escuro.
-- Valores antigos guardados: `parchment` (nome antigo do Pergaminho claro) vira `light`; valor inválido vira `auto`.
+- Valores antigos guardados: `parchment` (nome antigo do Pergaminho claro) vira `light`; valor inválido vira `light`.
 - `index.html` aplica o tema (resolvido) antes do primeiro desenho e `App.jsx` ajusta o `theme-color`, para o fundo não piscar. `<meta name="color-scheme">` é `dark light`.
 Design system do escuro: https://claude.ai/artifact/KubSPfxeLAVWVqNHBhmtPR
 
