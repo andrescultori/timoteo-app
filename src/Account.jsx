@@ -1,10 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useSession, signInWithGoogle, signOut } from './auth.js';
 import { hrefs } from './route.js';
+import { usePlan } from './plan.js';
 
-// Botão de conta do cabeçalho: "Entrar" (Google) quando deslogado; logado, o nome com um menu pequeno. Não aparece sem Supabase.
-export default function Account({ t }) {
+// Botão de conta do cabeçalho: "Entrar" (Google) quando deslogado; logado, o nome (com PRO ou PREMIUM ao lado, se tiver o plano) e um menu pequeno
+// com Favoritos, Perfil, Configurações e Sair. Não aparece sem Supabase.
+export default function Account({ t, onSettings }) {
   const { enabled, status, name, error } = useSession();
+  const { plan } = usePlan(); // plano efetivo: Pro ou Premium vencido já conta como Essencial
+  const badge = plan === 'pro' ? 'PRO' : plan === 'premium' ? 'PREMIUM' : null;
   const [open, setOpen] = useState(false);
   const box = useRef(null);
 
@@ -30,11 +34,14 @@ export default function Account({ t }) {
   const first = (name || '').split(' ')[0] || t.account;
   return (
     <div className="acct" ref={box}>
-      <button type="button" className="ghost acct-name" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)} title={name}>{first}</button>
+      <button type="button" className="ghost acct-name" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)} title={name} aria-label={badge ? `${name || first} (${badge})` : undefined}>
+        <span className="acct-first">{first}</span>{badge && <span className="acct-plan" aria-hidden="true">{badge}</span>}
+      </button>
       {open && (
         <div className="acct-menu" role="menu">
           <a role="menuitem" href={hrefs.favorites} onClick={() => setOpen(false)}>{t.favorites}</a>
           <a role="menuitem" href={hrefs.profile} onClick={() => setOpen(false)}>{t.profile}</a>
+          <button type="button" role="menuitem" onClick={() => { setOpen(false); onSettings?.(); }}>{t.settings}</button>
           <button type="button" role="menuitem" onClick={() => { setOpen(false); signOut(); }}>{t.signOut}</button>
         </div>
       )}

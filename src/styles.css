@@ -410,7 +410,9 @@ body, h1, h2, h3, h4, .tile .ab, .badge b, .ps-tile, .pager span, .place b, .tl-
 
 /* conta, perfil e lista de espera */
 .acct { position: relative; }
-.acct-name { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.acct-name { max-width: 200px; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+.acct-first { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.acct-plan { flex: none; padding: 1px 7px; border: 1px solid currentColor; border-radius: var(--radius-chip); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; line-height: 1.5; }
 .acct-menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 20; min-width: 180px; display: flex; flex-direction: column; padding: 6px; border: 1px solid var(--line-strong); border-radius: var(--radius-card); background: var(--panel-2); box-shadow: var(--shadow-pop); }
 .acct-menu a, .acct-menu button { display: block; text-align: left; padding: 8px 10px; border: 0; border-radius: var(--radius-chip); background: transparent; color: var(--fg); text-decoration: none; cursor: pointer; font-size: 16px; }
 .acct-menu a:hover, .acct-menu button:hover { background: color-mix(in srgb, var(--fg) 10%, transparent); color: var(--fg); }
