@@ -439,3 +439,15 @@ body, h1, h2, h3, h4, .tile .ab, .badge b, .ps-tile, .pager span, .place b, .tl-
 .pp-section-title button:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 3px; }
 .pp-caret { color: var(--muted); font-size: 0.9em; }
 .pp-section .pp-group { font-size: 0.95rem; color: var(--muted); }
+
+/* cobrança (Fase 4): compra do Pro, retorno do pagamento e histórico no perfil */
+.pro-buy { display: grid; gap: 8px; justify-items: start; }
+.pro-buy p { margin: 0; }
+.pro-price { font-weight: 600; }
+.pro-cta { font-weight: 700; border-color: var(--accent-2); }
+.profile-pay { margin-top: 26px; padding-top: 14px; border-top: 1px solid var(--line-strong); display: grid; gap: 10px; justify-items: start; max-width: 620px; }
+.profile-pay h3 { margin: 0; font: 700 1.15rem var(--f-display); }
+.profile-pay h4 { margin: 8px 0 0; font: 700 1rem var(--f-display); }
+.pay-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; width: 100%; }
+.pay-list li { display: grid; grid-template-columns: 7rem 1fr auto; gap: 10px; align-items: baseline; padding: 6px 0; border-bottom: 1px solid var(--line); }
+@media (max-width: 520px) { .pay-list li { grid-template-columns: 1fr auto; } .pay-list li span:first-child { grid-column: 1 / -1; color: var(--muted); } }

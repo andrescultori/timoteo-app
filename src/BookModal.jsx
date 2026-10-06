@@ -85,7 +85,7 @@ export default function BookModal({ book, lang, t, initialTab, initialPlace, onN
             </>
           )}
           {tab === 'sheet' && <Sheet book={book} lang={lang} t={t} info={info} error={infoError} />}
-          {tab === 'map' && info?.map && locked.map && <ProInvite t={t} />}
+          {tab === 'map' && info?.map && locked.map && <ProInvite t={t} lang={lang} />}
           {tab === 'map' && info?.map && !locked.map && (
             <Suspense fallback={<p className="soon">{t.loading}</p>}>
               <MapView book={book} map={info.map} lang={lang} t={t} initialPlace={initialPlace} onPlaceChange={(name) => sync(hrefs.book(book.slug, 'map', name))} onOpenTimeline={onOpenTimeline} onOpenPerson={onOpenPerson} />
@@ -96,7 +96,7 @@ export default function BookModal({ book, lang, t, initialTab, initialPlace, onN
               <PsalmsView key={initialTab === 'psalms' ? initialPlace : 'p'} lang={lang} t={t} initialN={initialPlace} onSelect={(n) => sync(hrefs.book('psa', 'psalms', String(n)))} onOpenPerson={onOpenPerson} />
             </Suspense>
           )}
-          {tab === 'structure' && info?.structure && locked.structure && <ProInvite t={t} />}
+          {tab === 'structure' && info?.structure && locked.structure && <ProInvite t={t} lang={lang} />}
           {tab === 'structure' && info?.structure && !locked.structure && (
             <Suspense fallback={<p className="soon">{t.loading}</p>}>
               <StructureView book={book} structure={info.structure} lang={lang} t={t} />

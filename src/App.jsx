@@ -21,6 +21,7 @@ const People = lazy(() => import('./People.jsx'));
 const Genealogy = lazy(() => import('./Genealogy.jsx'));
 const Favorites = lazy(() => import('./Favorites.jsx'));
 const Profile = lazy(() => import('./Profile.jsx'));
+const Checkout = lazy(() => import('./Checkout.jsx'));
 
 const store = {
   get(k, d) { try { return localStorage.getItem(k) ?? d; } catch { return d; } },
@@ -209,7 +210,7 @@ export default function App() {
       )}
 
       {route.kind === 'timeline' && plan.loading && <p className="soon page-wait">{t.loading}</p>}
-      {route.kind === 'timeline' && !plan.loading && !plan.can('timeline') && <ProInvite t={t} page title={t.timeline} />}
+      {route.kind === 'timeline' && !plan.loading && !plan.can('timeline') && <ProInvite t={t} lang={lang} page title={t.timeline} />}
       {route.kind === 'timeline' && !plan.loading && plan.can('timeline') && (
         <Suspense fallback={<p className="soon page-wait">{t.loading}</p>}>
           <Timeline lang={lang} t={t} focusId={route.id} onOpenBook={open} onOpenMap={openMap} onOpenPerson={openPerson} />
@@ -220,13 +221,18 @@ export default function App() {
           <Profile lang={lang} t={t} />
         </Suspense>
       )}
+      {route.kind === 'checkout' && (
+        <Suspense fallback={<p className="soon page-wait">{t.loading}</p>}>
+          <Checkout lang={lang} t={t} />
+        </Suspense>
+      )}
       {route.kind === 'favorites' && (
         <Suspense fallback={<p className="soon page-wait">{t.loading}</p>}>
           <Favorites lang={lang} t={t} />
         </Suspense>
       )}
       {route.kind === 'tree' && plan.loading && <p className="soon page-wait">{t.loading}</p>}
-      {route.kind === 'tree' && !plan.loading && !plan.can('genealogy') && <ProInvite t={t} page title={t.genealogy} />}
+      {route.kind === 'tree' && !plan.loading && !plan.can('genealogy') && <ProInvite t={t} lang={lang} page title={t.genealogy} />}
       {route.kind === 'tree' && !plan.loading && plan.can('genealogy') && (
         <Suspense fallback={<p className="soon page-wait">{t.loading}</p>}>
           <Genealogy lang={lang} t={t} treeId={route.id} focusNode={route.node} onOpenBook={open} onOpenPerson={openPerson} onSelect={openTree} />
