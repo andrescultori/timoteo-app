@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 
-export default function SettingsModal({ t, settings, onChange, onClose }) {
+export default function SettingsModal({ t, settings, canAcademic, onChange, onClose }) {
   const ref = useRef(null);
   useEffect(() => {
     const d = ref.current;
@@ -18,6 +18,8 @@ export default function SettingsModal({ t, settings, onChange, onClose }) {
           <button type="button" className="ghost close" onClick={() => ref.current.close()} aria-label={t.close}>✕</button>
         </div>
         <div className="body">
+          {!canAcademic && <p className="soon">{t.settingsNone}</p>}
+          {canAcademic && (
           <label className="cfg-row">
             <input type="checkbox" checked={settings.showScholarly} onChange={(e) => onChange({ ...settings, showScholarly: e.target.checked })} />
             <span>
@@ -25,6 +27,7 @@ export default function SettingsModal({ t, settings, onChange, onClose }) {
               <small>{t.settingsScholarlyHelp}</small>
             </span>
           </label>
+          )}
         </div>
       </div>
     </dialog>

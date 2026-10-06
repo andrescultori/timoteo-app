@@ -425,3 +425,9 @@ body, h1, h2, h3, h4, .tile .ab, .badge b, .ps-tile, .pager span, .place b, .tl-
 .profile-out { display: grid; gap: 12px; justify-items: start; }
 .waitlist-done { color: var(--accent-2); font-size: 14.5px; }
 .fav-device .ghost, .continue-note .ghost, .fav-toast .ghost { white-space: nowrap; }
+
+/* plano Pro: convite e marcas */
+.pro-invite { display: grid; gap: 10px; justify-items: start; max-width: 620px; padding: 16px 18px; border: 1px solid var(--line-strong); border-radius: var(--radius-card); background: var(--panel-2); }
+.pro-invite b { font: 700 19px/23px var(--f-display); }
+.pro-invite p { margin: 0; }
+.pro-tag { margin-left: 6px; padding: 0 6px; border: 1px solid var(--line-strong); border-radius: var(--radius-pill); font-size: 12px; font-weight: 600; letter-spacing: 0.06em; color: var(--accent-2); vertical-align: middle; }

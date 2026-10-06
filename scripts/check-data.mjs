@@ -326,6 +326,70 @@ for (const ver of VERSIONS) {
   read('src/data/people.json').people.forEach((p) => roundtrip(favKey.person(p.id), { type: 'person', id: p.id }, 'people'));
 }
 
+// Planos (src/data/plans.json): ids de personagens e slugs existem; a matriz ✅/❌ concorda com as listas e com as regras de can()
+{
+  const cfg = read('src/data/plans.json');
+  const { createCan, FEATURE_ROW, PLAN_ORDER } = await import(new URL('../src/planRules.js', import.meta.url).href);
+  const personIds = new Set(read('src/data/people.json').people.map((p) => p.id));
+  const sectionOf = Object.fromEntries([...fs.readFileSync(path.join(root, 'src/data/books.js'), 'utf8').matchAll(/^\s*\['(\w+)', '[^']*', '[^']*', '[^']*', '[^']*', '(\w+)'\]/gm)].map((m) => [m[1], m[2]]));
+  const sections = [...fs.readFileSync(path.join(root, 'src/data/books.js'), 'utf8').matchAll(/id: '(\w+)', pt:/g)].map((m) => m[1]);
+  const w = 'plans.json';
+  if (JSON.stringify(Object.keys(cfg.plans)) !== JSON.stringify(PLAN_ORDER)) err(`${w}: os planos devem ser ${PLAN_ORDER.join(', ')}`);
+  for (const [id, p] of Object.entries(cfg.plans)) {
+    bilingual(p.name, `${w}.plans.${id}.name`);
+    if (typeof p.price !== 'number' || p.price < 0) err(`${w}.plans.${id}: preço inválido`);
+    if (p.entryPrice !== null && (typeof p.entryPrice !== 'number' || p.entryPrice > p.price)) err(`${w}.plans.${id}: preço de entrada inválido`);
+  }
+  const ess = cfg.essencial;
+  if (new Set(ess.characters).size !== ess.characters.length) err(`${w}: ids de personagens repetidos em essencial.characters`);
+  ess.characters.forEach((id) => { if (!personIds.has(id)) err(`${w}: personagem "${id}" não existe em people.json`); });
+  const listed = [...ess.mapBooks, ...ess.structureBooks, ...cfg.pro.structureBooks];
+  listed.forEach((slug) => { if (!books.includes(slug)) err(`${w}: livro "${slug}" não existe em books.js`); });
+  (ess.mapSections ?? []).forEach((sec) => { if (!sections.includes(sec)) err(`${w}: seção "${sec}" não existe`); });
+  const expectedMaps = books.filter((s) => ess.mapSections.includes(sectionOf[s]));
+  if (JSON.stringify([...ess.mapBooks].sort()) !== JSON.stringify([...expectedMaps].sort())) err(`${w}: essencial.mapBooks deve ser exatamente os livros das seções ${ess.mapSections.join(', ')}`);
+  // todo livro com `structure` na ficha precisa estar em alguma lista de estrutura
+  books.forEach((slug) => { if (read(`src/data/info/${slug}.json`).structure && !ess.structureBooks.includes(slug) && !cfg.pro.structureBooks.includes(slug)) err(`${w}: ${slug} tem estrutura na ficha mas não está em nenhuma lista de plano`); });
+  // matriz
+  const ids = new Set();
+  cfg.features.forEach((f) => {
+    const fw = `${w}.features.${f.id}`;
+    if (ids.has(f.id)) err(`${fw}: id repetido`);
+    ids.add(f.id);
+    bilingual(f.label, `${fw}.label`);
+    if (f.note) bilingual(f.note, `${fw}.note`);
+    PLAN_ORDER.forEach((pl) => { if (![true, false, 'partial', 'soon'].includes(f[pl])) err(`${fw}.${pl}: valor deve ser true, false, "partial" ou "soon"`); });
+    PLAN_ORDER.forEach((pl) => { if (f[pl] === 'partial' && pl !== 'essencial') err(`${fw}.${pl}: "partial" só vale no Essencial`); });
+  });
+  Object.values(FEATURE_ROW).forEach((row) => { if (!ids.has(row)) err(`${w}: falta a linha "${row}" na matriz`); });
+  const can = createCan(cfg);
+  const sample = { slug: null, id: null };
+  const mapNo = books.find((s) => !ess.mapBooks.includes(s) && read(`src/data/info/${s}.json`).map);
+  const strNo = cfg.pro.structureBooks[0];
+  const perNo = [...personIds].find((id) => !ess.characters.includes(id));
+  const subject = { map: [ess.mapBooks[0], mapNo], structure: [ess.structureBooks[0], strNo], person: [ess.characters[0], perNo] };
+  for (const [feature, rowId] of Object.entries(FEATURE_ROW)) {
+    const row = cfg.features.find((f) => f.id === rowId);
+    if (!row) continue;
+    for (const pl of PLAN_ORDER) {
+      const cell = row[pl];
+      const key = feature === 'map' ? 'slug' : feature === 'structure' ? 'slug' : 'id';
+      const [yes, no] = subject[feature] ?? [null, null];
+      const gotYes = can(feature, { plan: pl, [key]: yes });
+      const gotNo = subject[feature] ? can(feature, { plan: pl, [key]: no }) : gotYes;
+      const wantYes = cell === true || cell === 'partial';
+      const wantNo = cell === true;
+      if (gotYes !== wantYes || gotNo !== wantNo) err(`${w}: a matriz diverge de can("${feature}") no plano ${pl} (linha ${rowId}: ${cell})`);
+    }
+    if (can(feature, { plan: 'essencial', isAdmin: true, ...sample }) !== true) err(`${w}: o administrador deve poder tudo (${feature})`);
+  }
+  if (row_partial_without_list(cfg)) err(`${w}: linha "partial" sem lista no Essencial`);
+  function row_partial_without_list(c) {
+    const need = { maps: c.essencial.mapBooks, structure: c.essencial.structureBooks, characters: c.essencial.characters };
+    return c.features.some((f) => f.essencial === 'partial' && !(need[f.id]?.length));
+  }
+}
+
 if (errors.length) {
   console.error(`${errors.length} problema(s):`);
   errors.slice(0, 60).forEach((e) => console.error(` - ${e}`));

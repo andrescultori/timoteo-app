@@ -5,6 +5,7 @@ import timeline from './data/timeline.json';
 import { people } from './data/people.json';
 import { pick as pickT, range, main } from './timelineUtil.js';
 import FavButton from './FavButton.jsx';
+import { usePlan } from './plan.js';
 import { favKey } from './userdata.js';
 
 // Nomes de mares exibidos como rótulos de fundo.
@@ -79,6 +80,7 @@ function useWidth(ref) {
 }
 
 export default function MapView({ book, map, lang, t, initialPlace, onPlaceChange, onOpenTimeline, onOpenPerson }) {
+  const { can } = usePlan();
   const boxRef = useRef(null);
   const [sel, setSel] = useState(() => Math.max(0, map.places.findIndex((p) => p.name.pt === initialPlace)));
   const [zoom, setZoom] = useState(false);
@@ -186,7 +188,7 @@ export default function MapView({ book, map, lang, t, initialPlace, onPlaceChang
         )}
       </ul>
 
-      {events.length > 0 && (
+      {can('events') && events.length > 0 && ( // a linha do tempo é do Pro: sem o plano, os chips de evento nem aparecem
         <div className="mevents">
           <h4>{t.mapEvents}: {pickText(places[sel].name, lang)}</h4>
           <div className="tl-chips">
@@ -204,7 +206,9 @@ export default function MapView({ book, map, lang, t, initialPlace, onPlaceChang
           <h4>{t.people}: {pickText(places[sel].name, lang)}</h4>
           <div className="tl-chips">
             {folks.map((p) => (
-              <button key={p.id} type="button" className="tl-chip" style={{ '--c': color }} onClick={() => onOpenPerson(p.id)}>{pickT(p.name, lang)}</button>
+              can('person', { id: p.id })
+                ? <button key={p.id} type="button" className="tl-chip" style={{ '--c': color }} onClick={() => onOpenPerson(p.id)}>{pickT(p.name, lang)}</button>
+                : <span key={p.id} className="tl-chip" style={{ '--c': color }}>{pickT(p.name, lang)}</span>
             ))}
           </div>
         </div>
