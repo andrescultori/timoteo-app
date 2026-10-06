@@ -4,7 +4,6 @@ import land from './data/land.json';
 import timeline from './data/timeline.json';
 import { people } from './data/people.json';
 import { pick as pickT, range, main } from './timelineUtil.js';
-import { useCssNumber, useThemeAttr } from './useTheme.js';
 
 // Nomes de mares exibidos como rótulos de fundo.
 const WATERS = [
@@ -116,10 +115,7 @@ export default function MapView({ book, map, lang, t, initialPlace, onPlaceChang
     [map.route, places, projection],
   );
 
-  // tamanho do rótulo vem da variável do tema (--fs-map-label); em tela estreita, 1px a menos (como sempre foi)
-  const labelBase = useCssNumber('--fs-map-label') || 12.5;
-  const parchment = useThemeAttr() === 'parchment';
-  const fs = W < 480 ? labelBase - 1 : labelBase;
+  const fs = W < 480 ? 16 : 18; // nomes dos lugares: 18px (16px em tela estreita)
   const spots = useMemo(() => {
     const items = places.map((p) => {
       const [x, y] = projection(p.lonLat);
@@ -158,8 +154,8 @@ export default function MapView({ book, map, lang, t, initialPlace, onPlaceChang
           <path className="land" d={landPath} />
           {WATERS.map((w) => {
             const [x, y] = projection(w.c);
-            const fs = parchment ? 18 : w.small ? 9 : 11;
-            const half = parchment ? (w.name[lang].length * (fs * 0.5 + 3)) / 2 : (w.name[lang].length * fs * 0.85) / 2; // maiúsculas com espaçamento entre letras
+            const fs = 18;
+            const half = (w.name[lang].length * (fs * 0.5 + 3)) / 2; // itálico com espaçamento entre letras (letter-spacing 3)
             if (x - half <= 4 || x + half >= W - 4 || y <= 20 || y >= H - 20) return null;
             return <text key={w.name.en} className="water" x={x} y={y} textAnchor="middle" fontSize={fs}>{w.name[lang]}</text>;
           })}
@@ -173,7 +169,7 @@ export default function MapView({ book, map, lang, t, initialPlace, onPlaceChang
                 aria-label={`${name}${p.uncertain ? `, ${t.mapUncertain}` : ''}`}
                 onClick={() => choose(i)} onKeyDown={onKey(i)}>
                 <circle className="hit" cx={x} cy={y} r={16} />
-                <circle className="pin" cx={x} cy={y} r={i === sel ? PIN_R : 6} fill={color} strokeDasharray={p.uncertain ? '3 2' : undefined} />
+                <circle className={`pin${p.uncertain ? ' unc' : ''}`} cx={x} cy={y} r={i === sel ? PIN_R : 6} />
                 {label && <text className="lbl" x={x + label[0]} y={y + label[1]} textAnchor={label[2]} style={{ fontSize: fs }}>{text}</text>}
               </g>
             );
@@ -182,9 +178,9 @@ export default function MapView({ book, map, lang, t, initialPlace, onPlaceChang
       </div>
 
       <ul className="maplegend" aria-label={t.mapLegend}>
-        <li><svg width="16" height="16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill={color} stroke="var(--panel)" strokeWidth="2" /></svg>{t.mapKnown}</li>
+        <li><svg width="16" height="16" aria-hidden="true"><circle className="lg-pin" cx="8" cy="8" r="6" /></svg>{t.mapKnown}</li>
         {places.some((p) => p.uncertain) && (
-          <li><svg width="16" height="16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill={color} stroke="var(--panel)" strokeWidth="2" strokeDasharray="3 2" /></svg>{t.mapUncertain} (?)</li>
+          <li><svg width="16" height="16" aria-hidden="true"><circle className="lg-pin unc" cx="8" cy="8" r="6" /></svg>{t.mapUncertain} (?)</li>
         )}
       </ul>
 

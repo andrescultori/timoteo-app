@@ -18,14 +18,10 @@ const store = {
   set(k, v) { try { localStorage.setItem(k, v); } catch { /* ignora */ } },
 };
 
-const THEMES = ['auto', 'dark', 'light', 'parchment'];
-const THEME_LABEL = { auto: 'Auto', dark: '☾', light: '☀', parchment: '📜' };
-
 const norm = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
 export default function App() {
   const [lang, setLang] = useState(() => store.get('lang', navigator.language?.startsWith('en') ? 'en' : 'pt'));
-  const [theme, setTheme] = useState(() => { const v = store.get('theme', 'auto'); return THEMES.includes(v) ? v : 'auto'; }); // auto | dark | light | parchment
   const [filter, setFilter] = useState('all');
   const [query, setQuery] = useState('');
   const [route, setRoute] = useState(parseHash);
@@ -37,19 +33,8 @@ export default function App() {
   usePageTitle([], t.title, route.kind === 'home');
   useEffect(() => { store.set('showScholarly', settings.showScholarly ? '1' : '0'); }, [settings]);
   useEffect(() => { document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en'; store.set('lang', lang); }, [lang]);
-  useEffect(() => {
-    const r = document.documentElement;
-    if (theme === 'auto') r.removeAttribute('data-theme'); else r.setAttribute('data-theme', theme);
-    store.set('theme', theme);
-    // As fontes do Pergaminho só são pedidas na primeira vez que o tema é ativado
-    if (theme === 'parchment' && !document.getElementById('parchment-fonts')) {
-      const link = document.createElement('link');
-      link.id = 'parchment-fonts';
-      link.rel = 'stylesheet';
-      link.href = 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap';
-      document.head.appendChild(link);
-    }
-  }, [theme]);
+  // O app tem um tema só (Pergaminho escuro): apaga a preferência de tema que versões anteriores gravaram
+  useEffect(() => { try { localStorage.removeItem('theme'); } catch { /* ignora */ } }, []);
   // A rota vem do hash. Ao sair da grade guardamos a rolagem para voltar ao mesmo ponto; páginas novas abrem no topo.
   const homeScroll = useRef(0);
   const routeRef = useRef(route);
@@ -83,8 +68,6 @@ export default function App() {
     })).filter((g) => g.books.length);
   }, [filter, query]);
 
-  const cycleTheme = () => setTheme((x) => THEMES[(THEMES.indexOf(x) + 1) % THEMES.length]);
-  const themeName = { auto: t.themeAuto, dark: t.themeDark, light: t.themeLight, parchment: t.themeParchment }[theme];
 
   return (
     <SettingsContext.Provider value={settings}>
@@ -94,8 +77,8 @@ export default function App() {
             <a className="homelink" href={hrefs.home} aria-label={t.home} title={t.home}>
               <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11.5 12 4l9 7.5" /><path d="M5.5 10v9.5h13V10" /><path d="M10 19.5v-5h4v5" /></svg>
             </a>
-            {theme === 'parchment' && <a className="logo" href={hrefs.home} aria-hidden="true" tabIndex={-1}><Logo size={36} /></a>}
-            <a href={hrefs.home}>{theme === 'parchment' ? <span className="wordmark">{t.title.split(' ')[0]}</span> : t.title}</a>
+            <a className="logo" href={hrefs.home} aria-hidden="true" tabIndex={-1}><Logo size={36} /></a>
+            <a href={hrefs.home}><span className="wordmark">{t.title.split(' ')[0]}</span></a>
           </h1>
           <p>{t.subtitle}</p>
         </div>
@@ -106,9 +89,6 @@ export default function App() {
             ))}
           </div>
           <button type="button" className="ghost" onClick={() => setShowSettings(true)} aria-label={t.settings} title={t.settings}>⚙</button>
-          <button type="button" className="ghost" onClick={cycleTheme} aria-label={`${t.toggleTheme}: ${themeName}`} title={`${t.toggleTheme}: ${themeName}`}>
-            {THEME_LABEL[theme]}
-          </button>
         </div>
       </header>
 
