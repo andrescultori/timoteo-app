@@ -21,3 +21,12 @@ export default function Icon({ name }) {
     </svg>
   );
 }
+
+// Coração dos favoritos (contorno ou preenchido)
+export function HeartIcon({ filled = false, size = 20 }) {
+  return (
+    <svg className="heart" viewBox="0 0 24 24" width={size} height={size} aria-hidden="true" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z" />
+    </svg>
+  );
+}

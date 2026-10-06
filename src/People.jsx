@@ -5,6 +5,8 @@ import timeline from './data/timeline.json';
 import { psalms } from './data/psalms.json';
 import { pick, range, main } from './timelineUtil.js';
 import BackButton from './BackButton.jsx';
+import FavButton from './FavButton.jsx';
+import { favKey } from './userdata.js';
 import { hrefs, go } from './route.js';
 import { usePageTitle } from './pageTitle.js';
 import { nodes as gNodes, parentOf, childrenOf, nodesOfPerson, treeOf, refsText, nodeName } from './genealogy.js';
@@ -53,6 +55,7 @@ export default function People({ lang, t, focusId, onOpenBook, onOpenTimeline, o
             <p>{person ? t.people : t.peopleSub}</p>
           </div>
           <div className="head-actions">
+            {person && <FavButton favKey={favKey.person(person.id)} t={t} />}
             <a className="ghost" href={hrefs.timeline()}>{t.timeline}</a>
             <BackButton t={t} />
           </div>

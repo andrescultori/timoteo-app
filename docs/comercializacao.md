@@ -86,7 +86,7 @@ Cada fase vira uma branch e um PR; o merge é do André. O Code diagnostica e es
 - Login com Google no lançamento; link mágico quando houver domínio e SMTP próprio. Conferir na documentação os limites do envio padrão do Supabase antes de decidir.
 - Cadastro opcional na interface, com a caixa de novidades separada e desmarcada.
 
-**Fase 2A: favoritos e "continuar de onde parei" (sem backend; pode vir antes da Fase 1)**
+**Fase 2A: favoritos e "continuar de onde parei" (sem backend; pode vir antes da Fase 1) — FEITA** (`src/userdata.js`, página `#favorites`)
 - Coração nas páginas de livro, capítulo do leitor, personagem e lugar do mapa. Escopo inicial: só esses quatro tipos (eventos, salmos e versículos depois).
 - Chaves: livro = slug; capítulo = slug + número; personagem = id; lugar = slug do livro + nome em PT (lugar não tem id; se um nome mudar, o favorito se perde; o `npm run check` pode avisar quando um favorito conhecido deixar de existir).
 - Sem cadastro, salva no aparelho (localStorage). Depois do primeiro favorito, aviso único: "Seus favoritos ficam só neste aparelho. Entre para guardá-los e acessá-los em qualquer lugar." **[decidido]** Não bloquear o coração atrás do cadastro e **sem limite** de favoritos em nenhum plano.

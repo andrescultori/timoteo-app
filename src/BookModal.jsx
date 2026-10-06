@@ -5,6 +5,8 @@ import { VERSIONS, loadBook } from './data/bible.js';
 import { useSettings } from './settings.js';
 import BackButton from './BackButton.jsx';
 import Icon from './icons.jsx';
+import FavButton from './FavButton.jsx';
+import { favKey, setPosition, peekResume, getVersionPref, setVersionPref } from './userdata.js';
 import { useLinkIndex, Rich } from './linkify.jsx';
 import { hrefs, sync } from './route.js';
 
@@ -59,6 +61,7 @@ export default function BookModal({ book, lang, t, initialTab, initialPlace, onN
             <h2 id="book-title">{book.name[lang]}</h2>
             <p>{section[lang]}</p>
           </div>
+          <FavButton favKey={favKey.book(book.slug)} t={t} />
           <BackButton t={t} />
         </div>
 
@@ -168,8 +171,8 @@ function Sheet({ book, lang, t, info, error }) {
 const LANG_NAME = { pt: 'Português', en: 'English' };
 
 // Versão preferida por idioma, lembrada entre livros e visitas (localStorage pode falhar; o leitor funciona sem ele).
-const readPref = (lang) => { try { return localStorage.getItem(`ver:${lang}`); } catch { return null; } };
-const writePref = (lang, id) => { try { localStorage.setItem(`ver:${lang}`, id); } catch { /* ignora */ } };
+const readPref = getVersionPref;
+const writePref = setVersionPref;
 
 // Prioriza o idioma da interface: preferida salva, senão a primeira versão desse idioma.
 function pickVersion(versions, lang) {
@@ -179,7 +182,7 @@ function pickVersion(versions, lang) {
 
 function Reader({ book, lang, t, initialChapter }) {
   const versions = VERSIONS.filter((v) => v.available && (!v.books || v.books.includes(book.n)));
-  const [version, setVersion] = useState(() => pickVersion(versions, lang));
+  const [version, setVersion] = useState(() => { const r = peekResume(book.slug); return versions.some((v) => v.id === r) ? r : pickVersion(versions, lang); });
   const [chapter, setChapter] = useState(initialChapter >= 1 && initialChapter <= book.chapters ? initialChapter : 1);
   const [data, setData] = useState(null);
   const [error, setError] = useState(false);
@@ -190,6 +193,9 @@ function Reader({ book, lang, t, initialChapter }) {
     loadBook(version, book.n).then((d) => alive && setData(d)).catch(() => alive && setError(true));
     return () => { alive = false; };
   }, [version, book.n]);
+
+  // "Continuar de onde parei": grava a posição ao abrir um capítulo no leitor (não ao só abrir a ficha)
+  useEffect(() => { setPosition({ version, slug: book.slug, chapter }); }, [version, book.slug, chapter]);
 
   const current = versions.find((v) => v.id === version);
   const groups = [lang, ...Object.keys(LANG_NAME).filter((l) => l !== lang)]
@@ -221,6 +227,10 @@ function Reader({ book, lang, t, initialChapter }) {
       </div>
       {error && <p className="soon">{t.loadError}</p>}
       {!error && !verses && <p className="soon">{t.loading}</p>}
+      <div className="chap-title">
+        <h3>{book.name[lang]} {chapter}</h3>
+        <FavButton favKey={favKey.chapter(book.slug, chapter)} t={t} />
+      </div>
       {verses && (
         // O número vem da posição: versículo que a versão não tem é null e fica sem texto, sem deslocar os seguintes.
         <div className="text" lang={current.lang}>
