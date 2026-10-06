@@ -1,0 +1,6 @@
+# Convenção de pasta do Supabase CLI (a CLI NÃO é dependência do projeto). As migrations ficam em supabase/migrations/
+# e são revisadas no PR e aplicadas depois; ver supabase/README.md.
+project_id = "timoteo-app"
+
+[db]
+major_version = 17

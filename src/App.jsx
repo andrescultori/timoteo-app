@@ -4,6 +4,8 @@ import { LANGS, T } from './i18n.js';
 import BookModal from './BookModal.jsx';
 import Logo from './Logo.jsx';
 import { HeartIcon } from './icons.jsx';
+import Account from './Account.jsx';
+import { useSession, signInWithGoogle } from './auth.js';
 import { VERSIONS } from './data/bible.js';
 import { useUserData, dismissContinue, dismissNotice, acknowledgeNotice, setResume } from './userdata.js';
 import SettingsModal from './SettingsModal.jsx';
@@ -16,6 +18,7 @@ const Timeline = lazy(() => import('./Timeline.jsx'));
 const People = lazy(() => import('./People.jsx'));
 const Genealogy = lazy(() => import('./Genealogy.jsx'));
 const Favorites = lazy(() => import('./Favorites.jsx'));
+const Profile = lazy(() => import('./Profile.jsx'));
 
 const store = {
   get(k, d) { try { return localStorage.getItem(k) ?? d; } catch { return d; } },
@@ -28,9 +31,17 @@ const systemDark = () => !window.matchMedia || window.matchMedia('(prefers-color
 
 const norm = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
+// Botão "Entrar com Google" dos avisos do aparelho (só quando o login existe)
+function SignInOffer({ t }) {
+  const { enabled, signedIn } = useSession();
+  if (!enabled || signedIn) return null;
+  return <button type="button" className="ghost" onClick={signInWithGoogle}>{t.signInGoogle}</button>;
+}
+
 // Cartão "Continuar: João 3 (versão)" no início, a partir da última posição de leitura
 function ContinueCard({ lang, t }) {
   const { position, dismissedAt, noticeShown } = useUserData();
+  const { signedIn } = useSession();
   const book = position && bySlug[position.slug];
   if (!position || !book || dismissedAt === position.at) return null;
   const version = VERSIONS.find((v) => v.id === position.version);
@@ -44,8 +55,8 @@ function ContinueCard({ lang, t }) {
       <a href={hrefs.book(position.slug, 'read', String(position.chapter))} onClick={go_}>
         {t.continueLabel}: <b>{book.name[lang]} {position.chapter}</b>{version ? ` (${version.label})` : ''}
       </a>
-      {!noticeShown && (
-        <span className="continue-note">{t.favNotice} <button type="button" className="ghost" onClick={acknowledgeNotice}>{t.favNoticeOk}</button></span>
+      {!noticeShown && !signedIn && (
+        <span className="continue-note">{t.favNotice} <button type="button" className="ghost" onClick={acknowledgeNotice}>{t.favNoticeOk}</button><SignInOffer t={t} /></span>
       )}
       <button type="button" className="ghost continue-x" onClick={dismissContinue} aria-label={t.continueDismiss} title={t.continueDismiss}>×</button>
     </div>
@@ -55,11 +66,13 @@ function ContinueCard({ lang, t }) {
 // Aviso único depois do primeiro favorito: os favoritos ficam só neste aparelho
 function DeviceNotice({ t }) {
   const { noticePending } = useUserData();
-  if (!noticePending) return null;
+  const { signedIn } = useSession();
+  if (!noticePending || signedIn) return null;
   return (
     <div className="fav-toast" role="status">
       <span>{t.favNotice}</span>
       <button type="button" className="ghost" onClick={dismissNotice}>{t.favNoticeOk}</button>
+      <SignInOffer t={t} />
     </div>
   );
 }
@@ -153,6 +166,7 @@ export default function App() {
           <a className="ghost fav-link" href={hrefs.favorites} aria-label={t.favorites} title={t.favorites}><HeartIcon size={18} /></a>
           <button type="button" className="ghost" onClick={() => setShowSettings(true)} aria-label={t.settings} title={t.settings}>⚙</button>
           <button type="button" className="ghost" onClick={toggleTheme} aria-label={`${t.toggleTheme}: ${themeName}`} title={`${t.toggleTheme}: ${themeName}`}>{THEME_LABEL[theme]}</button>
+          <Account t={t} />
         </div>
       </header>
 
@@ -192,6 +206,11 @@ export default function App() {
       {route.kind === 'timeline' && (
         <Suspense fallback={<p className="soon page-wait">{t.loading}</p>}>
           <Timeline lang={lang} t={t} focusId={route.id} onOpenBook={open} onOpenMap={openMap} onOpenPerson={openPerson} />
+        </Suspense>
+      )}
+      {route.kind === 'profile' && (
+        <Suspense fallback={<p className="soon page-wait">{t.loading}</p>}>
+          <Profile lang={lang} t={t} />
         </Suspense>
       )}
       {route.kind === 'favorites' && (

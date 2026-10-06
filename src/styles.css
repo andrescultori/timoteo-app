@@ -407,3 +407,21 @@ body, h1, h2, h3, h4, .tile .ab, .badge b, .ps-tile, .pager span, .place b, .tl-
 .fav-remove { flex: none; font-size: 14.5px; padding: 4px 12px; }
 @media (max-width: 520px) { .fav-btn { width: 36px; height: 36px; } .chap-title h3 { font-size: 24px; } }
 .fav-group .pp-group span { font-family: var(--f-body); }
+
+/* conta, perfil e lista de espera */
+.acct { position: relative; }
+.acct-name { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.acct-menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 20; min-width: 180px; display: flex; flex-direction: column; padding: 6px; border: 1px solid var(--line-strong); border-radius: var(--radius-card); background: var(--panel-2); box-shadow: var(--shadow-pop); }
+.acct-menu a, .acct-menu button { display: block; text-align: left; padding: 8px 10px; border: 0; border-radius: var(--radius-chip); background: transparent; color: var(--fg); text-decoration: none; cursor: pointer; font-size: 16px; }
+.acct-menu a:hover, .acct-menu button:hover { background: color-mix(in srgb, var(--fg) 10%, transparent); color: var(--fg); }
+.acct-err, .profile-err { color: var(--danger); font-size: 14.5px; }
+.profile-form { display: grid; gap: 14px; max-width: 520px; }
+.profile-form label { display: grid; gap: 4px; font-size: 14.5px; color: var(--muted); }
+.profile-form input[type='text'], .profile-form select { font-size: 16px; padding: 8px 12px; border: 1px solid var(--line-strong); border-radius: var(--radius-pill); background: var(--panel-2); color: var(--fg); }
+.profile-form .profile-consent { display: flex; gap: 12px; align-items: flex-start; color: var(--fg); font-size: 16px; }
+.profile-form .profile-consent input { margin-top: 5px; flex: none; }
+.profile-actions { display: flex; gap: 12px; align-items: center; }
+.profile-plan { margin: 0; }
+.profile-out { display: grid; gap: 12px; justify-items: start; }
+.waitlist-done { color: var(--accent-2); font-size: 14.5px; }
+.fav-device .ghost, .continue-note .ghost, .fav-toast .ghost { white-space: nowrap; }
