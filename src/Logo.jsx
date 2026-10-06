@@ -1,14 +1,13 @@
 import React from 'react';
+import { LOGO_D, LOGO_W, LOGO_H } from './logoPath.js';
 
-// TODO: trocar pelo vetor oficial (o André vai enviar). Trocar só este arquivo.
+// Marca oficial do Timóteo App, inline para seguir o tema (cor = currentColor; o .logo usa var(--logo) no styles.css).
+// O path vem de src/logoPath.js, GERADO por scripts/build-brand-assets.mjs a partir de branding/fonte/. Para trocar o desenho:
+// substituir os fontes e rodar o script (ver branding/README.md). `size` é a ALTURA em px (a marca não é quadrada: 152x170).
 export default function Logo({ size = 30 }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" aria-hidden="true" fill="currentColor">
-      <path d="M24 2l1.1 2.9L28 6l-2.9 1.1L24 10l-1.1-2.9L20 6l2.9-1.1z" />
-      <path d="M4 12l11 5v23L4 35z" />
-      <path d="M44 12l-11 5v23l11-5z" />
-      <path d="M7.5 16.6v17.2M10.8 18.1v17.8M40.5 16.6v17.2M37.2 18.1v17.8" stroke="var(--bg)" strokeWidth="1.3" fill="none" />
-      <path d="M16.5 12h15v3.2h-5.6V38l-1.9 3.5-1.9-3.5V15.2h-5.6z" />
+    <svg width={(size * LOGO_W) / LOGO_H} height={size} viewBox={`0 0 ${LOGO_W} ${LOGO_H}`} aria-hidden="true" focusable="false" fill="currentColor">
+      <path d={LOGO_D} fillRule="evenodd" clipRule="evenodd" />
     </svg>
   );
 }
