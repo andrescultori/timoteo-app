@@ -1,12 +1,12 @@
 # Temas anteriores (arquivo)
 
-Até out/2026 o Timóteo App tinha quatro temas: **auto** (seguia o sistema), **claro**, **escuro** (as paletas verde-água, com Bricolage Grotesque, Figtree e Literata) e **Pergaminho claro**. Em out/2026 ficaram só os dois Pergaminho, **escuro** (padrão) e **claro** (`docs/tema-pergaminho.md`). Este diretório guarda o que foi retirado (auto, claro e escuro antigos), para voltarmos se for preciso. **O Pergaminho claro não foi retirado**: hoje é o tema `light`.
+Até out/2026 o Timóteo App tinha quatro temas: **auto** (seguia o sistema), **claro**, **escuro** (as paletas verde-água, com Bricolage Grotesque, Figtree e Literata) e **Pergaminho claro**. Em out/2026 ficaram só os dois Pergaminho, **escuro** (padrão) e **claro** (`docs/tema-pergaminho.md`). Este diretório guarda o que foi retirado (auto, claro e escuro antigos), para voltarmos se for preciso. **O Pergaminho claro não foi retirado**: hoje é o tema `light`, e o modo automático voltou (agora escolhe entre os dois Pergaminho).
 
 **Estes arquivos não são importados pelo app nem entram no build** (ficam fora de `src/` e de `public/`).
 
 ## O que há aqui
 - `styles-temas-anteriores.css`: os tokens do `:root` claro antigo, o `@media (prefers-color-scheme: dark)` e `:root[data-theme='dark']` antigo, copiados sem alteração de `src/styles.css`.
-- `App-tema-snippet.jsx.txt`: do `src/App.jsx` de antes, o estado `theme` (auto | dark | light | parchment), o `cycleTheme`, o botão e o `useEffect` do `data-theme`. É o ciclo antigo; no app de hoje o botão só alterna escuro/claro.
+- `App-tema-snippet.jsx.txt`: do `src/App.jsx` de antes, o estado `theme` (auto | dark | light | parchment), o `cycleTheme`, o botão e o `useEffect` do `data-theme`. É o ciclo antigo (quatro opções); o app de hoje tem Auto, escuro e claro, com o código atual em `src/App.jsx`.
 
 ## Onde está o código completo
 Branch **`themes-archive-2026-10`** (mesmo commit planejado para a tag de mesmo nome, `b12a4db`): `styles.css`, `App.jsx`, `MapView.jsx`, `useTheme.js`, `i18n.js` e `index.html` do último estado com os quatro temas. `git checkout themes-archive-2026-10 -- <arquivo>` recupera qualquer um.

@@ -4,7 +4,12 @@ O app tem **dois temas**, os dois do design Pergaminho:
 - **Pergaminho escuro** (padrão): tokens no `:root` de `src/styles.css`, `color-scheme: dark`.
 - **Pergaminho claro**: `:root[data-theme='light']`, só troca os tokens de cor; tipografia, tamanhos e regras são os mesmos.
 
-O botão ☾/☀ do cabeçalho alterna entre os dois e a escolha fica em `localStorage` (`theme` = `dark` ou `light`). **Não há modo automático**: o sistema do navegador não muda o tema, e a primeira visita abre no escuro. Valores antigos guardados: `parchment` (nome do Pergaminho claro antes) vira `light`; `auto`, `dark` antigo ou inválido viram `dark`. `index.html` aplica o tema salvo antes do primeiro desenho (e ajusta `theme-color`), para o fundo não piscar. Design system do escuro: https://claude.ai/artifact/KubSPfxeLAVWVqNHBhmtPR
+O botão do cabeçalho percorre **Auto → ☾ (escuro) → ☀ (claro) → Auto**. A preferência fica em `localStorage.theme` (`auto`, `dark` ou `light`; padrão `auto`).
+- **Auto** segue o sistema (`prefers-color-scheme`): escuro → Pergaminho escuro, claro → Pergaminho claro, e acompanha a troca do sistema enquanto o app está aberto.
+- O CSS só conhece `data-theme='dark'|'light'`: `src/App.jsx` grava em `<html>` o tema já resolvido (no auto, o do sistema). O `:root` sem atributo é o escuro.
+- Valores antigos guardados: `parchment` (nome antigo do Pergaminho claro) vira `light`; valor inválido vira `auto`.
+- `index.html` aplica o tema (resolvido) antes do primeiro desenho e `App.jsx` ajusta o `theme-color`, para o fundo não piscar. `<meta name="color-scheme">` é `dark light`.
+Design system do escuro: https://claude.ai/artifact/KubSPfxeLAVWVqNHBhmtPR
 
 ## Tokens do Pergaminho escuro (`:root` em `src/styles.css`)
 | Grupo | Tokens |
@@ -44,4 +49,4 @@ Saíram do app o modo automático (que seguia o sistema) e os temas claro e escu
 
 ## Adicionar outro tema
 1. Crie `:root[data-theme='nome']` em `src/styles.css` com todos os tokens (copie o bloco `light`) e `color-scheme`.
-2. Inclua o valor em `THEMES`/`THEME_LABEL` e nas chaves `theme…` do `src/i18n.js`; ajuste o script do `index.html` e a escolha do botão, que hoje alterna entre dois.
+2. Inclua o valor em `THEMES`/`THEME_LABEL` e nas chaves `theme…` do `src/i18n.js`; ajuste o script do `index.html` e o ciclo do botão (`THEMES` em `App.jsx`).
