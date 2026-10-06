@@ -1,5 +1,5 @@
-/* Timóteo App: tema único, Pergaminho escuro. Tokens no :root; detalhes em docs/tema-pergaminho-escuro.md.
-   Os temas anteriores (auto, claro, escuro, Pergaminho claro) estão em docs/archive/temas/ e na tag/branch themes-archive-2026-10. */
+/* Timóteo App: dois temas, Pergaminho escuro (padrão, no :root) e Pergaminho claro (:root[data-theme='light']).
+   Detalhes em docs/tema-pergaminho.md. Os temas antigos (auto, claro e escuro de antes do Pergaminho) estão em docs/archive/temas/ e no branch/tag themes-archive-2026-10. */
 :root {
   --bg: #17130e; --panel: #1f1a13; --panel-2: #2a2319;
   --line: #4a3f2e; --line-soft: #352d21; --line-strong: #8a7957;
@@ -18,6 +18,20 @@
   --f-read: 'EB Garamond', Georgia, serif;
   --fs-content: 17px; --fs-sub: 19px; /* tamanhos do conteúdo e do subtítulo */
   color-scheme: dark;
+}
+
+/* Pergaminho claro: só troca os tokens de cor; tipografia, tamanhos e regras são os mesmos do escuro */
+:root[data-theme='light'] {
+  --bg: #fbf9f3; --panel: #fffdf8; --panel-2: #f6f1e4;
+  --line: #dccba6; --line-soft: #e6d8b8; --line-strong: #8a7957;
+  --fg: #1f2320; --muted: #54492f;
+  --accent: #0f2d24; --accent-hover: #1f4a3b; --accent-2: #3f5a4e; --on-accent: #f8f7f2;
+  --focus: #1f4a3b; --danger: #9a3b2c;
+  --s-lei: #d8a3a0; --s-historicos: #c9776a; --s-poesia: #b8c38a; --s-profMaiores: #869c6e; --s-profMenores: #e0c27a;
+  --s-evangelhos: #d9a060; --s-atos: #8fb5a6; --s-paulo: #a7bcca; --s-outras: #8199b5; --s-profecia: #b3a894;
+  --sea: #d3d6c4; --land: #f1e5c8; --coast: #a68c66; --halo: #f1e5c8; --sea-label: #4a5748;
+  --shadow-pop: 0 8px 24px rgba(31, 35, 32, 0.18);
+  color-scheme: light;
 }
 
 * { box-sizing: border-box; }

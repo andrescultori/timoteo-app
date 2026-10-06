@@ -18,10 +18,15 @@ const store = {
   set(k, v) { try { localStorage.setItem(k, v); } catch { /* ignora */ } },
 };
 
+const THEMES = ['dark', 'light']; // Pergaminho escuro (padrão) e Pergaminho claro
+const THEME_LABEL = { dark: '☾', light: '☀' };
+
 const norm = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
 export default function App() {
   const [lang, setLang] = useState(() => store.get('lang', navigator.language?.startsWith('en') ? 'en' : 'pt'));
+  // 'light' (ou 'parchment', como o Pergaminho claro se chamava antes) = claro; qualquer outro valor (auto, escuro antigo, inválido) = escuro
+  const [theme, setTheme] = useState(() => { const v = store.get('theme', 'dark'); return v === 'light' || v === 'parchment' ? 'light' : 'dark'; });
   const [filter, setFilter] = useState('all');
   const [query, setQuery] = useState('');
   const [route, setRoute] = useState(parseHash);
@@ -33,8 +38,11 @@ export default function App() {
   usePageTitle([], t.title, route.kind === 'home');
   useEffect(() => { store.set('showScholarly', settings.showScholarly ? '1' : '0'); }, [settings]);
   useEffect(() => { document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en'; store.set('lang', lang); }, [lang]);
-  // O app tem um tema só (Pergaminho escuro): apaga a preferência de tema que versões anteriores gravaram
-  useEffect(() => { try { localStorage.removeItem('theme'); } catch { /* ignora */ } }, []);
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    store.set('theme', theme);
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'light' ? '#fbf9f3' : '#17130e');
+  }, [theme]);
   // A rota vem do hash. Ao sair da grade guardamos a rolagem para voltar ao mesmo ponto; páginas novas abrem no topo.
   const homeScroll = useRef(0);
   const routeRef = useRef(route);
@@ -57,6 +65,9 @@ export default function App() {
   const openTimeline = (id = null) => go(hrefs.timeline(id));
   const openPerson = (id = null) => go(hrefs.person(id));
   const openTree = (id, node) => go(hrefs.tree(id, node));
+
+  const toggleTheme = () => setTheme((x) => (x === 'dark' ? 'light' : 'dark'));
+  const themeName = theme === 'light' ? t.themeLight : t.themeDark;
 
   const groups = useMemo(() => {
     const q = norm(query.trim());
@@ -89,6 +100,7 @@ export default function App() {
             ))}
           </div>
           <button type="button" className="ghost" onClick={() => setShowSettings(true)} aria-label={t.settings} title={t.settings}>⚙</button>
+          <button type="button" className="ghost" onClick={toggleTheme} aria-label={`${t.toggleTheme}: ${themeName}`} title={`${t.toggleTheme}: ${themeName}`}>{THEME_LABEL[theme]}</button>
         </div>
       </header>
 

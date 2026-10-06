@@ -41,7 +41,7 @@ Do Êxodo na linha do tempo, por exemplo, um clique leva ao mapa de Êxodo já n
 - **Salmos como tabela**: os 150 salmos coloridos por livro do Saltério, título ou gênero, com os salmos de título histórico ligados a Davi, aos personagens e à linha do tempo.
 - **Estrutura de Jó, Provérbios, Eclesiastes e Cantares**: os capítulos coloridos por parte (em Jó, por quem fala), a lista das partes e, em Eclesiastes e Cantares, as leituras lado a lado.
 - **Leitor de texto** em KJV, WEB e ASV (inglês), Bíblia Livre (português), com crédito e licença de cada uma.
-- Tema único, o Pergaminho escuro (serifa, fundo marrom-escuro), PT e EN.
+- Dois temas, Pergaminho escuro e Pergaminho claro (serifa), PT e EN.
 
 ![Linha do tempo, com as duas leituras da data do Êxodo](docs/images/linha-do-tempo.png)
 
