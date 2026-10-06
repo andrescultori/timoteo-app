@@ -1,6 +1,11 @@
 🇧🇷 Português | [🇺🇸 English](README.en.md)
 
-# 📖 Timóteo App
+<h1 align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="public/brand/logo-completo-bege.svg">
+    <img src="public/brand/logo-completo-verde.svg" alt="Timóteo App" width="320">
+  </picture>
+</h1>
 
 **Estudo bíblico interativo: cada livro com ficha, mapa, linha do tempo e personagens, e o texto em quatro versões de licença clara.**
 

@@ -403,6 +403,24 @@ for (const ver of VERSIONS) {
   else if (!billing.refundContact.trim()) console.warn('Aviso: billing.json "refundContact" está vazio; preencha o contato de reembolso antes de vender.');
 }
 
+// Marca (branding/fonte → public/brand, ícones, src/logoPath.js): os ativos gerados têm que bater com os fontes
+{
+  const dOf = (txt) => txt.match(/<path\b[^>]*?\sd="([^"]*)"/)?.[1];
+  const marca = dOf(fs.readFileSync(path.join(root, 'branding/fonte/Timoteo_Logomarca.svg'), 'utf8'));
+  const completo = dOf(fs.readFileSync(path.join(root, 'branding/fonte/Timoteo_Logo_Completo.svg'), 'utf8'));
+  const gerar = 'rode: node scripts/build-brand-assets.mjs';
+  const exige = (arq, d) => {
+    const f = path.join(root, arq);
+    if (!fs.existsSync(f)) { err(`marca: falta ${arq} (${gerar})`); return; }
+    if (d && !fs.readFileSync(f, 'utf8').includes(d)) err(`marca: ${arq} não bate com branding/fonte (${gerar})`);
+  };
+  ['marca-bege.svg', 'marca-verde.svg'].forEach((a) => exige(`public/brand/${a}`, marca));
+  ['logo-completo-bege.svg', 'logo-completo-verde.svg'].forEach((a) => exige(`public/brand/${a}`, completo));
+  exige('public/favicon.svg', marca);
+  exige('src/logoPath.js', marca);
+  ['favicon-32.png', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'og-image.png', 'manifest.webmanifest'].forEach((a) => exige(`public/${a}`));
+}
+
 if (errors.length) {
   console.error(`${errors.length} problema(s):`);
   errors.slice(0, 60).forEach((e) => console.error(` - ${e}`));

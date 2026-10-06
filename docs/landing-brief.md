@@ -45,3 +45,13 @@ Itens (✅ inclui, ❌ não inclui):
 - A landing só coleta e-mail na lista de espera ("Avise-me" do Premium e dos recursos em breve), com a caixa de consentimento própria.
 - Contagens e preços vêm de dados do projeto, não escritos à mão em vários lugares.
 - Acessível (contraste, teclado) e legível no celular; carregamento rápido.
+
+## Logo (arquivos prontos)
+Gerados a partir dos SVGs originais em `branding/fonte/` (ver `branding/README.md`); a versão final com curvas ainda vai chegar e entra trocando só os 2 fontes e rodando `node scripts/build-brand-assets.mjs`. Não redesenhar nem "consertar" o serrilhado.
+- `public/brand/marca-bege.svg` e `marca-verde.svg`: só a marca (152×170).
+- `public/brand/logo-completo-bege.svg` e `logo-completo-verde.svg`: marca + TIMÓTEO + ESTUDO BÍBLICO (486×337).
+- `public/favicon.svg`, `icon-192.png`, `icon-512.png`, `icon-maskable-512.png`, `apple-touch-icon.png`, `og-image.png` (1200×630), `manifest.webmanifest`: ícones e compartilhamento do app; a landing pode reaproveitá-los.
+- **Regra de cor:** bege `#F1F0E7` sobre fundo escuro; verde `#042016` sobre fundo claro (e fundo do ícone).
+- **Tamanho:** o logo completo só a partir de ~300 px de largura, porque "ESTUDO BÍBLICO" é muito fino. Abaixo disso, usar só a marca.
+- **Atenção:** nos fontes traçados de imagem, os traços horizontais finos de "ESTUDO BÍBLICO" saem com espessura zero em alguns pontos (o E parece F, o L parece I). Só some com a versão final em curvas; até lá, evitar essa legenda em destaque.
+
