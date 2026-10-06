@@ -24,6 +24,7 @@ O preço de entrada vale para todo novo assinante, sempre (um indicador por usu�
 | Personagens | 30 a 50 principais (lista aprovada pelo André) | ✅ todos (210 hoje) | ✅ |
 | Linha do tempo | ❌ | ✅ | ✅ |
 | Genealogia | ❌ | ✅ (em expansão: fases 1 e 2 prontas; reis de Judá, dinastias do norte e sacerdotes por vir) | ✅ |
+| Favoritos (livros, capítulos, personagens, lugares) e "continuar de onde parei" | ✅ sem limite; no aparelho sem cadastro, em todos os aparelhos com cadastro | ✅ | ✅ |
 | Leitura gamificada (badges, progresso anual) | em breve | em breve (no Pro) | ✅ |
 | Links externos (BibleProject, concordância) | em breve | em breve (no Pro) | ✅ |
 | IA: 10 conteúdos por mês, em PDF | ❌ | ❌ | ✅ |
@@ -85,6 +86,18 @@ Cada fase vira uma branch e um PR; o merge é do André. O Code diagnostica e es
 - Login com Google no lançamento; link mágico quando houver domínio e SMTP próprio. Conferir na documentação os limites do envio padrão do Supabase antes de decidir.
 - Cadastro opcional na interface, com a caixa de novidades separada e desmarcada.
 
+**Fase 2A: favoritos e "continuar de onde parei" (sem backend; pode vir antes da Fase 1)**
+- Coração nas páginas de livro, capítulo do leitor, personagem e lugar do mapa. Escopo inicial: só esses quatro tipos (eventos, salmos e versículos depois).
+- Chaves: livro = slug; capítulo = slug + número; personagem = id; lugar = slug do livro + nome em PT (lugar não tem id; se um nome mudar, o favorito se perde; o `npm run check` pode avisar quando um favorito conhecido deixar de existir).
+- Sem cadastro, salva no aparelho (localStorage). Depois do primeiro favorito, aviso único: "Seus favoritos ficam só neste aparelho. Entre para guardá-los e acessá-los em qualquer lugar." **[decidido]** Não bloquear o coração atrás do cadastro e **sem limite** de favoritos em nenhum plano.
+- Página "Meus favoritos" (`#favorites`), agrupada por tipo, com remover.
+- "Continuar de onde parei": guarda a última posição de leitura (versão, livro, capítulo) e oferece retomar no início. Mesmo aviso de aparelho.
+
+**Fase 2B: sincronização (depois da Fase 2)**
+- Tabelas `favorites` (`user_id`, `type`, `ref`, `created_at`, única por usuário + tipo + ref) e `reading_position` (uma linha por usuário), com RLS só do próprio usuário.
+- No login, os favoritos e a posição locais migram para a conta (união sem duplicar; posição mais recente vence). Depois disso, a conta é a fonte e o aparelho é cache.
+- Favorito de conteúdo Pro de quem está no Essencial (ou cujo Pro venceu) continua na lista, aberto como convite ao Pro, nunca como link quebrado.
+
 **Fase 3: conteúdo por plano (o que sai do site público)**
 - Definir em **um arquivo de configuração único** o que cada plano inclui (usado pelo app e pela landing, para a tabela ✅/❌ nunca divergir).
 - O pacote público do Essencial contém só o que é do Essencial: fichas sem `map` e sem `structure` (exceto Evangelhos e Pentateuco no mapa, e Salmos na estrutura), os personagens da lista aprovada, sem linha do tempo e sem genealogia.
@@ -109,6 +122,7 @@ Cada fase vira uma branch e um PR; o merge é do André. O Code diagnostica e es
 
 **Fase 7: LGPD e páginas legais**
 - Termos de uso, Política de privacidade, consentimento no cadastro, exportar e excluir a conta, descadastro de novidades.
+- Favoritos e histórico de leitura podem revelar convicção religiosa, que a LGPD trata como dado pessoal sensível (art. 5º, II). A Política e o consentimento precisam dizer isso; exportar e excluir a conta incluem favoritos e posição de leitura. Nada disso é usado para marketing nem compartilhado.
 
 **Fase 8: licença e repositório**
 - Só depois das fases 1 e 3: trocar o `LICENSE` para todos os direitos reservados, criar o arquivo de avisos de terceiros (OpenBible e Bíblia Livre, CC BY 4.0), atualizar os README e tornar o repositório privado. O GitHub Pages sai do ar.
