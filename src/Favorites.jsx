@@ -8,6 +8,7 @@ import { usePageTitle } from './pageTitle.js';
 import { pick } from './timelineUtil.js';
 import { useUserData, toggleFav, parseFavKey, FAV_TYPES } from './userdata.js';
 import { useSession, signInWithGoogle } from './auth.js';
+import { usePlan } from './plan.js';
 
 // Os lugares do mapa não têm id: para saber se o favorito ainda existe, carrega a ficha do livro (uma vez por livro).
 const INFO = import.meta.glob('./data/info/*.json');
@@ -30,7 +31,7 @@ function usePlaceBooks(slugs) {
 }
 
 // Resolve uma chave guardada em { label, href } ou null (destino que não existe mais nos dados)
-function resolve(key, lang, maps) {
+function resolve(key, lang, maps, can) {
   const k = parseFavKey(key);
   if (!k) return null;
   if (k.type === 'book') { const b = bySlug[k.slug]; return b && { label: b.name[lang], href: hrefs.book(b.slug) }; }
@@ -38,17 +39,18 @@ function resolve(key, lang, maps) {
     const b = bySlug[k.slug];
     return b && k.n >= 1 && k.n <= b.chapters ? { label: `${b.name[lang]} ${k.n}`, href: hrefs.book(b.slug, 'read', String(k.n)) } : null;
   }
-  if (k.type === 'person') { const p = peopleById[k.id]; return p && { label: pick(p.name, lang), href: hrefs.person(p.id) }; }
+  if (k.type === 'person') { const p = peopleById[k.id]; return p && { label: pick(p.name, lang), href: hrefs.person(p.id), pro: !can('person', { id: p.id }) }; }
   const b = bySlug[k.slug];
   const places = maps[k.slug];
   if (!b || places === undefined) return b ? 'loading' : null;
   const pl = places?.find((x) => x.name?.pt === k.name);
-  return pl ? { label: `${pick(pl.name, lang)} (${b.ab[lang]})`, href: hrefs.book(b.slug, 'map', pl.name.pt) } : null;
+  return pl ? { label: `${pick(pl.name, lang)} (${b.ab[lang]})`, href: hrefs.book(b.slug, 'map', pl.name.pt), pro: !can('map', { slug: b.slug }) } : null;
 }
 
 export default function Favorites({ lang, t }) {
   const { favs } = useUserData();
   const { enabled, signedIn } = useSession();
+  const { can } = usePlan();
   usePageTitle([t.favorites], t.title);
   const placeSlugs = useMemo(() => [...new Set(favs.map((f) => parseFavKey(f.key)).filter((k) => k?.type === 'place' && bySlug[k.slug]).map((k) => k.slug))], [favs]);
   const maps = usePlaceBooks(placeSlugs);
@@ -80,11 +82,11 @@ export default function Favorites({ lang, t }) {
               <h3 className="pp-group">{typeTitle[g.type] ?? t.favTypeOther} <span>{g.items.length}</span></h3>
               <ul className="fav-list">
                 {g.items.map((f) => {
-                  const r = resolve(f.key, lang, maps);
+                  const r = resolve(f.key, lang, maps, can);
                   return (
                     <li key={f.key} className={r && r !== 'loading' ? 'fav-item' : 'fav-item fav-missing'}>
                       {r === 'loading' ? <span>{t.loading}</span>
-                        : r ? <a href={r.href}>{r.label}</a>
+                        : r ? <span><a href={r.href}>{r.label}</a>{r.pro && <span className="pro-tag">{t.proTag}</span>}</span>
                           : <span><code>{f.key}</code> <em>({t.favNotFound})</em></span>}
                       <button type="button" className="ghost fav-remove" aria-label={`${t.favRemove}: ${r && r !== 'loading' ? r.label : f.key}`} onClick={() => toggleFav(f.key)}>{t.favRemoveShort}</button>
                     </li>

@@ -7,6 +7,8 @@ import { pick, range, main } from './timelineUtil.js';
 import BackButton from './BackButton.jsx';
 import FavButton from './FavButton.jsx';
 import { favKey } from './userdata.js';
+import { usePlan } from './plan.js';
+import ProInvite from './ProInvite.jsx';
 import { hrefs, go } from './route.js';
 import { usePageTitle } from './pageTitle.js';
 import { nodes as gNodes, parentOf, childrenOf, nodesOfPerson, treeOf, refsText, nodeName } from './genealogy.js';
@@ -42,7 +44,9 @@ export default function People({ lang, t, focusId, onOpenBook, onOpenTimeline, o
     return [...g.values()].sort((a, b) => a.n - b.n);
   }, [list, sort, lang]);
 
+  const plan = usePlan();
   const person = byId[focusId];
+  const gate = !person ? 'open' : plan.loading ? 'wait' : plan.can('person', { id: person.id }) ? 'open' : 'locked'; // fora do plano, a página mostra o convite ao Pro
   usePageTitle([person && pick(person.name, lang), t.people], t.title);
   const choose = (id) => onSelect(id);
 
@@ -84,7 +88,7 @@ export default function People({ lang, t, focusId, onOpenBook, onOpenTimeline, o
                     {g.items.map((p) => (
                       <li key={p.id}>
                         <button type="button" className="pp-card" onClick={() => choose(p.id)}>
-                          <b>{pick(p.name, lang)}</b>
+                          <b>{pick(p.name, lang)}{!plan.loading && !plan.can('person', { id: p.id }) && <span className="pro-tag">{t.proTag}</span>}</b>
                           <span>{pick(p.summary, lang).split(/(?<=[.!?])\s/)[0]}</span>
                           <small>{p.books.length} {p.books.length === 1 ? t.peopleBookOne : t.peopleBooks}</small>
                         </button>
@@ -98,7 +102,15 @@ export default function People({ lang, t, focusId, onOpenBook, onOpenTimeline, o
           </>
         )}
 
-        {person && (
+        {gate === 'wait' && <div className="body"><p className="soon">{t.loading}</p></div>}
+        {gate === 'locked' && (
+          <div className="body tl-detail">
+            <button type="button" className="ghost" onClick={() => choose(null)}>← {t.peopleBack}</button>
+            <ProInvite t={t} />
+          </div>
+        )}
+
+        {gate === 'open' && person && (
           <div className="body tl-detail">
             <button type="button" className="ghost" onClick={() => choose(null)}>← {t.peopleBack}</button>
             <p className="pp-summary">{pick(person.summary, lang)}</p>
@@ -106,7 +118,7 @@ export default function People({ lang, t, focusId, onOpenBook, onOpenTimeline, o
             {person.note && <p className="tl-warn">{pick(person.note, lang)}</p>}
 
 
-            {nodesOfPerson(person.id).length > 0 && (
+            {plan.can('family') && nodesOfPerson(person.id).length > 0 && (
               <>
                 <h4>{t.famTitle}</h4>
                 {nodesOfPerson(person.id).map((nid) => {
@@ -142,7 +154,7 @@ export default function People({ lang, t, focusId, onOpenBook, onOpenTimeline, o
               ))}
             </ul>
 
-            {person.events?.length > 0 && (
+            {plan.can('events') && person.events?.length > 0 && (
               <>
                 <h4>{t.timelineEvents}</h4>
                 <div className="tl-chips">

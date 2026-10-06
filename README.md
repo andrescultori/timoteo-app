@@ -33,7 +33,7 @@ Do Êxodo na linha do tempo, por exemplo, um clique leva ao mapa de Êxodo já n
 ## O que o site tem
 
 - **Grade dos 66 livros** por seção, com busca e filtro por testamento. Link direto por livro (`#joh`).
-- **Ficha de estudo** de cada livro, em PT e EN: autor, data, lugar, destinatários, versículo-chave, tema, contexto histórico, personagens, esboço e conexões. Autoria e datação mostram a **posição tradicional e a acadêmica lado a lado**; um botão em Configurações (⚙) esconde a acadêmica para estudar de forma mais simples.
+- **Ficha de estudo** de cada livro, em PT e EN: autor, data, lugar, destinatários, versículo-chave, tema, contexto histórico, personagens, esboço e conexões. Autoria e datação mostram a **posição tradicional e a acadêmica lado a lado**; a acadêmica fica visível só para administradores (interruptor em Configurações, ⚙).
 - **Mapa** em 46 livros, com costa em vetor própria (sem tiles externos), rótulos sem colisão, zoom por região, legenda e marcação de localização debatida.
 - **Linha do tempo** com 13 períodos e 69 eventos, em escala por bloco, datas aproximadas marcadas e cronologias debatidas (como a do Êxodo) mostradas lado a lado. Os livros ficam ligados ao período que o texto descreve.
 - **Personagens**: 210 pessoas, com resumo, livros onde aparecem, eventos e lugares; lista por ordem alfabética ou por livro.

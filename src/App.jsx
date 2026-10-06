@@ -6,6 +6,8 @@ import Logo from './Logo.jsx';
 import { HeartIcon } from './icons.jsx';
 import Account from './Account.jsx';
 import { useSession, signInWithGoogle } from './auth.js';
+import { usePlan } from './plan.js';
+import ProInvite from './ProInvite.jsx';
 import { VERSIONS } from './data/bible.js';
 import { useUserData, dismissContinue, dismissNotice, acknowledgeNotice, setResume } from './userdata.js';
 import SettingsModal from './SettingsModal.jsx';
@@ -86,6 +88,9 @@ export default function App() {
   const [query, setQuery] = useState('');
   const [route, setRoute] = useState(parseHash);
   const [settings, setSettings] = useState(() => ({ showScholarly: store.get('showScholarly', '1') !== '0' }));
+  const plan = usePlan();
+  // A posição acadêmica é oculta para todos e visível só para o administrador (can('academic')); o interruptor das Configurações vale só para ele
+  const effectiveSettings = { ...settings, showScholarly: plan.can('academic') && settings.showScholarly };
   const [showSettings, setShowSettings] = useState(false);
   const t = T[lang];
 
@@ -145,7 +150,7 @@ export default function App() {
 
 
   return (
-    <SettingsContext.Provider value={settings}>
+    <SettingsContext.Provider value={effectiveSettings}>
       <header className="top">
         <div className="brand">
           <h1>
@@ -203,7 +208,9 @@ export default function App() {
       </main>
       )}
 
-      {route.kind === 'timeline' && (
+      {route.kind === 'timeline' && plan.loading && <p className="soon page-wait">{t.loading}</p>}
+      {route.kind === 'timeline' && !plan.loading && !plan.can('timeline') && <ProInvite t={t} page title={t.timeline} />}
+      {route.kind === 'timeline' && !plan.loading && plan.can('timeline') && (
         <Suspense fallback={<p className="soon page-wait">{t.loading}</p>}>
           <Timeline lang={lang} t={t} focusId={route.id} onOpenBook={open} onOpenMap={openMap} onOpenPerson={openPerson} />
         </Suspense>
@@ -218,7 +225,9 @@ export default function App() {
           <Favorites lang={lang} t={t} />
         </Suspense>
       )}
-      {route.kind === 'tree' && (
+      {route.kind === 'tree' && plan.loading && <p className="soon page-wait">{t.loading}</p>}
+      {route.kind === 'tree' && !plan.loading && !plan.can('genealogy') && <ProInvite t={t} page title={t.genealogy} />}
+      {route.kind === 'tree' && !plan.loading && plan.can('genealogy') && (
         <Suspense fallback={<p className="soon page-wait">{t.loading}</p>}>
           <Genealogy lang={lang} t={t} treeId={route.id} focusNode={route.node} onOpenBook={open} onOpenPerson={openPerson} onSelect={openTree} />
         </Suspense>
@@ -238,7 +247,7 @@ export default function App() {
         <a href="https://github.com/andrescultori/timoteo-app" target="_blank" rel="noopener noreferrer">GitHub</a>
       </footer>
       <DeviceNotice t={t} />
-      {showSettings && <SettingsModal t={t} settings={settings} onChange={setSettings} onClose={() => setShowSettings(false)} />}
+      {showSettings && <SettingsModal t={t} settings={settings} canAcademic={plan.can('academic')} onChange={setSettings} onClose={() => setShowSettings(false)} />}
     </SettingsContext.Provider>
   );
 }

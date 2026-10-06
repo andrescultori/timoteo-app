@@ -7,6 +7,8 @@ import BackButton from './BackButton.jsx';
 import Icon from './icons.jsx';
 import FavButton from './FavButton.jsx';
 import { favKey, setPosition, peekResume, getVersionPref, setVersionPref } from './userdata.js';
+import { usePlan } from './plan.js';
+import ProInvite from './ProInvite.jsx';
 import { useLinkIndex, Rich } from './linkify.jsx';
 import { hrefs, sync } from './route.js';
 
@@ -42,6 +44,8 @@ export default function BookModal({ book, lang, t, initialTab, initialPlace, onN
   const prev = BOOKS[book.n - 2];
   const next = BOOKS[book.n];
   const { info, error: infoError } = useInfo(book.slug);
+  const plan = usePlan();
+  const locked = { map: !plan.loading && !plan.can('map', { slug: book.slug }), structure: !plan.loading && !plan.can('structure', { slug: book.slug }) };
   const tabs = ['summary', 'sheet', ...(info?.map ? ['map'] : []), ...(book.slug === 'psa' ? ['psalms'] : []), ...(info?.structure ? ['structure'] : []), 'read'];
 
   const facts = [
@@ -67,7 +71,7 @@ export default function BookModal({ book, lang, t, initialTab, initialPlace, onN
 
         <div className="seg tabs" role="tablist">
           {tabs.map((k) => (
-            <button key={k} type="button" role="tab" aria-selected={tab === k} aria-pressed={tab === k} onClick={() => setTab(k)}>{t[k]}</button>
+            <button key={k} type="button" role="tab" aria-selected={tab === k} aria-pressed={tab === k} onClick={() => setTab(k)}>{t[k]}{locked[k] && <span className="pro-tag">{t.proTag}</span>}</button>
           ))}
         </div>
 
@@ -81,7 +85,8 @@ export default function BookModal({ book, lang, t, initialTab, initialPlace, onN
             </>
           )}
           {tab === 'sheet' && <Sheet book={book} lang={lang} t={t} info={info} error={infoError} />}
-          {tab === 'map' && info?.map && (
+          {tab === 'map' && info?.map && locked.map && <ProInvite t={t} />}
+          {tab === 'map' && info?.map && !locked.map && (
             <Suspense fallback={<p className="soon">{t.loading}</p>}>
               <MapView book={book} map={info.map} lang={lang} t={t} initialPlace={initialPlace} onPlaceChange={(name) => sync(hrefs.book(book.slug, 'map', name))} onOpenTimeline={onOpenTimeline} onOpenPerson={onOpenPerson} />
             </Suspense>
@@ -91,7 +96,8 @@ export default function BookModal({ book, lang, t, initialTab, initialPlace, onN
               <PsalmsView key={initialTab === 'psalms' ? initialPlace : 'p'} lang={lang} t={t} initialN={initialPlace} onSelect={(n) => sync(hrefs.book('psa', 'psalms', String(n)))} onOpenPerson={onOpenPerson} />
             </Suspense>
           )}
-          {tab === 'structure' && info?.structure && (
+          {tab === 'structure' && info?.structure && locked.structure && <ProInvite t={t} />}
+          {tab === 'structure' && info?.structure && !locked.structure && (
             <Suspense fallback={<p className="soon">{t.loading}</p>}>
               <StructureView book={book} structure={info.structure} lang={lang} t={t} />
             </Suspense>
@@ -113,8 +119,10 @@ const pick = (v, lang) => (v && typeof v === 'object' ? v[lang] ?? v.en : v);
 // Nome do personagem da ficha. Com `ids` (ids de src/data/people.json), cada nome vira link para a página da pessoa.
 // "Adão e Eva" + ids [adao, eva] liga cada parte; com um só id, liga o nome inteiro; id null deixa a parte sem link.
 function CharName({ c, lang }) {
+  const { can } = usePlan();
+  const link = (id) => (can('person', { id }) ? id : null); // fora do plano, o nome vira texto comum
   const name = pick(c.name, lang);
-  const ids = c.ids ?? [];
+  const ids = (c.ids ?? []).map((id) => (id ? link(id) : id));
   if (!ids.length) return name;
   if (ids.length === 1) return ids[0] ? <a className="plink" href={hrefs.person(ids[0])}>{name}</a> : name;
   const parts = name.split(lang === 'pt' ? /( e |, )/ : /( and |, )/);

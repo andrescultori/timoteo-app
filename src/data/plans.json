@@ -1,0 +1,262 @@
+{
+  "currency": "BRL",
+  "plans": {
+    "essencial": {
+      "name": {
+        "pt": "Essencial",
+        "en": "Essencial"
+      },
+      "price": 0,
+      "entryPrice": null,
+      "available": true
+    },
+    "pro": {
+      "name": {
+        "pt": "Pro",
+        "en": "Pro"
+      },
+      "price": 49.9,
+      "entryPrice": 29.9,
+      "available": true
+    },
+    "premium": {
+      "name": {
+        "pt": "Premium",
+        "en": "Premium"
+      },
+      "price": 79.9,
+      "entryPrice": 49.9,
+      "available": false
+    }
+  },
+  "features": [
+    {
+      "id": "bible",
+      "label": {
+        "pt": "Bíblia (todas as versões atuais e futuras)",
+        "en": "Bible (all current and future versions)"
+      },
+      "essencial": true,
+      "pro": true,
+      "premium": true
+    },
+    {
+      "id": "sheets",
+      "label": {
+        "pt": "Fichas dos 66 livros",
+        "en": "Study sheets of the 66 books"
+      },
+      "essencial": true,
+      "pro": true,
+      "premium": true,
+      "note": {
+        "pt": "No Essencial, sem mapa e sem estrutura (exceções abaixo).",
+        "en": "In Essencial, without maps and structure (exceptions below)."
+      }
+    },
+    {
+      "id": "maps",
+      "label": {
+        "pt": "Mapas",
+        "en": "Maps"
+      },
+      "essencial": "partial",
+      "pro": true,
+      "premium": true,
+      "note": {
+        "pt": "No Essencial, só Pentateuco e Evangelhos.",
+        "en": "In Essencial, only the Pentateuch and the Gospels."
+      }
+    },
+    {
+      "id": "structure",
+      "label": {
+        "pt": "Estrutura dos livros",
+        "en": "Book structure"
+      },
+      "essencial": "partial",
+      "pro": true,
+      "premium": true,
+      "note": {
+        "pt": "No Essencial, só Salmos. No Pro, também Jó, Provérbios, Eclesiastes e Cantares.",
+        "en": "In Essencial, only Psalms. In Pro, also Job, Proverbs, Ecclesiastes and Song of Songs."
+      }
+    },
+    {
+      "id": "characters",
+      "label": {
+        "pt": "Personagens",
+        "en": "People"
+      },
+      "essencial": "partial",
+      "pro": true,
+      "premium": true,
+      "note": {
+        "pt": "No Essencial, 50 principais; no Pro, todos.",
+        "en": "In Essencial, 50 main ones; in Pro, all of them."
+      }
+    },
+    {
+      "id": "timeline",
+      "label": {
+        "pt": "Linha do tempo",
+        "en": "Timeline"
+      },
+      "essencial": false,
+      "pro": true,
+      "premium": true
+    },
+    {
+      "id": "genealogy",
+      "label": {
+        "pt": "Genealogia",
+        "en": "Genealogy"
+      },
+      "essencial": false,
+      "pro": true,
+      "premium": true,
+      "note": {
+        "pt": "Em expansão: reis de Judá, dinastias do norte e sacerdotes por vir.",
+        "en": "Growing: kings of Judah, northern dynasties and priests to come."
+      }
+    },
+    {
+      "id": "academic",
+      "label": {
+        "pt": "Posição acadêmica",
+        "en": "Scholarly view"
+      },
+      "essencial": false,
+      "pro": false,
+      "premium": true,
+      "note": {
+        "pt": "Autoria e datação nas fichas, na linha do tempo e nas abas Salmos e Estrutura. Ainda não está à venda: por enquanto, só o administrador vê.",
+        "en": "Authorship and dating in the sheets, the timeline and the Psalms and Structure tabs. Not on sale yet: for now only the administrator sees it."
+      }
+    },
+    {
+      "id": "favorites",
+      "label": {
+        "pt": "Favoritos e \"continuar de onde parei\"",
+        "en": "Favorites and \"continue where you left off\""
+      },
+      "essencial": true,
+      "pro": true,
+      "premium": true,
+      "note": {
+        "pt": "No aparelho sem cadastro; em todos os aparelhos com cadastro. Sem limite.",
+        "en": "On the device without an account; on every device with an account. No limit."
+      }
+    },
+    {
+      "id": "gamification",
+      "label": {
+        "pt": "Leitura gamificada (badges, progresso anual)",
+        "en": "Gamified reading (badges, yearly progress)"
+      },
+      "essencial": "soon",
+      "pro": "soon",
+      "premium": true
+    },
+    {
+      "id": "links",
+      "label": {
+        "pt": "Links externos (BibleProject, concordância)",
+        "en": "External links (BibleProject, concordance)"
+      },
+      "essencial": "soon",
+      "pro": "soon",
+      "premium": true
+    },
+    {
+      "id": "ai",
+      "label": {
+        "pt": "IA: 10 conteúdos por mês, em PDF",
+        "en": "AI: 10 pieces a month, as PDF"
+      },
+      "essencial": false,
+      "pro": false,
+      "premium": true
+    }
+  ],
+  "essencial": {
+    "characters": [
+      "adao",
+      "eva",
+      "noe",
+      "abraao",
+      "sara",
+      "isaque",
+      "jaco",
+      "jose",
+      "moises",
+      "arao",
+      "josue",
+      "debora",
+      "gideao",
+      "sansao",
+      "rute",
+      "samuel",
+      "saul",
+      "davi",
+      "salomao",
+      "elias",
+      "eliseu",
+      "isaias",
+      "jeremias",
+      "ezequiel",
+      "daniel",
+      "jonas",
+      "ester",
+      "neemias",
+      "jesus",
+      "maria-mae-de-jesus",
+      "jose-marido-de-maria",
+      "joao-batista",
+      "pedro",
+      "andre",
+      "tiago-zebedeu",
+      "joao-apostolo",
+      "filipe-apostolo",
+      "bartolomeu",
+      "mateus",
+      "tome",
+      "tiago-alfeu",
+      "tadeu",
+      "simao-zelote",
+      "judas-iscariotes",
+      "maria-madalena",
+      "pilatos",
+      "estevao",
+      "paulo",
+      "barnabe",
+      "timoteo"
+    ],
+    "mapSections": [
+      "lei",
+      "evangelhos"
+    ],
+    "mapBooks": [
+      "gen",
+      "exo",
+      "lev",
+      "num",
+      "deu",
+      "mat",
+      "mar",
+      "luk",
+      "joh"
+    ],
+    "structureBooks": [
+      "psa"
+    ]
+  },
+  "pro": {
+    "structureBooks": [
+      "job",
+      "pro",
+      "ecc",
+      "sng"
+    ]
+  }
+}

@@ -20,6 +20,9 @@ const listeners = new Set();
 const set = (next) => { state = { ...state, ...next }; listeners.forEach((fn) => fn()); };
 const subscribe = (fn) => { listeners.add(fn); return () => listeners.delete(fn); };
 const get = () => state;
+// para outros módulos (plano) acompanharem a sessão sem React
+export const subscribeAuth = (fn) => subscribe(() => fn(state));
+export const getAuthState = get;
 
 const nameOf = (user) => user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email || '';
 
@@ -29,7 +32,7 @@ export function useSession() {
 }
 
 const RETURN_KEY = 'authReturnHash';
-const hasStoredSession = () => {
+export const hasStoredSession = () => {
   try {
     for (let i = 0; i < localStorage.length; i += 1) {
       const k = localStorage.key(i);

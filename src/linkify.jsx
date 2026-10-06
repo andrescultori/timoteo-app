@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { hrefs } from './route.js';
+import { usePlan } from './plan.js';
 
 // Liga, nos textos da ficha, os nomes de personagens (página #person/<id>) e os lugares do mapa do próprio livro (#<livro>/map/<lugar>).
 // Regras: maiúsculas e minúsculas contam (evita "tiro", "job"); só a primeira ocorrência de cada nome em cada bloco de texto vira link;
@@ -11,6 +12,7 @@ const alias = (name) => name.split(/[,(]/)[0].trim();
 
 export function useLinkIndex(book, info, lang) {
   const [people, setPeople] = useState(null);
+  const { can, plan, isAdmin } = usePlan();
   useEffect(() => {
     let alive = true;
     import('./data/people-index.json').then((m) => { if (alive) setPeople(m.default ?? m); }).catch(() => { /* sem links, o texto continua */ });
@@ -23,6 +25,7 @@ export function useLinkIndex(book, info, lang) {
       const byAlias = new Map();
       for (const p of people) {
         if (p.no || (p.only && !p.only.includes(book.slug))) continue; // autoLink: false / linkBooks em people.json
+        if (!can('person', { id: p.id })) continue; // fora do plano: texto comum, nunca link para página que não abre
         const a = alias(p.name[lang]);
         if (a.length < 3) continue;
         if (!byAlias.has(a)) byAlias.set(a, []);
@@ -34,7 +37,7 @@ export function useLinkIndex(book, info, lang) {
         if (pick) entries.set(a, hrefs.person(pick.id));
       }
     }
-    for (const pl of info?.map?.places ?? []) {
+    for (const pl of can('map', { slug: book.slug }) ? info?.map?.places ?? [] : []) { // livro sem mapa no plano: o lugar vira texto comum
       const n = pl.name[lang];
       if (n && n.length >= 3 && !entries.has(n)) entries.set(n, hrefs.book(book.slug, 'map', pl.name.pt));
     }
@@ -42,7 +45,7 @@ export function useLinkIndex(book, info, lang) {
     const names = [...entries.keys()].sort((a, b) => b.length - a.length);
     const re = new RegExp(`(?<![\\p{L}\\p{N}])(${names.map(esc).join('|')})(?![\\p{L}\\p{N}])`, 'gu');
     return { re, entries };
-  }, [people, info, book.slug, lang]);
+  }, [people, info, book.slug, lang, plan, isAdmin]); // eslint-disable-line react-hooks/exhaustive-deps
 }
 
 // Texto com links. `index` vem de useLinkIndex; sem índice (carregando), devolve o texto puro.

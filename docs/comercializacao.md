@@ -93,12 +93,20 @@ Cada fase vira uma branch e um PR; o merge é do André. O Code diagnostica e es
 - Página "Meus favoritos" (`#favorites`), agrupada por tipo, com remover.
 - "Continuar de onde parei": guarda a última posição de leitura (versão, livro, capítulo) e oferece retomar no início. Mesmo aviso de aparelho.
 
-**Fase 2 (versão simples), o que ficou fora:** papel de editor de conteúdo, indicador do preço de entrada (`usou_preco_de_entrada`, Fase 4), link mágico, painel admin (Fase 6) e o gate da posição acadêmica por plano (Fase 3). Entraram: login com Google, `profiles`, `entitlements`, `app_admins`, `waitlist` (componente `WaitlistButton` pronto, ainda não plugado em telas), `favorites` e `reading_position`. Esquema e RLS em `supabase/migrations/20261007000000_fase2_base.sql`; como aplicar em `supabase/README.md`.
+**Fase 2 (versão simples), o que ficou fora:** papel de editor de conteúdo, indicador do preço de entrada (`usou_preco_de_entrada`, Fase 4), link mágico, painel admin (Fase 6) e o gate da posição acadêmica por plano (feito na Fase 3A). Entraram: login com Google, `profiles`, `entitlements`, `app_admins`, `waitlist` (componente `WaitlistButton` pronto, ainda não plugado em telas), `favorites` e `reading_position`. Esquema e RLS em `supabase/migrations/20261007000000_fase2_base.sql`; como aplicar em `supabase/README.md`.
 
 **Fase 2B: sincronização — FEITA no código** (depende de aplicar a migration; `src/userdata.js`)
-- Tabelas `favorites` (`user_id`, `type`, `ref`, `created_at`, única por usuário + tipo + ref) e `reading_position` (uma linha por usuário), com RLS só do próprio usuário.
+- Tabelas `favorites` (`user_id`, `key`, `created_at`, única por usuário + `key`; a chave é a mesma do app: `book:<slug>`, `chapter:<slug>:<n>`, `person:<id>`, `place:<slug>:<nome PT>`) e `reading_position` (uma linha por usuário), com RLS só do próprio usuário.
 - No login, os favoritos e a posição locais migram para a conta (união sem duplicar; posição mais recente vence). Depois disso, a conta é a fonte e o aparelho é cache.
 - Favorito de conteúdo Pro de quem está no Essencial (ou cujo Pro venceu) continua na lista, aberto como convite ao Pro, nunca como link quebrado.
+
+**Fase 3A: regras de plano no app — FEITA no código** (só interface; o conteúdo continua no pacote público, então **não é segurança**, só experiência)
+- Configuração única em `src/data/plans.json` (planos, preços, matriz ✅/❌, listas do Essencial); regras puras em `src/planRules.js` (`can(feature, ctx)`), estado em `src/plan.js` (`usePlan`: sem login = Essencial; logado lê `entitlements`, Pro/Premium só valem sem `expires_at` ou com data futura; admin via `is_admin()` vê tudo; falha de rede = Essencial; cache local de 24 h, sempre rebuscado). O app nunca grava plano.
+- Essencial: mapa só no Pentateuco e Evangelhos (seções `lei` e `evangelhos`), estrutura só em Salmos, 50 personagens (`docs/personagens-essencial.md`), favoritos. Pro: o resto. Conteúdo fora do plano mostra o convite `ProInvite` (com "Avise-me"); lista de personagens e abas continuam visíveis; nomes e lugares fora do plano viram texto comum; favoritos Pro ficam na lista com selo "Pro" e abrem o convite.
+- Posição acadêmica: oculta para todos e visível só para admin (Configurações mantém o interruptor só para admin). Os dados continuam no repositório.
+- `npm run check` valida ids, slugs e se a matriz concorda com `can()`.
+
+**Fase 3B: conteúdo Pro fora do site público — PENDENTE** (abaixo; só com confirmação do André)
 
 **Fase 3: conteúdo por plano (o que sai do site público)**
 - Definir em **um arquivo de configuração único** o que cada plano inclui (usado pelo app e pela landing, para a tabela ✅/❌ nunca divergir).

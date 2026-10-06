@@ -3,6 +3,7 @@ import { bySlug } from './data/books.js';
 import { psalms } from './data/psalms.json';
 import { people } from './data/people.json';
 import { useSettings } from './settings.js';
+import { usePlan } from './plan.js';
 import { hrefs, go } from './route.js';
 
 const L = (pt, en) => ({ pt, en });
@@ -33,6 +34,7 @@ const MODES = {
 
 export default function PsalmsView({ lang, t, initialN, onSelect, onOpenPerson }) {
   const { showScholarly } = useSettings();
+  const { can } = usePlan();
   const [mode, setMode] = useState('book');
   const [cat, setCat] = useState(null);
   const [n, setN] = useState(initialN && psalms[initialN - 1] ? Number(initialN) : null);
@@ -92,8 +94,10 @@ export default function PsalmsView({ lang, t, initialN, onSelect, onOpenPerson }
               <p>{showScholarly && <b>{t.traditional}. </b>}{t.psalmsHistTrad}</p>
               {showScholarly && <p><b>{t.scholarly}.</b> {t.psalmsHistSch}</p>}
               <div className="tl-places">
-                {p.hist.people.map((id) => <button key={id} type="button" className="tl-place" onClick={() => onOpenPerson(id)}>{pick(people.find((x) => x.id === id).name, lang)}</button>)}
-                <button type="button" className="tl-place" onClick={() => go(hrefs.timeline('davi'))}>{t.timeline}</button>
+                {p.hist.people.map((id) => (can('person', { id })
+                  ? <button key={id} type="button" className="tl-place" onClick={() => onOpenPerson(id)}>{pick(people.find((x) => x.id === id).name, lang)}</button>
+                  : <span key={id} className="tl-place">{pick(people.find((x) => x.id === id).name, lang)}</span>))}
+                {can('timeline') && <button type="button" className="tl-place" onClick={() => go(hrefs.timeline('davi'))}>{t.timeline}</button>}
               </div>
             </section>
           )}
