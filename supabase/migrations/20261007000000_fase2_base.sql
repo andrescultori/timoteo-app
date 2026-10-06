@@ -149,6 +149,27 @@ create policy waitlist_select_own_or_admin on public.waitlist
 revoke all on public.waitlist from anon, authenticated;
 grant select, insert on public.waitlist to authenticated;
 
+-- Anti-abuso: no máximo 50 inscrições na lista de espera por usuário. Repetir um recurso já inscrito não conta como linha nova.
+create or replace function public.waitlist_limit()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if exists (select 1 from public.waitlist where user_id = new.user_id and feature = new.feature) then
+    return new;
+  end if;
+  if (select count(*) from public.waitlist where user_id = new.user_id) >= 50 then
+    raise exception 'Limite de 50 inscrições na lista de espera por usuário atingido.' using errcode = 'check_violation';
+  end if;
+  return new;
+end;
+$$;
+
+create trigger waitlist_limit
+  before insert on public.waitlist
+  for each row execute function public.waitlist_limit();
+
 -- =====================================================================================================================
 -- favorites: `key` é a mesma de src/favKeys.js (book:<slug>, chapter:<slug>:<n>, person:<id>, place:<slug>:<nome PT>)
 -- =====================================================================================================================
@@ -169,6 +190,27 @@ create policy favorites_all_own on public.favorites
 
 revoke all on public.favorites from anon, authenticated;
 grant select, insert, update, delete on public.favorites to authenticated;
+
+-- Anti-abuso: no máximo 5000 favoritos por usuário. Regravar uma chave que já existe (upsert) não conta como linha nova.
+create or replace function public.favorites_limit()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if exists (select 1 from public.favorites where user_id = new.user_id and key = new.key) then
+    return new;
+  end if;
+  if (select count(*) from public.favorites where user_id = new.user_id) >= 5000 then
+    raise exception 'Limite de 5000 favoritos por usuário atingido.' using errcode = 'check_violation';
+  end if;
+  return new;
+end;
+$$;
+
+create trigger favorites_limit
+  before insert on public.favorites
+  for each row execute function public.favorites_limit();
 
 -- =====================================================================================================================
 -- reading_position: uma linha por usuário
@@ -206,7 +248,7 @@ begin
   insert into public.profiles (id, name, email)
   values (
     new.id,
-    coalesce(new.raw_user_meta_data ->> 'full_name', new.raw_user_meta_data ->> 'name'),
+    left(coalesce(new.raw_user_meta_data ->> 'full_name', new.raw_user_meta_data ->> 'name'), 120),
     new.email
   )
   on conflict (id) do nothing;
@@ -227,7 +269,7 @@ create trigger on_auth_user_created
 
 -- Contas que já existiam antes desta migration (ex.: o primeiro teste de login) ganham perfil e plano Essencial.
 insert into public.profiles (id, name, email)
-select u.id, coalesce(u.raw_user_meta_data ->> 'full_name', u.raw_user_meta_data ->> 'name'), u.email
+select u.id, left(coalesce(u.raw_user_meta_data ->> 'full_name', u.raw_user_meta_data ->> 'name'), 120), u.email
 from auth.users u
 on conflict (id) do nothing;
 
