@@ -1,4 +1,4 @@
-/* Timóteo App: dois temas, Pergaminho escuro (padrão, no :root) e Pergaminho claro (:root[data-theme='light']).
+/* Timóteo App: dois temas, Pergaminho escuro (no :root) e Pergaminho claro (:root[data-theme='light']).
    Detalhes em docs/tema-pergaminho.md. Os temas antigos (auto, claro e escuro de antes do Pergaminho) estão em docs/archive/temas/ e no branch/tag themes-archive-2026-10. */
 :root {
   --bg: #17130e; --panel: #1f1a13; --panel-2: #2a2319;
