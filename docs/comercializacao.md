@@ -75,9 +75,9 @@ Cada fase vira uma branch e um PR; o merge é do André. O Code diagnostica e es
 - Conferir na fonte as taxas atuais do Mercado Pago e o preço e os limites do Supabase pago, e ver se R$49,90/ano cobre o custo fixo.
 - Confirmar os itens "proposto".
 
-**Fase 1: site atual no Cloudflare Pages (sem reescrever)**
+**Fase 1: site atual no Cloudflare (projeto criado pelo painel como Workers com static assets; build `npm run build`, deploy `npx wrangler deploy`, `wrangler.jsonc` na raiz) (sem reescrever)**
 - Build `npm run build`, saída `dist`. O `base: './'` do Vite já funciona na raiz.
-- Projeto do app no Cloudflare Pages, deploy em `*.pages.dev`; o GitHub Pages segue no ar até validar.
+- Projeto do app no Cloudflare (Workers com static assets, criado pelo painel; build `npm run build`, deploy `npx wrangler deploy`, `wrangler.jsonc` na raiz), deploy em `*.pages.dev`; o GitHub Pages segue no ar até validar.
 - Conferir hash (`#joh`), `public/bible/` e fichas.
 
 **Fase 2: Supabase dedicado (login e dados do usuário)**
