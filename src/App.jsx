@@ -115,19 +115,26 @@ export default function App() {
   }, [theme]);
   // A rota vem do hash. Ao sair da grade guardamos a rolagem para voltar ao mesmo ponto; páginas novas abrem no topo.
   const homeScroll = useRef(0);
+  const peopleListScroll = useRef(0); // a lista de personagens também volta ao ponto em que estava, quando se volta de um personagem
   const routeRef = useRef(route);
   routeRef.current = route;
   useEffect(() => {
     const onHash = () => {
-      if (routeRef.current.kind === 'home') homeScroll.current = window.scrollY;
-      setRoute(parseHash());
+      const next = parseHash();
+      const prev = routeRef.current;
+      if (prev.kind === 'home') homeScroll.current = window.scrollY;
+      if (prev.kind === 'person' && !prev.id) peopleListScroll.current = next.kind === 'person' && next.id ? window.scrollY : 0;
+      else if (next.kind === 'person' && !next.id && prev.kind !== 'person') peopleListScroll.current = 0; // chegou à lista vindo de outra página: topo
+      setRoute(next);
     };
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
-  const pageKey = route.kind === 'book' ? route.slug : route.kind;
+  // cada personagem é uma página nova (abre no topo); a lista, a grade e o resto seguem a regra acima
+  const pageKey = route.kind === 'book' ? route.slug : route.kind === 'person' ? `person/${route.id ?? ''}` : route.kind;
   useEffect(() => {
-    window.scrollTo(0, route.kind === 'home' ? homeScroll.current : 0);
+    const listaDePersonagens = route.kind === 'person' && !route.id;
+    window.scrollTo(0, route.kind === 'home' ? homeScroll.current : listaDePersonagens ? peopleListScroll.current : 0);
   }, [pageKey]);
 
   const open = (slug) => go(hrefs.book(slug));
@@ -155,10 +162,7 @@ export default function App() {
       <header className="top">
         <div className="brand">
           <h1>
-            <a className="homelink" href={hrefs.home} aria-label={t.home} title={t.home}>
-              <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11.5 12 4l9 7.5" /><path d="M5.5 10v9.5h13V10" /><path d="M10 19.5v-5h4v5" /></svg>
-            </a>
-            <a className="logo" href={hrefs.home} aria-hidden="true" tabIndex={-1}><Logo size={36} /></a>
+            <a className="logo" href={hrefs.home} aria-label={t.home} title={t.home}><Logo size={36} /></a>
             <a href={hrefs.home}><span className="wordmark">{t.title.split(' ')[0]}</span></a>
           </h1>
           <p>{t.subtitle}</p>
