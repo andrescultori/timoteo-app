@@ -18,15 +18,17 @@ const store = {
   set(k, v) { try { localStorage.setItem(k, v); } catch { /* ignora */ } },
 };
 
-const THEMES = ['dark', 'light']; // Pergaminho escuro (padrão) e Pergaminho claro
-const THEME_LABEL = { dark: '☾', light: '☀' };
+const THEMES = ['auto', 'dark', 'light']; // preferência: segue o sistema, Pergaminho escuro ou Pergaminho claro
+const THEME_LABEL = { auto: 'Auto', dark: '☾', light: '☀' };
+const systemDark = () => !window.matchMedia || window.matchMedia('(prefers-color-scheme: dark)').matches;
 
 const norm = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
 export default function App() {
   const [lang, setLang] = useState(() => store.get('lang', navigator.language?.startsWith('en') ? 'en' : 'pt'));
   // 'light' (ou 'parchment', como o Pergaminho claro se chamava antes) = claro; qualquer outro valor (auto, escuro antigo, inválido) = escuro
-  const [theme, setTheme] = useState(() => { const v = store.get('theme', 'dark'); return v === 'light' || v === 'parchment' ? 'light' : 'dark'; });
+  // preferência guardada: auto | dark | light ('parchment', o nome antigo do Pergaminho claro, vira light; valor inválido vira auto)
+  const [theme, setTheme] = useState(() => { const v = store.get('theme', 'auto'); return v === 'parchment' ? 'light' : THEMES.includes(v) ? v : 'auto'; });
   const [filter, setFilter] = useState('all');
   const [query, setQuery] = useState('');
   const [route, setRoute] = useState(parseHash);
@@ -38,10 +40,19 @@ export default function App() {
   usePageTitle([], t.title, route.kind === 'home');
   useEffect(() => { store.set('showScholarly', settings.showScholarly ? '1' : '0'); }, [settings]);
   useEffect(() => { document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en'; store.set('lang', lang); }, [lang]);
+  // O CSS só conhece data-theme = dark | light; no modo auto o valor é o do sistema e acompanha a troca dele
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
     store.set('theme', theme);
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'light' ? '#fbf9f3' : '#17130e');
+    const mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+    const apply = () => {
+      const resolved = theme === 'auto' ? (systemDark() ? 'dark' : 'light') : theme;
+      document.documentElement.setAttribute('data-theme', resolved);
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', resolved === 'light' ? '#fbf9f3' : '#17130e');
+    };
+    apply();
+    if (theme !== 'auto' || !mq) return undefined;
+    mq.addEventListener('change', apply);
+    return () => mq.removeEventListener('change', apply);
   }, [theme]);
   // A rota vem do hash. Ao sair da grade guardamos a rolagem para voltar ao mesmo ponto; páginas novas abrem no topo.
   const homeScroll = useRef(0);
@@ -66,8 +77,8 @@ export default function App() {
   const openPerson = (id = null) => go(hrefs.person(id));
   const openTree = (id, node) => go(hrefs.tree(id, node));
 
-  const toggleTheme = () => setTheme((x) => (x === 'dark' ? 'light' : 'dark'));
-  const themeName = theme === 'light' ? t.themeLight : t.themeDark;
+  const toggleTheme = () => setTheme((x) => THEMES[(THEMES.indexOf(x) + 1) % THEMES.length]);
+  const themeName = { auto: t.themeAuto, dark: t.themeDark, light: t.themeLight }[theme];
 
   const groups = useMemo(() => {
     const q = norm(query.trim());
