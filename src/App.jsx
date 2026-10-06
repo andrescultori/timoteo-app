@@ -3,6 +3,9 @@ import { BOOKS, SECTIONS, bySlug } from './data/books.js';
 import { LANGS, T } from './i18n.js';
 import BookModal from './BookModal.jsx';
 import Logo from './Logo.jsx';
+import { HeartIcon } from './icons.jsx';
+import { VERSIONS } from './data/bible.js';
+import { useUserData, dismissContinue, dismissNotice, acknowledgeNotice, setResume } from './userdata.js';
 import SettingsModal from './SettingsModal.jsx';
 import { SettingsContext } from './settings.js';
 import { parseHash, hrefs, go } from './route.js';
@@ -12,6 +15,7 @@ import { usePageTitle } from './pageTitle.js';
 const Timeline = lazy(() => import('./Timeline.jsx'));
 const People = lazy(() => import('./People.jsx'));
 const Genealogy = lazy(() => import('./Genealogy.jsx'));
+const Favorites = lazy(() => import('./Favorites.jsx'));
 
 const store = {
   get(k, d) { try { return localStorage.getItem(k) ?? d; } catch { return d; } },
@@ -23,6 +27,42 @@ const THEME_LABEL = { auto: 'Auto', dark: '☾', light: '☀' };
 const systemDark = () => !window.matchMedia || window.matchMedia('(prefers-color-scheme: dark)').matches;
 
 const norm = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+// Cartão "Continuar: João 3 (versão)" no início, a partir da última posição de leitura
+function ContinueCard({ lang, t }) {
+  const { position, dismissedAt, noticeShown } = useUserData();
+  const book = position && bySlug[position.slug];
+  if (!position || !book || dismissedAt === position.at) return null;
+  const version = VERSIONS.find((v) => v.id === position.version);
+  const go_ = (e) => {
+    e.preventDefault();
+    setResume(position.slug, position.version); // o leitor abre na mesma versão
+    go(hrefs.book(position.slug, 'read', String(position.chapter)));
+  };
+  return (
+    <div className="continue-card" role="region" aria-label={t.continueLabel}>
+      <a href={hrefs.book(position.slug, 'read', String(position.chapter))} onClick={go_}>
+        {t.continueLabel}: <b>{book.name[lang]} {position.chapter}</b>{version ? ` (${version.label})` : ''}
+      </a>
+      {!noticeShown && (
+        <span className="continue-note">{t.favNotice} <button type="button" className="ghost" onClick={acknowledgeNotice}>{t.favNoticeOk}</button></span>
+      )}
+      <button type="button" className="ghost continue-x" onClick={dismissContinue} aria-label={t.continueDismiss} title={t.continueDismiss}>×</button>
+    </div>
+  );
+}
+
+// Aviso único depois do primeiro favorito: os favoritos ficam só neste aparelho
+function DeviceNotice({ t }) {
+  const { noticePending } = useUserData();
+  if (!noticePending) return null;
+  return (
+    <div className="fav-toast" role="status">
+      <span>{t.favNotice}</span>
+      <button type="button" className="ghost" onClick={dismissNotice}>{t.favNoticeOk}</button>
+    </div>
+  );
+}
 
 export default function App() {
   const [lang, setLang] = useState(() => store.get('lang', navigator.language?.startsWith('en') ? 'en' : 'pt'));
@@ -110,6 +150,7 @@ export default function App() {
               <button key={l.id} type="button" aria-pressed={lang === l.id} onClick={() => setLang(l.id)}>{l.label}</button>
             ))}
           </div>
+          <a className="ghost fav-link" href={hrefs.favorites} aria-label={t.favorites} title={t.favorites}><HeartIcon size={18} /></a>
           <button type="button" className="ghost" onClick={() => setShowSettings(true)} aria-label={t.settings} title={t.settings}>⚙</button>
           <button type="button" className="ghost" onClick={toggleTheme} aria-label={`${t.toggleTheme}: ${themeName}`} title={`${t.toggleTheme}: ${themeName}`}>{THEME_LABEL[theme]}</button>
         </div>
@@ -117,6 +158,7 @@ export default function App() {
 
       {route.kind === 'home' && (
       <main>
+        <ContinueCard lang={lang} t={t} />
         <div className="controls">
           <div className="seg" role="group">
             {['all', 'at', 'nt'].map((f) => (
@@ -152,6 +194,11 @@ export default function App() {
           <Timeline lang={lang} t={t} focusId={route.id} onOpenBook={open} onOpenMap={openMap} onOpenPerson={openPerson} />
         </Suspense>
       )}
+      {route.kind === 'favorites' && (
+        <Suspense fallback={<p className="soon page-wait">{t.loading}</p>}>
+          <Favorites lang={lang} t={t} />
+        </Suspense>
+      )}
       {route.kind === 'tree' && (
         <Suspense fallback={<p className="soon page-wait">{t.loading}</p>}>
           <Genealogy lang={lang} t={t} treeId={route.id} focusNode={route.node} onOpenBook={open} onOpenPerson={openPerson} onSelect={openTree} />
@@ -171,6 +218,7 @@ export default function App() {
         {' · © 2026 · '}
         <a href="https://github.com/andrescultori/timoteo-app" target="_blank" rel="noopener noreferrer">GitHub</a>
       </footer>
+      <DeviceNotice t={t} />
       {showSettings && <SettingsModal t={t} settings={settings} onChange={setSettings} onClose={() => setShowSettings(false)} />}
     </SettingsContext.Provider>
   );
