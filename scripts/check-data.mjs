@@ -307,6 +307,25 @@ for (const ver of VERSIONS) {
   Object.keys(g.nodes).filter((id) => !reached.has(id)).forEach((id) => err(`genealogia: nó "${id}" não está ligado a nenhuma raiz`));
 }
 
+// Favoritos: as chaves geradas por src/favKeys.js precisam ser únicas e voltar iguais ao serem desmontadas (livro, capítulo, personagem e lugar do mapa)
+{
+  const { favKey, parseFavKey } = await import(new URL('../src/favKeys.js', import.meta.url).href);
+  const seen = new Set();
+  const roundtrip = (key, expected, where) => {
+    const k = parseFavKey(key);
+    if (!k || Object.entries(expected).some(([a, b]) => k[a] !== b)) err(`favoritos: chave "${key}" não volta igual (${where})`);
+    if (seen.has(key)) err(`favoritos: chave repetida "${key}" (${where})`);
+    seen.add(key);
+  };
+  books.forEach((slug) => {
+    roundtrip(favKey.book(slug), { type: 'book', slug }, slug);
+    const chapters = chaptersOf(slug);
+    for (const n of new Set([1, chapters])) roundtrip(favKey.chapter(slug, n), { type: 'chapter', slug, n }, slug);
+    (read(`src/data/info/${slug}.json`).map?.places ?? []).forEach((p) => roundtrip(favKey.place(slug, p.name.pt), { type: 'place', slug, name: p.name.pt }, `${slug}.map`));
+  });
+  read('src/data/people.json').people.forEach((p) => roundtrip(favKey.person(p.id), { type: 'person', id: p.id }, 'people'));
+}
+
 if (errors.length) {
   console.error(`${errors.length} problema(s):`);
   errors.slice(0, 60).forEach((e) => console.error(` - ${e}`));

@@ -4,6 +4,8 @@ import land from './data/land.json';
 import timeline from './data/timeline.json';
 import { people } from './data/people.json';
 import { pick as pickT, range, main } from './timelineUtil.js';
+import FavButton from './FavButton.jsx';
+import { favKey } from './userdata.js';
 
 // Nomes de mares exibidos como rótulos de fundo.
 const WATERS = [
@@ -210,11 +212,14 @@ export default function MapView({ book, map, lang, t, initialPlace, onPlaceChang
 
       <div className="mplaces">
         {places.map((p, i) => (
-          <button key={pickText(p.name, lang)} type="button" className="place" aria-current={i === sel} onClick={() => choose(i)}>
-            <b>{pickText(p.name, lang)}{p.uncertain ? ' ?' : ''}</b>
-            <span>{pickText(p.note, lang)}</span>
-            <small>{book.ab[lang]} {p.ref}</small>
-          </button>
+          <div key={pickText(p.name, lang)} className="placewrap">
+            <button type="button" className="place" aria-current={i === sel} onClick={() => choose(i)}>
+              <b>{pickText(p.name, lang)}{p.uncertain ? ' ?' : ''}</b>
+              <span>{pickText(p.note, lang)}</span>
+              <small>{book.ab[lang]} {p.ref}</small>
+            </button>
+            <FavButton favKey={favKey.place(book.slug, p.name.pt)} t={t} className="fav-place" />
+          </div>
         ))}
       </div>
 
