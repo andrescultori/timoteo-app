@@ -38,7 +38,7 @@ From the Exodus on the timeline, for example, one click opens the Exodus map alr
 ## What the site has
 
 - **A grid of the 66 books** by section, with search and a testament filter. Direct link per book (`#joh`).
-- **A study sheet** for each book, in PT and EN: author, date, place, recipients, key verse, theme, historical context, people, outline and connections. Authorship and dating show the **traditional and scholarly positions side by side**; the scholarly one is visible to administrators only (switch in Settings, ⚙).
+- **A study sheet** for each book, in PT and EN: author, date, place, recipients, key verse, theme, historical context, people, outline and connections. Authorship and dating show the **traditional and scholarly positions side by side**; the scholarly one is visible to administrators only (switch in Settings, in the account menu).
 - **A map** in 46 books, with its own vector coastline (no external tiles), collision-free labels, regional zoom, a legend and flags for debated locations.
 - **A timeline** with 13 periods and 69 events, on a per-block scale, with approximate dates marked and debated chronologies (such as the Exodus) shown side by side. Books are tied to the period their text describes.
 - **People**: 210 people, with a summary, the books they appear in, events and places; the list sorts alphabetically or by book.

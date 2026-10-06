@@ -174,9 +174,8 @@ export default function App() {
             ))}
           </div>
           <a className="ghost fav-link" href={hrefs.favorites} aria-label={t.favorites} title={t.favorites}><HeartIcon size={18} /></a>
-          <button type="button" className="ghost" onClick={() => setShowSettings(true)} aria-label={t.settings} title={t.settings}>⚙</button>
           <button type="button" className="ghost" onClick={toggleTheme} aria-label={`${t.toggleTheme}: ${themeName}`} title={`${t.toggleTheme}: ${themeName}`}>{THEME_LABEL[theme]}</button>
-          <Account t={t} />
+          <Account t={t} onSettings={() => setShowSettings(true)} />
         </div>
       </header>
 
