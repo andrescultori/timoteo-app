@@ -32,20 +32,29 @@ export default function People({ lang, t, focusId, onOpenBook, onOpenTimeline, o
       .sort((a, b) => pick(a.name, lang).localeCompare(pick(b.name, lang), lang));
   }, [query, bookFilter, lang]);
 
+  const plan = usePlan();
+  const person = byId[focusId];
+  const [proOpen, setProOpen] = useState(true);
+
   // Por livro: cada pessoa fica no primeiro livro em que aparece (ordem canônica); dentro dele, A–Z
-  const groups = useMemo(() => {
-    if (sort === 'alpha') return [{ key: 'all', title: null, items: list }];
+  const groupsOf = (items) => {
+    if (sort === 'alpha') return [{ key: 'all', title: null, items }];
     const g = new Map();
-    for (const p of list) {
+    for (const p of items) {
       const first = p.books.map((b) => bySlug[b.book]).sort((a, b) => a.n - b.n)[0];
       if (!g.has(first.slug)) g.set(first.slug, { key: first.slug, n: first.n, title: first.name[lang], items: [] });
       g.get(first.slug).items.push(p);
     }
     return [...g.values()].sort((a, b) => a.n - b.n);
-  }, [list, sort, lang]);
-
-  const plan = usePlan();
-  const person = byId[focusId];
+  };
+  // Essencial: duas seções (incluídos no plano em cima, Pro embaixo); quem tem tudo (ou enquanto o plano carrega) vê uma lista só
+  const split = !plan.loading && people.some((p) => !plan.can('person', { id: p.id }));
+  const sections = split
+    ? [
+        { key: 'in', title: t.peopleIncluded, items: list.filter((p) => plan.can('person', { id: p.id })) },
+        { key: 'pro', title: t.peoplePro, items: list.filter((p) => !plan.can('person', { id: p.id })), pro: true },
+      ].filter((x) => x.items.length)
+    : [{ key: 'all', title: null, items: list }];
   const gate = !person ? 'open' : plan.loading ? 'wait' : plan.can('person', { id: person.id }) ? 'open' : 'locked'; // fora do plano, a página mostra o convite ao Pro
   usePageTitle([person && pick(person.name, lang), t.people], t.title);
   const choose = (id) => onSelect(id);
@@ -81,22 +90,39 @@ export default function People({ lang, t, focusId, onOpenBook, onOpenTimeline, o
             </div>
             <div className="body">
               {list.length === 0 && <p className="soon">{t.noResults}</p>}
-              {groups.map((g) => (
-                <section key={g.key}>
-                  {g.title && <h3 className="pp-group">{g.title}</h3>}
-                  <ul className="pp-list">
-                    {g.items.map((p) => (
-                      <li key={p.id}>
-                        <button type="button" className="pp-card" onClick={() => choose(p.id)}>
-                          <b>{pick(p.name, lang)}{!plan.loading && !plan.can('person', { id: p.id }) && <span className="pro-tag">{t.proTag}</span>}</b>
-                          <span>{pick(p.summary, lang).split(/(?<=[.!?])\s/)[0]}</span>
-                          <small>{p.books.length} {p.books.length === 1 ? t.peopleBookOne : t.peopleBooks}</small>
-                        </button>
-                      </li>
+              {sections.map((sec) => {
+                const open = !sec.pro || proOpen;
+                const H = sec.title ? 'h4' : 'h3';
+                return (
+                  <section key={sec.key} className={sec.title ? 'pp-section' : undefined} aria-labelledby={sec.title ? `pp-sec-${sec.key}` : undefined}>
+                    {sec.title && (
+                      <h3 className="pp-section-title" id={`pp-sec-${sec.key}`}>
+                        {sec.pro ? (
+                          <button type="button" aria-expanded={proOpen} onClick={() => setProOpen(!proOpen)}>
+                            <span className="pp-caret" aria-hidden="true">{proOpen ? '▾' : '▸'}</span>{sec.title} ({sec.items.length})
+                          </button>
+                        ) : <>{sec.title} ({sec.items.length})</>}
+                      </h3>
+                    )}
+                    {open && groupsOf(sec.items).map((g) => (
+                      <div key={g.key}>
+                        {g.title && <H className="pp-group">{g.title}</H>}
+                        <ul className="pp-list">
+                          {g.items.map((p) => (
+                            <li key={p.id}>
+                              <button type="button" className="pp-card" onClick={() => choose(p.id)}>
+                                <b>{pick(p.name, lang)}{sec.pro && <span className="pro-tag">{t.proTag}</span>}</b>
+                                <span>{pick(p.summary, lang).split(/(?<=[.!?])\s/)[0]}</span>
+                                <small>{p.books.length} {p.books.length === 1 ? t.peopleBookOne : t.peopleBooks}</small>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
                     ))}
-                  </ul>
-                </section>
-              ))}
+                  </section>
+                );
+              })}
               <p className="tl-scalenote">{t.peopleNote}</p>
             </div>
           </>
