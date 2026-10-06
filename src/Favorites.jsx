@@ -7,6 +7,7 @@ import { hrefs } from './route.js';
 import { usePageTitle } from './pageTitle.js';
 import { pick } from './timelineUtil.js';
 import { useUserData, toggleFav, parseFavKey, FAV_TYPES } from './userdata.js';
+import { useSession, signInWithGoogle } from './auth.js';
 
 // Os lugares do mapa não têm id: para saber se o favorito ainda existe, carrega a ficha do livro (uma vez por livro).
 const INFO = import.meta.glob('./data/info/*.json');
@@ -47,6 +48,7 @@ function resolve(key, lang, maps) {
 
 export default function Favorites({ lang, t }) {
   const { favs } = useUserData();
+  const { enabled, signedIn } = useSession();
   usePageTitle([t.favorites], t.title);
   const placeSlugs = useMemo(() => [...new Set(favs.map((f) => parseFavKey(f.key)).filter((k) => k?.type === 'place' && bySlug[k.slug]).map((k) => k.slug))], [favs]);
   const maps = usePlaceBooks(placeSlugs);
@@ -69,7 +71,9 @@ export default function Favorites({ lang, t }) {
           <div className="head-actions"><BackButton t={t} /></div>
         </div>
         <div className="body">
-          <p className="fav-device" role="note">{t.favNotice}</p>
+          {!signedIn && (
+            <p className="fav-device" role="note">{t.favNotice} {enabled && <button type="button" className="ghost" onClick={signInWithGoogle}>{t.signInGoogle}</button>}</p>
+          )}
           {favs.length === 0 && <p className="soon">{t.favEmpty} <HeartIcon size={16} /></p>}
           {[...groups, { type: 'other', items: unknown }].filter((g) => g.items.length).map((g) => (
             <section key={g.type} className="fav-group">

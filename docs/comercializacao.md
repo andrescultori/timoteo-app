@@ -80,7 +80,7 @@ Cada fase vira uma branch e um PR; o merge é do André. O Code diagnostica e es
 - Projeto do app no Cloudflare Pages (build `npm run build`, saída `dist`, branch de produção `main`), no ar em `timoteo-app.pages.dev`; o GitHub Pages segue no ar até validar.
 - Conferir hash (`#joh`), `public/bible/` e fichas.
 
-**Fase 2: Supabase dedicado (login e dados do usuário)**
+**Fase 2: Supabase dedicado (login e dados do usuário) — migrations prontas; aplicação e teste pelo André** (`supabase/`, `src/auth.js`, página `#profile`)
 - Tabelas: perfis (nome, e-mail, campos opcionais, consentimento de novidades com data), planos e direitos (`plano`, `inicia_em`, `expira_em`, `usou_preco_de_entrada`), papéis (`admin`, `editor`), lista de espera ("Avise-me", com o recurso de interesse).
 - Regras de acesso (RLS) por usuário; ninguém lê o plano de outro; só `admin` altera planos.
 - Login com Google no lançamento; link mágico quando houver domínio e SMTP próprio. Conferir na documentação os limites do envio padrão do Supabase antes de decidir.
@@ -93,7 +93,9 @@ Cada fase vira uma branch e um PR; o merge é do André. O Code diagnostica e es
 - Página "Meus favoritos" (`#favorites`), agrupada por tipo, com remover.
 - "Continuar de onde parei": guarda a última posição de leitura (versão, livro, capítulo) e oferece retomar no início. Mesmo aviso de aparelho.
 
-**Fase 2B: sincronização (depois da Fase 2)**
+**Fase 2 (versão simples), o que ficou fora:** papel de editor de conteúdo, indicador do preço de entrada (`usou_preco_de_entrada`, Fase 4), link mágico, painel admin (Fase 6) e o gate da posição acadêmica por plano (Fase 3). Entraram: login com Google, `profiles`, `entitlements`, `app_admins`, `waitlist` (componente `WaitlistButton` pronto, ainda não plugado em telas), `favorites` e `reading_position`. Esquema e RLS em `supabase/migrations/20261007000000_fase2_base.sql`; como aplicar em `supabase/README.md`.
+
+**Fase 2B: sincronização — FEITA no código** (depende de aplicar a migration; `src/userdata.js`)
 - Tabelas `favorites` (`user_id`, `type`, `ref`, `created_at`, única por usuário + tipo + ref) e `reading_position` (uma linha por usuário), com RLS só do próprio usuário.
 - No login, os favoritos e a posição locais migram para a conta (união sem duplicar; posição mais recente vence). Depois disso, a conta é a fonte e o aparelho é cache.
 - Favorito de conteúdo Pro de quem está no Essencial (ou cujo Pro venceu) continua na lista, aberto como convite ao Pro, nunca como link quebrado.
