@@ -15,3 +15,7 @@ verify_jwt = true
 
 [functions.mp-webhook]
 verify_jwt = false
+
+# Conciliação diária (Fase 4): chamada pelo GitHub Actions com o segredo RECONCILE_SECRET no cabeçalho x-reconcile-secret.
+[functions.reconcile-payments]
+verify_jwt = false
