@@ -14,7 +14,7 @@ const MAX_AGE = 24 * 60 * 60 * 1000;
 const read = () => { try { return JSON.parse(localStorage.getItem(CACHE)); } catch { return null; } };
 const write = (v) => { try { v ? localStorage.setItem(CACHE, JSON.stringify(v)) : localStorage.removeItem(CACHE); } catch { /* ignora */ } };
 
-const OFF = { plan: 'essencial', isAdmin: false, loading: false, userId: null };
+const OFF = { plan: 'essencial', isAdmin: false, loading: false, userId: null, usedEntry: false, expiresAt: null };
 let state = OFF;
 const listeners = new Set();
 const set = (next) => { state = { ...state, ...next }; listeners.forEach((fn) => fn()); };
@@ -22,7 +22,7 @@ const set = (next) => { state = { ...state, ...next }; listeners.forEach((fn) =>
 // "Carregando" enquanto há sessão guardada e o plano ainda não chegou; com cache recente do mesmo aparelho, já mostra o plano guardado.
 function fromCache() {
   const c = read();
-  if (c && Date.now() - c.at < MAX_AGE) return { plan: effectivePlan(c.plan, c.expires_at), isAdmin: !!c.isAdmin, loading: false, userId: c.userId };
+  if (c && Date.now() - c.at < MAX_AGE) return { plan: effectivePlan(c.plan, c.expires_at), isAdmin: !!c.isAdmin, loading: false, userId: c.userId, usedEntry: !!c.usedEntry, expiresAt: c.expires_at ?? null };
   return null;
 }
 if (typeof window !== 'undefined' && hasStoredSession()) state = fromCache() ?? { ...OFF, loading: true };
@@ -32,18 +32,23 @@ async function load(userId) {
   if (fetchingFor === userId) return;
   fetchingFor = userId;
   const cached = fromCache();
-  if (cached && cached.userId === userId) set(cached); else set({ plan: 'essencial', isAdmin: false, loading: true, userId });
+  if (state.userId === userId && !state.loading) { /* atualização: mantém o que já aparece até a resposta chegar */ } else if (cached && cached.userId === userId) set(cached); else set({ plan: 'essencial', isAdmin: false, loading: true, userId });
   try {
     const client = await getClient();
+    // `usou_preco_de_entrada` vem da migration da Fase 4; se ela ainda não foi aplicada, repete sem a coluna (o plano não pode cair por isso)
+    const readEnt = async () => {
+      const full = await client.from('entitlements').select('plan,expires_at,usou_preco_de_entrada').eq('user_id', userId).maybeSingle();
+      return full.error ? client.from('entitlements').select('plan,expires_at').eq('user_id', userId).maybeSingle() : full;
+    };
     const [e, a] = await Promise.all([
-      client.from('entitlements').select('plan,expires_at').eq('user_id', userId).maybeSingle(),
+      readEnt(),
       client.rpc('is_admin'),
     ]);
     const row = e.error ? null : e.data;
     const isAdmin = a.error ? false : a.data === true;
     if (e.error && a.error) throw e.error; // sem rede: segue com o que havia (cache ou essencial)
-    set({ plan: effectivePlan(row?.plan, row?.expires_at), isAdmin, loading: false, userId });
-    write({ userId, plan: row?.plan ?? 'essencial', expires_at: row?.expires_at ?? null, isAdmin, at: Date.now() });
+    set({ plan: effectivePlan(row?.plan, row?.expires_at), isAdmin, loading: false, userId, usedEntry: !!row?.usou_preco_de_entrada, expiresAt: row?.expires_at ?? null });
+    write({ userId, plan: row?.plan ?? 'essencial', expires_at: row?.expires_at ?? null, usedEntry: !!row?.usou_preco_de_entrada, isAdmin, at: Date.now() });
   } catch {
     set({ loading: false, userId });
   } finally { fetchingFor = null; }
@@ -59,11 +64,16 @@ if (typeof window !== 'undefined') {
   onAuth(getAuthState());
 }
 
+// Busca o plano de novo agora (depois de um pagamento confirmado pelo servidor)
+export function refreshPlan() {
+  if (state.userId) { fetchingFor = null; load(state.userId); }
+}
+
 const subscribe = (fn) => { listeners.add(fn); return () => listeners.delete(fn); };
 const get = () => state;
 
 // { plan, isAdmin, loading } + can(feature, extra) já com o plano do usuário
 export function usePlan() {
   const s = useSyncExternalStore(subscribe, get, get);
-  return { plan: s.plan, isAdmin: s.isAdmin, loading: s.loading, can: (feature, extra) => can(feature, { plan: s.plan, isAdmin: s.isAdmin, ...extra }) };
+  return { plan: s.plan, isAdmin: s.isAdmin, loading: s.loading, usedEntry: s.usedEntry, expiresAt: s.expiresAt, can: (feature, extra) => can(feature, { plan: s.plan, isAdmin: s.isAdmin, ...extra }) };
 }

@@ -4,3 +4,14 @@ project_id = "timoteo-app"
 
 [db]
 major_version = 17
+
+# Edge Functions da Fase 4 (cobrança). O webhook é chamado pelo Mercado Pago, que não envia JWT do Supabase;
+# a autenticação dele é o x-signature, conferido no código.
+[functions.create-checkout]
+verify_jwt = true
+
+[functions.verify-payment]
+verify_jwt = true
+
+[functions.mp-webhook]
+verify_jwt = false

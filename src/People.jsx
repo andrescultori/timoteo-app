@@ -132,7 +132,7 @@ export default function People({ lang, t, focusId, onOpenBook, onOpenTimeline, o
         {gate === 'locked' && (
           <div className="body tl-detail">
             <button type="button" className="ghost" onClick={() => choose(null)}>← {t.peopleBack}</button>
-            <ProInvite t={t} />
+            <ProInvite t={t} lang={lang} />
           </div>
         )}
 

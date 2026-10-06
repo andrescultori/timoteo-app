@@ -9,6 +9,7 @@ import { bySlug } from './data/books.js';
 //   #person  #person/davi          personagens (e pessoa)
 //   #favorites                     meus favoritos
 //   #profile                       meu perfil (conta)
+//   #checkout/retorno              volta do pagamento no Mercado Pago (o servidor confere; a URL não libera nada)
 //   #tree/adao-jesus  #tree/adao-jesus/mt-salomao   genealogia (árvore e nó em foco)
 const TABS = ['summary', 'sheet', 'map', 'psalms', 'structure', 'read'];
 
@@ -19,6 +20,7 @@ export function parseHash(hash = location.hash) {
   if (a === 'person') return { kind: 'person', id: b || null };
   if (a === 'favorites') return { kind: 'favorites' };
   if (a === 'profile') return { kind: 'profile' };
+  if (a === 'checkout') return { kind: 'checkout' };
   if (a === 'tree') return { kind: 'tree', id: b || null, node: c || null };
   if (bySlug[a]) return { kind: 'book', slug: a, tab: TABS.includes(b) ? b : 'summary', place: c || null };
   return { kind: 'home' };
@@ -31,8 +33,20 @@ export const hrefs = {
   person: (id) => (id ? `#person/${id}` : '#person'),
   favorites: '#favorites',
   profile: '#profile',
+  checkout: '#checkout/retorno',
   tree: (id = 'adao-jesus', node) => `#tree/${id}${node ? `/${node}` : ''}`,
 };
+
+// Volta do Mercado Pago: o back_url é `<app>/?checkout=success|pending|failure` (mais o que o Mercado Pago acrescentar).
+// Vira a rota #checkout/retorno e guarda só a referência do pagamento (id nosso, validado de novo no servidor). O status da URL é ignorado.
+try {
+  const q = new URLSearchParams(location.search);
+  if (q.has('checkout')) {
+    const ref = q.get('external_reference');
+    if (ref && /^[0-9a-f-]{36}$/i.test(ref)) sessionStorage.setItem('checkoutRef', ref.toLowerCase());
+    history.replaceState(null, '', `${location.pathname}#checkout/retorno`);
+  }
+} catch { /* sem sessionStorage ou history: segue sem a referência */ }
 
 // Navegar adiciona uma entrada ao histórico (o botão voltar funciona). Trocar o hash pela mesma rota não faz nada.
 // Posição na pilha de navegação do app (guardada em history.state): serve para o botão Voltar saber se há para onde voltar.

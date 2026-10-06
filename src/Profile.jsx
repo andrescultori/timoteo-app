@@ -2,6 +2,10 @@ import React, { useEffect, useState } from 'react';
 import BackButton from './BackButton.jsx';
 import { useSession, signInWithGoogle, getClient } from './auth.js';
 import { usePageTitle } from './pageTitle.js';
+import { usePlan, refreshPlan } from './plan.js';
+import { SubscribeBlock } from './ProInvite.jsx';
+import { billingEnabled, listPayments, verifyPayment, formatBRL } from './billing.js';
+import billing from './data/billing.json';
 
 const SEX = ['female', 'male', 'other'];
 const AGE = ['18-24', '25-34', '35-44', '45-54', '55-64', '65+'];
@@ -13,10 +17,12 @@ export default function Profile({ lang, t }) {
   const { enabled, status, user, name: googleName } = useSession();
   usePageTitle([t.profile], t.title);
   const [form, setForm] = useState(null); // null enquanto carrega
-  const [plan, setPlan] = useState({ plan: 'essencial', expires_at: null });
   const [consentAt, setConsentAt] = useState(null);
   const [msg, setMsg] = useState(null); // 'saved' | 'error'
   const [busy, setBusy] = useState(false);
+  const livePlan = usePlan();
+  const [payments, setPayments] = useState(null); // null enquanto carrega; [] sem pagamentos; false se a tabela ainda não existe
+  const [checking, setChecking] = useState(false);
 
   useEffect(() => {
     if (status !== 'in') { setForm(null); return undefined; }
@@ -24,12 +30,8 @@ export default function Profile({ lang, t }) {
     (async () => {
       try {
         const c = await getClient();
-        const [p, e] = await Promise.all([
-          c.from('profiles').select('name,sex,age_band,city_state,marketing_consent,marketing_consent_at').eq('id', user.id).maybeSingle(),
-          c.from('entitlements').select('plan,expires_at').eq('user_id', user.id).maybeSingle(),
-        ]);
+        const p = await c.from('profiles').select('name,sex,age_band,city_state,marketing_consent,marketing_consent_at').eq('id', user.id).maybeSingle();
         if (!alive) return;
-        if (e.data) setPlan(e.data);
         const d = p.data;
         setConsentAt(d?.marketing_consent_at ?? null);
         setForm({ name: d?.name || googleName || '', sex: d?.sex || '', age_band: d?.age_band || '', city_state: d?.city_state || '', marketing_consent: !!d?.marketing_consent });
@@ -38,6 +40,13 @@ export default function Profile({ lang, t }) {
     })();
     return () => { alive = false; };
   }, [status, user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const loadPayments = () => listPayments(user.id).then(setPayments).catch(() => setPayments(false));
+  useEffect(() => { if (status === 'in' && billingEnabled) loadPayments(); }, [status, user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  const checkPayment = async () => {
+    setChecking(true);
+    try { await verifyPayment(); refreshPlan(); await loadPayments(); } catch { /* o histórico segue como estava */ } finally { setChecking(false); }
+  };
 
   const set = (k) => (e) => { setMsg(null); setForm({ ...form, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }); };
 
@@ -57,9 +66,6 @@ export default function Profile({ lang, t }) {
       setMsg('saved');
     } catch { setMsg('error'); } finally { setBusy(false); }
   };
-
-  const planLabel = t[PLAN_KEY[plan.plan]] ?? t.planEssencial;
-  const until = plan.expires_at ? new Date(plan.expires_at).toLocaleDateString(lang === 'pt' ? 'pt-BR' : 'en-US') : null;
 
   return (
     <div className="page wide" role="region" aria-labelledby="pf-title">
@@ -82,7 +88,7 @@ export default function Profile({ lang, t }) {
           {status === 'in' && !form && <p className="soon">{t.loading}</p>}
           {status === 'in' && form && (
             <form className="profile-form" onSubmit={save}>
-              <p className="profile-plan"><b>{planLabel}</b>{until ? ` (${t.planUntil} ${until})` : ''}</p>
+              <p className="profile-plan"><b>{t[PLAN_KEY[livePlan.plan]] ?? t.planEssencial}</b>{livePlan.plan !== 'essencial' && livePlan.expiresAt ? ` (${t.planUntil} ${new Date(livePlan.expiresAt).toLocaleDateString(lang === 'pt' ? 'pt-BR' : 'en-US')})` : ''}</p>
               <label>{t.profileName}
                 <input type="text" value={form.name} maxLength={120} onChange={set('name')} autoComplete="name" />
               </label>
@@ -115,6 +121,29 @@ export default function Profile({ lang, t }) {
               </div>
               <p className="tl-warn">{user?.email}</p>
             </form>
+          )}
+          {status === 'in' && billingEnabled && (
+            <section className="profile-pay" aria-labelledby="pf-pay">
+              <h3 id="pf-pay">{t.payTitle}</h3>
+              {livePlan.plan === 'essencial' && <SubscribeBlock t={t} lang={lang} />}
+              {livePlan.plan === 'pro' && livePlan.expiresAt && <SubscribeBlock t={t} lang={lang} renew />}
+              <p className="tl-warn">{t.refundPolicy.replace('{n}', billing.refundDays)}{billing.refundContact.trim() ? ` ${t.refundContact.replace('{c}', billing.refundContact.trim())}` : ''}</p>
+              <h4>{t.payHistory}</h4>
+              {payments === null && <p className="soon">{t.loading}</p>}
+              {payments && payments.length === 0 && <p className="tl-warn">{t.payNone}</p>}
+              {payments && payments.length > 0 && (
+                <ul className="pay-list">
+                  {payments.map((p) => (
+                    <li key={p.id}>
+                      <span>{new Date(p.created_at).toLocaleDateString(lang === 'pt' ? 'pt-BR' : 'en-US')}</span>
+                      <span>{formatBRL(p.amount_cents / 100, lang)} <small>({t[`payKind_${p.price_kind}`]})</small></span>
+                      <b>{t[`payStatus_${p.status}`] ?? p.status}</b>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <button type="button" className="ghost" disabled={checking} onClick={checkPayment}>{t.payCheck}</button>
+            </section>
           )}
         </div>
       </div>

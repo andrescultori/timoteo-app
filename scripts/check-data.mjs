@@ -390,6 +390,19 @@ for (const ver of VERSIONS) {
   }
 }
 
+// Cobrança (Fase 4): o preço de src/data/plans.json é o mesmo das Edge Functions (supabase/functions/_shared/pricing.js)
+{
+  const cfg = read('src/data/plans.json').plans.pro;
+  const { PRICE_CENTS, PRO_MONTHS } = await import(new URL('../supabase/functions/_shared/pricing.js', import.meta.url).href);
+  if (Math.round(cfg.price * 100) !== PRICE_CENTS.cheio) err(`preço do Pro diverge: plans.json ${cfg.price} x pricing.js ${PRICE_CENTS.cheio / 100}`);
+  if (Math.round(cfg.entryPrice * 100) !== PRICE_CENTS.entrada) err(`preço de entrada do Pro diverge: plans.json ${cfg.entryPrice} x pricing.js ${PRICE_CENTS.entrada / 100}`);
+  if (PRO_MONTHS !== 12) err('pricing.js: o Pro dura 12 meses');
+  const billing = read('src/data/billing.json');
+  if (!Number.isInteger(billing.refundDays) || billing.refundDays < 7) err('billing.json: refundDays deve ser inteiro e no mínimo 7 (política combinada)');
+  if (typeof billing.refundContact !== 'string') err('billing.json: refundContact deve ser texto');
+  else if (!billing.refundContact.trim()) console.warn('Aviso: billing.json "refundContact" está vazio; preencha o contato de reembolso antes de vender.');
+}
+
 if (errors.length) {
   console.error(`${errors.length} problema(s):`);
   errors.slice(0, 60).forEach((e) => console.error(` - ${e}`));
