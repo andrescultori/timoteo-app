@@ -1,8 +1,12 @@
-# Tema Pergaminho escuro
+# Temas Pergaminho (escuro e claro)
 
-O app tem **um tema só**, o Pergaminho escuro. Não há seletor de tema nem `data-theme`; o `color-scheme` é sempre `dark`, mesmo com o sistema do navegador em modo claro. Design system aprovado: https://claude.ai/artifact/KubSPfxeLAVWVqNHBhmtPR
+O app tem **dois temas**, os dois do design Pergaminho:
+- **Pergaminho escuro** (padrão): tokens no `:root` de `src/styles.css`, `color-scheme: dark`.
+- **Pergaminho claro**: `:root[data-theme='light']`, só troca os tokens de cor; tipografia, tamanhos e regras são os mesmos.
 
-## Tokens (`:root` em `src/styles.css`)
+O botão ☾/☀ do cabeçalho alterna entre os dois e a escolha fica em `localStorage` (`theme` = `dark` ou `light`). **Não há modo automático**: o sistema do navegador não muda o tema, e a primeira visita abre no escuro. Valores antigos guardados: `parchment` (nome do Pergaminho claro antes) vira `light`; `auto`, `dark` antigo ou inválido viram `dark`. `index.html` aplica o tema salvo antes do primeiro desenho (e ajusta `theme-color`), para o fundo não piscar. Design system do escuro: https://claude.ai/artifact/KubSPfxeLAVWVqNHBhmtPR
+
+## Tokens do Pergaminho escuro (`:root` em `src/styles.css`)
 | Grupo | Tokens |
 |---|---|
 | Superfícies | `--bg #17130e` (página), `--panel #1f1a13` (painéis), `--panel-2 #2a2319` (campos, abas, chips e cartões dentro de painel) |
@@ -14,6 +18,10 @@ O app tem **um tema só**, o Pergaminho escuro. Não há seletor de tema nem `da
 | Mapa | `--sea #111a17`, `--land #2f281a`, `--coast #8a7957`, `--halo #2f281a`, `--sea-label #9fb3a8` |
 | Outros | `--shadow-pop`, `--space-1…10` (4 a 40px), `--radius-chip 5px`, `--radius-card 8px`, `--radius-panel 12px`, `--radius-pill 999px`; fontes `--f-display` (Cormorant Garamond), `--f-body` e `--f-read` (EB Garamond) |
 
+## Tokens do Pergaminho claro (`:root[data-theme='light']`)
+`--bg #fbf9f3`, `--panel #fffdf8`, `--panel-2 #f6f1e4`; `--line #dccba6`, `--line-soft #e6d8b8`; `--fg #1f2320`, `--muted #54492f`; `--accent #0f2d24`, `--accent-hover #1f4a3b`, `--accent-2 #3f5a4e`, `--on-accent #f8f7f2`; seções `#d8a3a0 #c9776a #b8c38a #869c6e #e0c27a #d9a060 #8fb5a6 #a7bcca #8199b5 #b3a894`; mapa `--sea #d3d6c4`, `--land #f1e5c8`, `--coast #a68c66`, `--halo #f1e5c8`.
+Tokens que o desenho original do claro não tinha e foram **derivados** (revisar com o André): `--line-strong #8a7957` (igual ao do escuro; 3,8 a 4,2:1), `--focus #1f4a3b`, `--danger #9a3b2c`, `--sea-label #4a5748` (o `#5e6b5c` do Pergaminho claro original dava 3,8:1), `--shadow-pop` com tinta clara. `--on-section` e `--space-*`/`--radius-*` são os mesmos do escuro.
+
 ## Regras de aplicação
 - Página `--bg`; painéis `--panel`; campos, abas, chips e cartões dentro de painel `--panel-2`. Sem sombras, exceto `--shadow-pop` no aviso flutuante.
 - Texto: `--fg` conteúdo; `--muted` legendas; `--accent` links, datas, título de capítulo e ponto do mapa; `--accent-2` rótulos, referências e número de versículo; hover de link `--accent-hover`.
@@ -24,12 +32,16 @@ O app tem **um tema só**, o Pergaminho escuro. Não há seletor de tema nem `da
 
 ## Tamanhos
 Corpo 17px/1,55; leitor 17px/1,75 (coluna de ~62ch). Títulos em Cormorant 700: página 40/42, personagem 44/46, seção ou período 30/34, lugar e evento 19/23. "Capítulo N" 28px 600, letter-spacing .04em, `--accent`; sigla do bloco 27px 700; wordmark TIMÓTEO 22px 600, letter-spacing .08em. Frase da grade 19px itálico; botões, abas e campos 16px 500; legendas 14,5px; rótulos em maiúsculas 13px 600, letter-spacing .14em; número do versículo 12px 600. Numerais lining. Mapa: nomes dos lugares 18px (16px em tela estreita, em `src/MapView.jsx`); mar em itálico 18px, letter-spacing 3, `--sea-label`; ponto `--accent` com contorno `--panel`; localização debatida: ponto vazado com contorno tracejado.
-As fontes vêm do `<link>` do `index.html` (carregadas sempre). `index.html` também fixa `color-scheme: dark`, `theme-color #17130e` e o fundo do `<html>` para não piscar claro.
+As fontes vêm do `<link>` do `index.html` (carregadas sempre).
 
 ## Logo
 `src/Logo.jsx` é um **placeholder**; o vetor oficial será enviado pelo André. Trocar só esse arquivo (SVG com `currentColor`). Aparece com o wordmark em todas as páginas. Não há favicon nem ícones de PWA ainda.
 
-## Temas anteriores (arquivados)
-Auto, claro, escuro e Pergaminho claro saíram do app e estão arquivados:
+## Temas antigos (arquivados)
+Saíram do app o modo automático (que seguia o sistema) e os temas claro e escuro de antes do Pergaminho (fontes Bricolage Grotesque, Figtree e Literata). Estão arquivados:
 - **Branch `themes-archive-2026-10`** (a tag de mesmo nome não pôde ser criada pelo ambiente; o branch aponta para o mesmo commit, `b12a4db`, e pode ser convertido em tag).
-- **`docs/archive/temas/`**: `styles-temas-anteriores.css`, `App-tema-snippet.jsx.txt` e `README.md` (como restaurar). Esses arquivos não são importados e não entram no build.
+- **`docs/archive/temas/`**: `styles-temas-anteriores.css`, `App-tema-snippet.jsx.txt` e `README.md` (como restaurar). Não são importados e não entram no build.
+
+## Adicionar outro tema
+1. Crie `:root[data-theme='nome']` em `src/styles.css` com todos os tokens (copie o bloco `light`) e `color-scheme`.
+2. Inclua o valor em `THEMES`/`THEME_LABEL` e nas chaves `theme…` do `src/i18n.js`; ajuste o script do `index.html` e a escolha do botão, que hoje alterna entre dois.

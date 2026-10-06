@@ -5,9 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Timóteo App</title>
     <meta name="description" content="Tabela interativa dos 66 livros da Bíblia, com ficha de estudo e texto." />
-    <meta name="color-scheme" content="dark" />
+    <meta name="color-scheme" content="dark light" />
     <meta name="theme-color" content="#17130e" />
-    <style>html{background:#17130e}</style>
+    <!-- Aplica o tema salvo antes do primeiro desenho, para não piscar o fundo errado -->
+    <script>try{var t=localStorage.getItem('theme');document.documentElement.setAttribute('data-theme',t==='light'||t==='parchment'?'light':'dark')}catch(e){document.documentElement.setAttribute('data-theme','dark')}</script>
+    <style>html{background:#17130e}html[data-theme='light']{background:#fbf9f3}</style>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
