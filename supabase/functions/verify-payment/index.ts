@@ -1,10 +1,11 @@
 // Plano B do webhook: ao voltar do checkout (ou pelo botão "verificar pagamento"), consulta no Mercado Pago os pagamentos do
-// PRÓPRIO usuário e aplica o mesmo fluxo do webhook. Exige usuário logado. Corpo opcional: { ref: <id do pagamento> }.
+// PRÓPRIO usuário (em aberto e aprovados dos últimos 45 dias) e aplica o mesmo fluxo do webhook. Exige usuário logado.
+// Corpo opcional: { ref: <id do pagamento> } só escolhe qual pagamento aparece no status devolvido.
 // Nunca confia em dados do navegador: só lê as linhas do usuário no banco e o que o Mercado Pago responde.
 import { corsHeaders, json, bearer } from '../_shared/http.js';
 import { createDb } from '../_shared/db.js';
 import { searchPayments } from '../_shared/mp.js';
-import { applyAll, UUID } from '../_shared/payments.js';
+import { applyAll } from '../_shared/payments.js';
 
 Deno.serve(async (req: Request) => {
   const appUrl = Deno.env.get('APP_URL') ?? '';
@@ -21,14 +22,13 @@ Deno.serve(async (req: Request) => {
     if (!user) return json({ error: 'unauthorized' }, 401, cors);
 
     const body = await req.json().catch(() => ({}));
-    let rows = await db.recentPayments(user.id);
-    if (typeof body?.ref === 'string' && UUID.test(body.ref)) {
-      const wanted = rows.filter((r: { id: string }) => r.id === body.ref.toLowerCase());
-      if (wanted.length) rows = wanted;
-    }
-    // só vale consultar o que ainda não foi concluído (aprovado, reembolsado e estornado já estão resolvidos)
-    const open = rows.filter((r: { status: string }) => ['pending', 'rejected', 'cancelled'].includes(r.status));
-    for (const r of open) await applyAll(await searchPayments(token, r.id), db);
+    // Reconfere os pagamentos em aberto (3 dias) e os APROVADOS dos últimos 45 dias: um reembolso ou estorno cujo aviso
+    // se perdeu também é aplicado aqui. Só linhas do próprio usuário (a função SQL filtra por user_id).
+    const rows = await db.userPaymentsToVerify(user.id);
+    await Promise.all(rows.map(async (r: { id: string }) => {
+      await applyAll(await searchPayments(token, r.id), db);
+      await db.markReconciled(r.id);
+    }));
 
     const after = await db.recentPayments(user.id);
     const target = (typeof body?.ref === 'string' && after.find((r: { id: string }) => r.id === String(body.ref).toLowerCase())) || after[0] || null;

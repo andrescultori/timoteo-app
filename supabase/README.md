@@ -69,7 +69,7 @@ supabase secrets set --project-ref zqxodmjrbzmyhnkqszqh \
 ```
 (ou Edge Functions → Secrets no painel). `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` já existem no ambiente das funções: **não** os defina nem os copie para lugar nenhum. `APP_URL` é a origem do app, sem barra no fim e sem hash. Para desenvolvimento local, `http://localhost:5173` já é aceito no CORS.
 
-## 4. Publicar as funções
+## 4. Publicar as funções (a conciliação, abaixo, tem a sua)
 ```bash
 supabase functions deploy create-checkout --project-ref zqxodmjrbzmyhnkqszqh
 supabase functions deploy verify-payment  --project-ref zqxodmjrbzmyhnkqszqh
@@ -101,3 +101,42 @@ Use o comprador de teste. Para cada caso, confira o plano em `#profile` e as lin
 - Em pagamento parcelado com juros, `transaction_amount` deve continuar igual ao preço do item (os juros ficam em outro campo). Se vier maior, a função recusa por valor diferente (log `amount`): ajustar a conferência para `transaction_amount` sem juros.
 - Pix pago em duplicidade e o log `pagamento duplicado, reembolsar à mão`: reembolsar no painel.
 - **Como tratar `duplicate_payment` e `duplicate_entry`** (aparecem como `console.error` do `mp-webhook` em Edge Functions → Logs, e em `payments` como aprovado com `months_granted = 0`): o dinheiro entrou mas não concedeu meses. Reembolse esse pagamento no painel do Mercado Pago; o reembolso não mexe no plano. `duplicate_payment` = o mesmo checkout pago duas vezes; `duplicate_entry` = dois checkouts a preço de entrada (só o primeiro vale).
+
+
+---
+
+# Conciliação de pagamentos (Fase 4)
+
+Reembolso e estorno não podem depender só do aviso (webhook): se o aviso se perder, a pessoa fica com meses que já devolvemos. Dois mecanismos reconferem no Mercado Pago, pelo mesmo caminho do webhook (referência, valor e moeda continuam conferidos):
+- **`verify-payment`** (logado, ao voltar do checkout e no botão "Conferir pagamento" do perfil): além dos pagamentos em aberto, reconfere os **aprovados dos últimos 45 dias** do próprio usuário.
+- **`reconcile-payments`** (diária, pelo GitHub Actions): varre `payments` aprovados nos últimos 45 dias e pendentes dos últimos 3, no máximo 200 por execução, os reconferidos há mais tempo primeiro (`reconciled_at`).
+
+O estorno (chargeback) chega no Mercado Pago em outro tópico de notificação (`topic_chargebacks_wh`), que o `mp-webhook` não trata; a conciliação diária é o que o aplica. **Reembolso parcial não desfaz meses** (o pagamento segue aprovado): a conciliação só registra no log (`reembolso parcial ... decidir à mão`) para você decidir; não há regra de proporção.
+
+## Aplicar
+1. Migration `20261009000000_fase4_conciliacao.sql` (nova; não mexe nas anteriores): coluna `payments.reconciled_at` e as funções `payments_to_reconcile` e `user_payments_to_verify` (só `service_role`).
+2. Publicar as funções (a `verify-payment` mudou; a `reconcile-payments` é nova):
+```bash
+supabase functions deploy verify-payment    --project-ref zqxodmjrbzmyhnkqszqh
+supabase functions deploy reconcile-payments --project-ref zqxodmjrbzmyhnkqszqh --no-verify-jwt
+```
+
+## Segredo `RECONCILE_SECRET` (o mesmo valor nos dois lados; nunca no repositório)
+1. Gere um valor longo e aleatório, por exemplo `openssl rand -hex 32`.
+2. **Supabase:** `supabase secrets set --project-ref zqxodmjrbzmyhnkqszqh RECONCILE_SECRET='<valor>'` (ou Edge Functions → Secrets no painel).
+3. **GitHub:** repositório → Settings → Secrets and variables → Actions → New repository secret, nome `RECONCILE_SECRET`, o mesmo valor.
+A função compara o segredo em tempo constante; sem o cabeçalho `x-reconcile-secret` (ou com valor errado) responde 401.
+
+## Agendamento (GitHub Actions, sem custo)
+`.github/workflows/reconcile-payments.yml` roda todo dia às 06:17 UTC e também à mão. Faz um `POST` na função e **falha se a resposta não for 200** (o GitHub avisa por e-mail). Observação: o GitHub desativa workflows agendados de um repositório sem atividade por 60 dias; se isso acontecer, reative em Actions.
+
+## Rodar à mão
+- Pelo GitHub: Actions → "Conciliação de pagamentos" → Run workflow.
+- Pelo terminal:
+```bash
+curl -sS -X POST -H "x-reconcile-secret: $RECONCILE_SECRET" \
+  https://zqxodmjrbzmyhnkqszqh.supabase.co/functions/v1/reconcile-payments
+```
+Resposta esperada: `{"read":N,"changed":M,"errors":0}` com HTTP 200. `read` = pagamentos reconferidos (até 200); `changed` = quantos mudaram de estado (por exemplo, um reembolso aplicado); `errors` > 0 devolve HTTP 500 (alguma consulta ao Mercado Pago falhou; as demais foram processadas e a linha com erro é tentada de novo na próxima). Nada de dado pessoal no resumo nem no log.
+- Quando algo mudar, o rastro está em Edge Functions → `reconcile-payments` → Logs: `reembolso aplicado`, `estorno aplicado`, `duplicate_payment`/`duplicate_entry` e `reembolso parcial`, sempre com o id do pagamento (o `payments.id`, que é o `external_reference`).
+- Para conferir um caso: depois da execução, o pagamento está `refunded`/`charged_back` e o `entitlements` do usuário voltou ao Essencial (se esse era o único com meses), com `usou_preco_de_entrada = false`.

@@ -1,0 +1,28 @@
+name: Conciliação de pagamentos
+# Todo dia reconfere no Mercado Pago os pagamentos recentes (reembolsos e estornos cujo aviso se perdeu). Não custa nada.
+# Também roda à mão: Actions → "Conciliação de pagamentos" → Run workflow. Falha se a resposta não for 200.
+# O segredo RECONCILE_SECRET vem de Settings → Secrets and variables → Actions (o mesmo valor do secret do Supabase).
+on:
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: reconcile-payments
+  cancel-in-progress: false
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Chamar a conciliação
+        env:
+          RECONCILE_SECRET: ${{ secrets.RECONCILE_SECRET }}
+        run: |
+          if [ -z "$RECONCILE_SECRET" ]; then echo "O secret RECONCILE_SECRET não está cadastrado no GitHub."; exit 1; fi
+          code=$(curl -sS -m 150 -o resposta.json -w '%{http_code}' -X POST \
+            -H "x-reconcile-secret: $RECONCILE_SECRET" \
+            https://zqxodmjrbzmyhnkqszqh.supabase.co/functions/v1/reconcile-payments)
+          echo "HTTP $code"
+          cat resposta.json; echo
+          [ "$code" = "200" ]
