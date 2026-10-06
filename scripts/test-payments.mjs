@@ -215,6 +215,53 @@ const driftSec = async (user, months) => Number((await q(
   eq((await ent(u2)).plan, 'premium', 'Premium vigente não vira Pro');
 }
 
+// preço de entrada pago duas vezes
+{
+  const u = await newUser();
+  const p1 = await newPay(u, 2990, 'entrada');
+  const p2 = await newPay(u, 2990, 'entrada');
+  eq((await apply(p1, 'approved', 2990, 'mpE1')).result, 'granted', 'entrada: o primeiro aprovado concede');
+  const before = (await ent(u)).expires_at.toISOString();
+  const r2 = await apply(p2, 'approved', 2990, 'mpE2');
+  eq(r2.result, 'duplicate_entry', 'entrada: o segundo aprovado é duplicado');
+  eq((await pay(p2)), { status: 'approved', months_granted: 0, mp_payment_id: 'mpE2' }, 'entrada duplicada fica registrada como aprovada com 0 meses');
+  eq((await ent(u)).expires_at.toISOString(), before, 'entrada duplicada não muda o vencimento');
+  ok((await driftSec(u, 12)) < 60, 'entrada duplicada: continua com 12 meses, não 24');
+  eq((await apply(p2, 'approved', 2990, 'mpE2')).result, 'noop', 'entrada duplicada repetida pelo webhook: sem efeito');
+  // reembolso do duplicado: não mexe no plano
+  eq((await apply(p2, 'refunded', 2990, 'mpE2')).result, 'reversed', 'reembolso do duplicado é registrado');
+  eq((await ent(u)).expires_at.toISOString(), before, 'reembolso do duplicado não tira meses');
+  eq([(await ent(u)).plan, (await ent(u)).usou_preco_de_entrada], ['pro', true], 'reembolso do duplicado: segue Pro e entrada gasta');
+  // reembolso do primeiro: volta ao Essencial e libera a entrada
+  eq((await apply(p1, 'refunded', 2990, 'mpE1')).result, 'reversed', 'reembolso do primeiro');
+  eq([(await ent(u)).plan, (await ent(u)).expires_at, (await ent(u)).usou_preco_de_entrada], ['essencial', null, false], 'depois do reembolso: Essencial e preço de entrada disponível de novo');
+  // e uma nova compra a preço de entrada volta a valer
+  const p3 = await newPay(u, 2990, 'entrada');
+  eq((await apply(p3, 'approved', 2990, 'mpE3')).result, 'granted', 'nova entrada depois do reembolso concede');
+  ok((await driftSec(u, 12)) < 60, 'nova entrada: 12 meses');
+}
+{
+  // entrada duplicada seguida de renovação a preço cheio: o cheio soma normalmente
+  const u = await newUser();
+  const p1 = await newPay(u, 2990, 'entrada');
+  const p2 = await newPay(u, 2990, 'entrada');
+  await apply(p1, 'approved', 2990, 'mpF1');
+  await apply(p2, 'approved', 2990, 'mpF2');
+  const p3 = await newPay(u, 4990, 'cheio');
+  eq((await apply(p3, 'approved', 4990, 'mpF3')).result, 'granted', 'preço cheio depois do duplicado concede');
+  ok((await driftSec(u, 24)) < 60, 'entrada + cheio = 24 meses');
+}
+{
+  // duas aprovações disparadas juntas. O PGlite tem uma conexão só (as chamadas entram em fila), então isto cobre o resultado;
+  // a concorrência real (duas sessões, a segunda esperando o bloqueio de `entitlements`) foi conferida em Postgres 16 com psql.
+  const u = await newUser();
+  const p1 = await newPay(u, 2990, 'entrada');
+  const p2 = await newPay(u, 2990, 'entrada');
+  const results = await Promise.all([apply(p1, 'approved', 2990, 'mpC1'), apply(p2, 'approved', 2990, 'mpC2')]);
+  eq(results.map((r) => r.result).sort(), ['duplicate_entry', 'granted'], 'aprovações simultâneas: uma concede, a outra é duplicada');
+  ok((await driftSec(u, 12)) < 60, 'aprovações simultâneas: 12 meses, não 24');
+}
+
 // permissões: o cliente não grava nem executa nada
 {
   const u = await newUser();
