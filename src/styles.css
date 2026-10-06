@@ -4,6 +4,7 @@
   --bg: #17130e; --panel: #1f1a13; --panel-2: #2a2319;
   --line: #4a3f2e; --line-soft: #352d21; --line-strong: #8a7957;
   --fg: #efe6d2; --muted: #b8aa8c;
+  --logo: #f1f0e7; /* marca oficial: bege sobre fundo escuro */
   --accent: #a9cdbb; --accent-hover: #c6e0d2; --accent-2: #8fb5a6; --on-accent: #0f2d24;
   --focus: #c6e0d2; --danger: #e39a8b;
   --on-section: #14100b; /* texto sobre as cores de seção */
@@ -25,6 +26,7 @@
   --bg: #fbf9f3; --panel: #fffdf8; --panel-2: #f6f1e4;
   --line: #dccba6; --line-soft: #e6d8b8; --line-strong: #8a7957;
   --fg: #1f2320; --muted: #54492f;
+  --logo: #042016; /* marca oficial: verde sobre fundo claro */
   --accent: #0f2d24; --accent-hover: #1f4a3b; --accent-2: #3f5a4e; --on-accent: #f8f7f2;
   --focus: #1f4a3b; --danger: #9a3b2c;
   --s-lei: #d8a3a0; --s-historicos: #c9776a; --s-poesia: #b8c38a; --s-profMaiores: #869c6e; --s-profMenores: #e0c27a;
@@ -288,7 +290,7 @@ h1 a { color: inherit; text-decoration: none; }
 /* ===== Regras que eram do Pergaminho claro, agora do tema único ===== */
 h1 { font: 600 2rem/1.1 var(--f-display); letter-spacing: 0.08em; color: var(--accent); }
 .wordmark { text-transform: uppercase; }
-.logo { display: inline-flex; color: var(--accent); }
+.logo, .brand h1 a.logo { display: inline-flex; color: var(--logo); } /* .brand h1 a herda a cor do título (accent); a marca usa a cor oficial */
 .brand p { font-size: var(--fs-sub); font-style: italic; color: var(--muted); }
 .ttl h2 { font-size: 40px; font-weight: 700; }
 #pp-title { font-size: 44px; }

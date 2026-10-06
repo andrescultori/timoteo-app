@@ -1,0 +1,16 @@
+{
+  "name": "Timóteo App",
+  "short_name": "Timóteo",
+  "description": "Tabela interativa dos 66 livros da Bíblia, com ficha de estudo, mapa, linha do tempo, personagens e texto.",
+  "lang": "pt-BR",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "theme_color": "#fbf9f3",
+  "background_color": "#fbf9f3",
+  "icons": [
+    { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

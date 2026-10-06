@@ -40,7 +40,7 @@ Corpo 17px/1,55; leitor 17px/1,75 (coluna de ~62ch). Títulos em Cormorant 700: 
 As fontes vêm do `<link>` do `index.html` (carregadas sempre).
 
 ## Logo
-`src/Logo.jsx` é um **placeholder**; o vetor oficial será enviado pelo André. Trocar só esse arquivo (SVG com `currentColor`). Aparece com o wordmark em todas as páginas. Não há favicon nem ícones de PWA ainda.
+`src/Logo.jsx` desenha a marca oficial **inline** (`currentColor`), com o path vindo de `src/logoPath.js` (gerado de `branding/fonte/` por `scripts/build-brand-assets.mjs`; ver `branding/README.md`). A cor vem da variável `--logo` (bege `#f1f0e7` no escuro, verde `#042016` no claro), definida nos dois temas. Aparece com o wordmark em todas as páginas. Favicon, ícones de PWA e imagem de compartilhamento são gerados pelo mesmo script.
 
 ## Temas antigos (arquivados)
 Saíram do app o modo automático (que seguia o sistema) e os temas claro e escuro de antes do Pergaminho (fontes Bricolage Grotesque, Figtree e Literata). Estão arquivados:
