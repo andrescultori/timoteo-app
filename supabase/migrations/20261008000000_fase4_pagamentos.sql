@@ -129,6 +129,20 @@ begin
     insert into public.entitlements (user_id, plan) values (r.user_id, 'essencial') on conflict (user_id) do nothing;
     select * into e from public.entitlements where user_id = r.user_id for update;
 
+    -- Preço de entrada pago duas vezes (dois checkouts abertos, ou abuso): o dinheiro entrou e fica registrado, mas não concede meses.
+    -- A checagem vem DEPOIS do bloqueio de `entitlements`: duas aprovações simultâneas do mesmo usuário são serializadas ali,
+    -- e a segunda enxerga a primeira já gravada. Só conta como "outro" um pagamento de entrada que de fato concedeu meses
+    -- (assim, depois de reembolsar o primeiro, uma nova compra a preço de entrada volta a valer).
+    if r.price_kind = 'entrada' and exists (
+      select 1 from public.payments
+      where user_id = r.user_id and id <> r.id and status = 'approved' and price_kind = 'entrada' and months_granted > 0
+    ) then
+      update public.payments
+        set status = 'approved', mp_payment_id = p_mp_payment_id, approved_at = v_now, months_granted = 0
+        where id = r.id;
+      return jsonb_build_object('result', 'duplicate_entry', 'months', 0);
+    end if;
+
     v_active := e.plan <> 'essencial' and (e.expires_at is null or e.expires_at > v_now);
     if v_active and (e.expires_at is null or e.plan = 'premium') then
       -- direito já vigente sem prazo (concessão manual) ou Premium: não mexe no plano nem no prazo
@@ -174,8 +188,8 @@ begin
       update public.entitlements set expires_at = v_new where user_id = r.user_id;
     end if;
   end if;
-  -- o preço de entrada só fica "gasto" enquanto sobrar algum pagamento aprovado
-  select exists (select 1 from public.payments where user_id = r.user_id and status = 'approved' and id <> r.id) into v_has_other;
+  -- o preço de entrada só fica "gasto" enquanto sobrar algum pagamento aprovado que concedeu meses
+  select exists (select 1 from public.payments where user_id = r.user_id and status = 'approved' and months_granted > 0 and id <> r.id) into v_has_other;
   update public.entitlements set usou_preco_de_entrada = v_has_other where user_id = r.user_id;
   return jsonb_build_object('result', 'reversed', 'status', p_status, 'months', r.months_granted);
 end;

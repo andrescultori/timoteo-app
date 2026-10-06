@@ -36,6 +36,7 @@ Deno.serve(async (req: Request) => {
     const out = await applyMpPayment(mp, db);
     if (out.result === 'rejected') console.error('mp-webhook: pagamento recusado pela conferência:', out.reason, 'mp_id', mp.id);
     if (out.detail?.result === 'duplicate_payment') console.error('mp-webhook: pagamento duplicado, reembolsar à mão: mp_id', mp.id);
+    if (out.detail?.result === 'duplicate_entry') console.error('mp-webhook: preço de entrada pago duas vezes, reembolsar à mão: mp_id', mp.id);
     return json(out);
   } catch (e) {
     console.error('mp-webhook:', (e as Error).message);
