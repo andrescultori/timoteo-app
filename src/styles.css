@@ -431,3 +431,11 @@ body, h1, h2, h3, h4, .tile .ab, .badge b, .ps-tile, .pager span, .place b, .tl-
 .pro-invite b { font: 700 19px/23px var(--f-display); }
 .pro-invite p { margin: 0; }
 .pro-tag { margin-left: 6px; padding: 0 6px; border: 1px solid var(--line-strong); border-radius: var(--radius-pill); font-size: 12px; font-weight: 600; letter-spacing: 0.06em; color: var(--accent-2); vertical-align: middle; }
+
+/* lista de personagens em seções (Essencial: incluídos em cima, Pro embaixo) */
+.pp-section + .pp-section { margin-top: 26px; padding-top: 6px; border-top: 1px solid var(--line-strong); }
+.pp-section-title { margin: 14px 0 6px; font: 700 1.15rem var(--f-display); }
+.pp-section-title button { all: unset; cursor: pointer; display: inline-flex; gap: 8px; align-items: baseline; }
+.pp-section-title button:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 3px; }
+.pp-caret { color: var(--muted); font-size: 0.9em; }
+.pp-section .pp-group { font-size: 0.95rem; color: var(--muted); }
