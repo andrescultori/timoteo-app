@@ -33,6 +33,7 @@ Tabela interativa dos 66 livros da Bíblia (inspirada no "TaBíblia Periódica")
 - Rodapé de assinatura em `src/App.jsx` (classe `.assinatura`; texto "Desenvolvido por" / "Developed by" na chave `madeBy` do i18n; segue o idioma ativo). "André Scultori" → github.com/andrescultori; **"GitHub" → o repositório** (github.com/andrescultori/timoteo-app), por decisão do André, **não** o GitHub Pages, que é o padrão da skill de assinatura. Ano: 2026 (criação). Manter assim.
 - `src/linkify.jsx` e `src/data/people-index.json`: na ficha do livro, nomes de personagens ligam a `#person/<id>` e lugares do mapa do próprio livro ligam à aba Mapa (só a 1ª ocorrência por bloco; nome ambíguo como José/Tiago só liga se o livro desambiguar). O índice é gerado de `people.json` por `node scripts/build-people-index.mjs` (rode ao mudar `people.json`; o `npm run check` avisa se estiver velho).
 - `src/BackButton.jsx` e `src/route.js` (`goBack`, `canGoBack`): botão Voltar das páginas volta à página anterior do app (sem histórico, vai ao início). O início tem a casinha ao lado do título.
+- Temas (auto, dark, light e **parchment**/Pergaminho): `data-theme` em `<html>`, ciclo e botão em `src/App.jsx`, tokens em `src/styles.css` (regras do Pergaminho no fim do arquivo). O `@media` escuro exclui `data-theme='parchment'`; tema claro novo entra nessa exclusão. `src/Logo.jsx` é **placeholder** (o André vai enviar o vetor oficial). Tamanhos do mapa vêm de `--fs-map-label` (`src/useTheme.js`). Detalhes em `docs/tema-pergaminho.md`.
 - `src/BookModal.jsx`: página do livro (nome histórico; abas Resumo, Ficha, Mapa e Ler). `src/App.jsx`: grade, filtros, tema, idioma, link direto por hash (`#joh`).
 
 ## Regras de conteúdo
@@ -60,6 +61,7 @@ Tabela interativa dos 66 livros da Bíblia (inspirada no "TaBíblia Periódica")
 
 7. Versículos das fichas (versículo-chave, referências no esboço, nos textos e nas bios) linkados ao texto bíblico. **Adiado** até se decidir como o texto bíblico será oferecido (leitor próprio, YouVersion ou os dois; ver "Decisões em aberto").
 8. Plano de leitura (ex.: Provérbios em 31 dias, Salmos em 30). **Mais adiante**, depois da genealogia dos personagens e de mais eventos na linha do tempo (reis e profetas).
+8b. **Tema Pergaminho: feito** (`docs/tema-pergaminho.md`); logo oficial pendente (o André vai enviar o vetor).
 9. **Comercialização (Essencial, Pro, Premium).** Planos, decisões, restrições e fases em `docs/comercializacao.md` (fases 0 a 8 levam ao lançamento; gamificação, links externos e editor de conteúdo vêm depois). Landing: `docs/landing-brief.md`. Resumo: site atual no Cloudflare Pages, Supabase (login Google, planos, conteúdo Pro fora do site público, favoritos e "continuar de onde parei" sincronizados; sem cadastro ficam no aparelho), cobrança anual pelo Mercado Pago (checkout hospedado, sem cartão no site), landing em projeto separado, admin mínimo, LGPD, e só então licença nova e repositório privado. **Nada disso começa sem o André confirmar a fase 0.**
 
 ## Comandos
