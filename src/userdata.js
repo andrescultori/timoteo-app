@@ -232,8 +232,9 @@ export async function disconnectAccount({ flush: send = false } = {}) {
   if (send && account) {
     await Promise.race([Promise.all([flush(), sendPosition()]), new Promise((r) => setTimeout(r, 4000))]).catch(() => {});
   }
+  const wasConnected = !!account || !!backend.get(K.acc); // sem conta ligada (modo local, ainda sem o aceite dos Termos), os favoritos são só do aparelho: não apagar
   account = null;
   connecting = null;
   commit({ account: null });
-  if (send || backend.get(K.acc)) clearCache();
+  if (wasConnected) clearCache();
 }

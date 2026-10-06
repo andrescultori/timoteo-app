@@ -9,6 +9,7 @@ import { bySlug } from './data/books.js';
 //   #person  #person/davi          personagens (e pessoa)
 //   #favorites                     meus favoritos
 //   #profile                       meu perfil (conta)
+//   #terms  #privacy               Termos de Uso e Política de Privacidade
 //   #checkout/retorno              volta do pagamento no Mercado Pago (o servidor confere; a URL não libera nada)
 //   #tree/adao-jesus  #tree/adao-jesus/mt-salomao   genealogia (árvore e nó em foco)
 const TABS = ['summary', 'sheet', 'map', 'psalms', 'structure', 'read'];
@@ -21,6 +22,8 @@ export function parseHash(hash = location.hash) {
   if (a === 'favorites') return { kind: 'favorites' };
   if (a === 'profile') return { kind: 'profile' };
   if (a === 'checkout') return { kind: 'checkout' };
+  if (a === 'terms') return { kind: 'terms' };
+  if (a === 'privacy') return { kind: 'privacy' };
   if (a === 'tree') return { kind: 'tree', id: b || null, node: c || null };
   if (bySlug[a]) return { kind: 'book', slug: a, tab: TABS.includes(b) ? b : 'summary', place: c || null };
   return { kind: 'home' };
@@ -34,6 +37,8 @@ export const hrefs = {
   favorites: '#favorites',
   profile: '#profile',
   checkout: '#checkout/retorno',
+  terms: '#terms',
+  privacy: '#privacy',
   tree: (id = 'adao-jesus', node) => `#tree/${id}${node ? `/${node}` : ''}`,
 };
 

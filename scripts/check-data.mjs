@@ -421,6 +421,42 @@ for (const ver of VERSIONS) {
   ['favicon-32.png', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'og-image.png', 'manifest.webmanifest'].forEach((a) => exige(`public/${a}`));
 }
 
+// Textos legais (Fase 7): docs/legal/ é a fonte; as caixas de consentimento do app (src/legal/consent.js) copiam docs/legal/consentimento.md
+{
+  const legalDir = path.join(root, 'docs/legal');
+  const txt = (f) => fs.readFileSync(path.join(legalDir, f), 'utf8');
+  const termos = txt('termos-de-uso.md');
+  const politica = txt('politica-de-privacidade.md');
+  const consent = txt('consentimento.md');
+  const version = fs.readFileSync(path.join(root, 'src/legal/version.js'), 'utf8').match(/LEGAL_VERSION = '([^']*)'/)?.[1];
+  if (!version) err('src/legal/version.js: não achei LEGAL_VERSION');
+
+  // as caixas do app têm que ser cópia fiel dos textos do André
+  const consentSrc = fs.readFileSync(path.join(root, 'src/legal/consent.js'), 'utf8');
+  const strings = [...consentSrc.matchAll(/^\s*(?:box1|box2|box3|footer|base|pro|confirm):\s*('(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"),?$/gm)].map((m) => Function(`return ${m[1]}`)());
+  if (strings.length !== 7) err(`consent.js: esperava 7 textos, achei ${strings.length}`);
+  for (const str of strings) {
+    const normal = str.replace('{data}', 'DD/MM/AAAA').replace('{email}', '[e-mail]');
+    if (!consent.includes(normal)) err(`consent.js: texto diferente de docs/legal/consentimento.md: "${normal.slice(0, 60)}…"`);
+  }
+
+  // o que os textos afirmam (preços, prazo de reembolso) tem que bater com a configuração
+  const cfg = read('src/data/plans.json').plans.pro;
+  const brl = (v) => `R$ ${v.toFixed(2).replace('.', ',')}`;
+  const billing = read('src/data/billing.json');
+  if (!termos.includes(brl(cfg.price))) err(`termos-de-uso.md não cita o preço do Pro (${brl(cfg.price)}) de plans.json`);
+  if (!termos.includes(brl(cfg.entryPrice))) err(`termos-de-uso.md não cita o preço de entrada (${brl(cfg.entryPrice)}) de plans.json`);
+  if (!termos.includes(`${billing.refundDays} dias`)) err(`termos-de-uso.md não cita o prazo de reembolso de billing.json (${billing.refundDays} dias)`);
+  if (!consent.includes(`${billing.refundDays} dias`)) err(`consentimento.md não cita o prazo de reembolso de billing.json (${billing.refundDays} dias)`);
+
+  // pendências: só avisam (o André revisa, e a cobrança não deve ligar em produção antes)
+  const pend = (nome, t) => (t.match(/\[(?!Termos de Uso\]|Política de Privacidade\]|e-mail\])[^\]\n]+\]/g) ?? []).length;
+  const nT = pend('termos', termos);
+  const nP = pend('politica', politica);
+  if (version === 'rascunho') console.warn('Aviso: LEGAL_VERSION = "rascunho" (src/legal/version.js): textos legais em revisão. Publique uma versão com data antes de ligar VITE_BILLING_ENABLED em produção.');
+  if (nT + nP) console.warn(`Aviso: ${nT} pendência(s) [entre colchetes] nos Termos e ${nP} na Política de Privacidade (docs/legal/). Resolver antes de publicar.`);
+}
+
 if (errors.length) {
   console.error(`${errors.length} problema(s):`);
   errors.slice(0, 60).forEach((e) => console.error(` - ${e}`));

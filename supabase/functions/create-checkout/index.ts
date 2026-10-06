@@ -23,6 +23,10 @@ Deno.serve(async (req: Request) => {
     const user = await db.getUser(bearer(req));
     if (!user) return json({ error: 'unauthorized' }, 401, cors);
 
+    // só quem aceitou os Termos (18+) compra: sem aceite, o app abre o consentimento
+    const terms = await db.getProfileTerms(user.id);
+    if (!terms?.terms_accepted_at) return json({ error: 'terms_required' }, 403, cors);
+
     const ent = await db.getEntitlement(user.id);
     const kind = priceKind(ent?.usou_preco_de_entrada === true);
     const cents = PRICE_CENTS[kind];

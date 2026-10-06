@@ -21,6 +21,7 @@ export async function reconcileRow(row, { search, db, log = console.error }) {
     const d = o.detail?.result;
     if (o.result === 'rejected') log(`conciliação: pagamento recusado pela conferência (${o.reason}): payment ${row.id}`);
     if (d === 'reversed') log(`conciliação: ${o.status === 'charged_back' ? 'estorno' : 'reembolso'} aplicado: payment ${row.id}`);
+    if (d === 'orphan') log(`conciliação: pagamento de conta excluída (órfão) ${o.status}; se foi aprovado, reembolsar à mão no Mercado Pago: payment ${row.id}`);
     if (d === 'duplicate_payment' || d === 'duplicate_entry') log(`conciliação: ${d}, reembolsar à mão: payment ${row.id}`);
     if (d && d !== 'noop') changed = true;
   }
