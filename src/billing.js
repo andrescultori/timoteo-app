@@ -23,7 +23,12 @@ const MP_HOST = /(^|\.)mercadopago\.(com|com\.br)$/;
 export async function startCheckout() {
   const client = await getClient();
   const { data, error } = await client.functions.invoke('create-checkout', { body: {} });
-  if (error || !data?.url) throw new Error('checkout_unavailable');
+  if (error) {
+    let code = '';
+    try { code = (await error.context.json())?.error ?? ''; } catch { /* sem corpo legível */ }
+    throw new Error(code === 'terms_required' ? 'terms_required' : 'checkout_unavailable'); // sem aceite dos Termos o servidor recusa (403)
+  }
+  if (!data?.url) throw new Error('checkout_unavailable');
   const u = new URL(data.url);
   if (u.protocol !== 'https:' || !MP_HOST.test(u.hostname)) throw new Error('checkout_unavailable'); // só segue para o Mercado Pago
   window.location.assign(u.href);

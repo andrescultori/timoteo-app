@@ -424,6 +424,135 @@ const driftSec = async (user, months) => Number((await q(
   await q(`update public.payments set approved_at = now() - interval '100 days' where user_id = $1`, [ul]);
 }
 
+// Fase 7 (LGPD): accept_legal, exclusão de conta e pagamentos órfãos
+{
+  const as = async (uid, fn) => { // executa como `authenticated` com auth.uid() = uid (ou anônimo, uid = null)
+    await db.exec(`set role ${uid === 'anon' ? 'anon' : 'authenticated'}; select set_config('request.jwt.claim.sub', '${uid && uid !== 'anon' ? uid : ''}', false);`);
+    try { return await fn(); } finally { await db.exec(`reset role; select set_config('request.jwt.claim.sub', '', false);`); }
+  };
+  const profile = async (id) => (await q(`select terms_version, terms_accepted_at, sensitive_consent_at, sensitive_consent_version, marketing_consent, marketing_consent_at from public.profiles where id = $1`, [id]))[0];
+
+  // accept_legal
+  const u = await newUser();
+  eq((await profile(u)).terms_accepted_at, null, 'novo usuário: sem aceite');
+  await as(u, () => q(`select public.accept_legal('2026-10-10', true)`));
+  let pf = await profile(u);
+  eq([pf.terms_version, pf.sensitive_consent_version, pf.marketing_consent], ['2026-10-10', '2026-10-10', true], 'accept_legal grava versões e novidades');
+  ok(pf.terms_accepted_at && Math.abs(Date.now() - pf.terms_accepted_at.getTime()) < 60000, 'data do aceite é do servidor');
+  ok(pf.sensitive_consent_at && pf.marketing_consent_at, 'consentimento sensível e de novidades carimbados');
+  await as(u, () => q(`select public.accept_legal('2026-10-11')`));
+  pf = await profile(u);
+  eq([pf.terms_version, pf.marketing_consent], ['2026-10-11', true], 'p_marketing nulo mantém a escolha de novidades');
+  await as(u, () => q(`select public.accept_legal('2026-10-11', false)`));
+  eq((await profile(u)).marketing_consent, false, 'p_marketing falso desliga as novidades');
+  await as(null, async () => rejects(() => q(`select public.accept_legal('x')`), 'sem login não grava aceite'));
+  await as(u, async () => {
+    await rejects(() => q(`select public.accept_legal('')`), 'versão vazia é recusada');
+    await rejects(() => q(`select public.accept_legal(null)`), 'versão nula é recusada');
+    await rejects(() => q(`update public.profiles set terms_accepted_at = now() where id = $1`, [u]), 'cliente não grava terms_accepted_at direto');
+    await rejects(() => q(`update public.profiles set sensitive_consent_at = now() where id = $1`, [u]), 'cliente não grava sensitive_consent_at direto');
+    await rejects(() => q(`update public.profiles set terms_version = 'x' where id = $1`, [u]), 'cliente não grava terms_version direto');
+    await q(`update public.profiles set name = 'Teste' where id = $1`, [u]); ok(true, 'cliente ainda edita o nome');
+  });
+  await as('anon', async () => rejects(() => q(`select public.accept_legal('x')`), 'anon não executa accept_legal'));
+  const other = await newUser();
+  await as(other, () => q(`select public.accept_legal('v-outro', false)`));
+  eq((await profile(u)).terms_version, '2026-10-11', 'aceite de um usuário não mexe no de outro');
+
+  // exclusão de conta
+  const d = await newUser();
+  const dOther = await newUser();
+  await q(`insert into public.favorites (user_id, key) values ($1, 'book:gen'), ($1, 'person:davi'), ($2, 'book:exo')`, [d, dOther]);
+  await q(`insert into public.reading_position (user_id, version, slug, chapter) values ($1, 'kjv', 'gen', 1)`, [d]);
+  await q(`insert into public.waitlist (user_id, feature) values ($1, 'pro')`, [d]);
+  const pApproved = await newPay(d); await apply(pApproved, 'approved', 2990, 'mpDEL1');
+  const pRefunded = await newPay(d); await apply(pRefunded, 'approved', 2990, 'mpDEL2'); await apply(pRefunded, 'refunded', 2990, 'mpDEL2');
+  const pPending = await newPay(d);
+  const pRejected = await newPay(d); await apply(pRejected, 'rejected');
+  const pCancelled = await newPay(d); await apply(pCancelled, 'cancelled');
+  const dResult = (await q(`select public.delete_account_data($1) as r`, [d]))[0].r;
+  eq(dResult, { deleted_payments: 2, anonymized_payments: 3 }, 'exclusão: 2 apagados (recusado e cancelado) e 3 anonimizados');
+  for (const t of ['favorites', 'reading_position', 'waitlist', 'entitlements']) eq(Number((await q(`select count(*) as n from public.${t} where user_id = $1`, [d]))[0].n), 0, `exclusão apaga ${t}`);
+  eq(Number((await q(`select count(*) as n from public.profiles where id = $1`, [d]))[0].n), 0, 'exclusão apaga o perfil');
+  const pays = await q(`select id, status, user_id from public.payments where id in ($1, $2, $3, $4, $5)`, [pApproved, pRefunded, pPending, pRejected, pCancelled]);
+  eq(pays.map((x) => x.status).sort(), ['approved', 'pending', 'refunded'], 'sobram aprovado, reembolsado e pendente');
+  ok(pays.every((x) => x.user_id === null), 'os pagamentos que ficam estão anonimizados (user_id nulo)');
+  eq(Number((await q(`select count(*) as n from public.favorites where user_id = $1`, [dOther]))[0].n), 1, 'exclusão não mexe nos dados de outro usuário');
+  eq((await q(`select public.delete_account_data($1) as r`, [d]))[0].r, { deleted_payments: 0, anonymized_payments: 0 }, 'exclusão é idempotente');
+  // o Auth apaga depois (aqui simulado): nada quebra e os pagamentos continuam
+  await q(`delete from auth.users where id = $1`, [d]);
+  eq(Number((await q(`select count(*) as n from public.payments where id = $1`, [pApproved]))[0].n), 1, 'apagar o usuário no Auth não apaga o pagamento');
+
+  // FK on delete set null: apagar o usuário direto também só anonimiza
+  const f = await newUser();
+  const pf1 = await newPay(f); await apply(pf1, 'approved', 2990, 'mpFK1');
+  await q(`delete from auth.users where id = $1`, [f]);
+  eq((await q(`select user_id from public.payments where id = $1`, [pf1]))[0].user_id, null, 'FK: apagar o usuário deixa o pagamento com user_id nulo');
+  eq((await pay(pf1)).status, 'approved', 'FK: o pagamento segue aprovado');
+
+  // administradores
+  const solo = await newUser();
+  await q(`insert into public.app_admins (user_id) select $1 where not exists (select 1 from public.app_admins)`, [solo]);
+  const soloIsOnly = Number((await q(`select count(*) as n from public.app_admins`))[0].n) === 1;
+  if (soloIsOnly) {
+    await rejects(() => q(`select public.delete_account_data($1)`, [solo]), 'o único administrador não pode ser excluído');
+    eq(Number((await q(`select count(*) as n from public.app_admins where user_id = $1`, [solo]))[0].n), 1, 'o único admin continua admin');
+  }
+  const second = await newUser();
+  await q(`insert into public.app_admins (user_id) values ($1)`, [second]);
+  await q(`select public.delete_account_data($1)`, [second]); ok(true, 'com outro admin, um deles pode ser excluído');
+  eq(Number((await q(`select count(*) as n from public.app_admins where user_id = $1`, [second]))[0].n), 0, 'o admin excluído sai da lista');
+  const plain = await newUser();
+  await q(`select public.delete_account_data($1)`, [plain]); ok(true, 'usuário comum é excluído mesmo havendo admin único');
+
+  // pagamento órfão: nunca mexe em plano de ninguém
+  const pro = await newUser();
+  const pPro = await newPay(pro); await apply(pPro, 'approved', 2990, 'mpORF0');
+  const proBefore = await ent(pro);
+  const orphanPending = pPending; // ficou pendente e anônimo
+  const orphanRes = await apply(orphanPending, 'approved', 2990, 'mpORF1');
+  eq([orphanRes.result, (await pay(orphanPending)).status, (await pay(orphanPending)).months_granted], ['orphan', 'approved', 0], 'Pix pago depois da exclusão: aprovado, 0 meses, resultado orphan');
+  eq((await apply(orphanPending, 'approved', 2990, 'mpORF1')).result, 'noop', 'órfão aprovado de novo: sem efeito');
+  eq((await apply(orphanPending, 'refunded', 2990, 'mpORF1')).result, 'orphan', 'reembolso do órfão é registrado');
+  eq((await pay(orphanPending)).status, 'refunded', 'órfão reembolsado');
+  eq((await apply(orphanPending, 'refunded', 2990, 'mpORF1')).result, 'noop', 'reembolso do órfão repetido: sem efeito');
+  const proAfter = await ent(pro);
+  eq([proAfter.plan, proAfter.expires_at.toISOString(), proAfter.usou_preco_de_entrada], [proBefore.plan, proBefore.expires_at.toISOString(), proBefore.usou_preco_de_entrada], 'pagamento órfão não mexe no plano de ninguém');
+  eq(Number((await q(`select count(*) as n from public.entitlements where user_id is null`))[0].n), 0, 'nenhuma linha de entitlements sem dono');
+  // órfão recusado
+  const orphanP2 = await newPay(await newUser()); await q(`update public.payments set user_id = null where id = $1`, [orphanP2]);
+  eq((await apply(orphanP2, 'rejected')).result, 'orphan', 'órfão pendente recusado é registrado');
+
+  // conciliação enxerga o órfão (reembolso pode chegar depois da exclusão)
+  const orphanR = await newPay(await newUser(), 2990, 'cheio'); await apply(orphanR, 'approved', 2990, 'mpORF9').catch(() => {});
+  await q(`update public.payments set user_id = null where id = $1`, [orphanR]);
+  await q(`update public.payments set reconciled_at = null where id = $1`, [orphanR]);
+  const sqlDb2 = {
+    getPayment: async (id) => (await q(`select * from public.payments where id = $1`, [id]))[0] ?? null,
+    applyPayment: async ({ paymentId, mpPaymentId, status, amountCents }) => (await q(`select public.apply_payment($1, $2, $3, $4) as r`, [paymentId, mpPaymentId, status, amountCents]))[0].r,
+    paymentsToReconcile: async (limit) => q(`select * from public.payments_to_reconcile($1)`, [limit]),
+    markReconciled: async (id) => q(`update public.payments set reconciled_at = now() where id = $1`, [id]),
+  };
+  const orphanRow = (await q(`select amount_cents from public.payments where id = $1`, [orphanR]))[0];
+  ok((await q(`select id from public.payments_to_reconcile(200)`)).some((x) => x.id === orphanR), 'a conciliação seleciona pagamentos órfãos');
+  const recLogs = [];
+  const recRes = await handleReconcile(new Request('https://x/f', { method: 'POST', headers: { 'x-reconcile-secret': 'seg-ok' } }), {
+    secret: 'seg-ok', db: sqlDb2, log: (m) => recLogs.push(m),
+    search: async (id) => (id === orphanR ? [{ id: 'mpORF9', external_reference: orphanR, currency_id: 'BRL', transaction_amount: orphanRow.amount_cents / 100, status: 'refunded' }] : []),
+  });
+  eq(recRes.status, 200, 'conciliação com órfão responde 200');
+  eq((await pay(orphanR)).status, 'refunded', 'conciliação aplica o reembolso do órfão');
+  ok(recLogs.some((m) => m.includes('órfão') && m.includes(orphanR)), 'órfão vai para o log (só o id do pagamento)');
+  ok(recLogs.every((m) => !m.includes('@')), 'log sem e-mail');
+
+  // RLS: órfão invisível para os usuários
+  await as(u, async () => eq(Number((await q(`select count(*) as n from public.payments where user_id is null`))[0].n), 0, 'RLS: pagamento órfão não aparece para o cliente'));
+  eq((await q(`select * from public.user_payments_to_verify($1)`, [u])).filter((x) => x.user_id === null).length, 0, 'verify não devolve órfão');
+  // permissões das funções novas
+  await as(u, async () => rejects(() => q(`select public.delete_account_data($1)`, [u]), 'cliente não executa delete_account_data'));
+  await as('anon', async () => rejects(() => q(`select public.delete_account_data($1)`, [u]), 'anon não executa delete_account_data'));
+}
+
 // permissões: o cliente não grava nem executa nada
 {
   const u = await newUser();

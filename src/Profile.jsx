@@ -6,6 +6,7 @@ import { usePlan, refreshPlan } from './plan.js';
 import { SubscribeBlock } from './ProInvite.jsx';
 import { billingEnabled, listPayments, verifyPayment, formatBRL } from './billing.js';
 import billing from './data/billing.json';
+import YourData from './YourData.jsx';
 
 const SEX = ['female', 'male', 'other'];
 const AGE = ['18-24', '25-34', '35-44', '45-54', '55-64', '65+'];
@@ -122,6 +123,7 @@ export default function Profile({ lang, t }) {
               <p className="tl-warn">{user?.email}</p>
             </form>
           )}
+          {status === 'in' && form && <YourData t={t} lang={lang} />}
           {status === 'in' && billingEnabled && (
             <section className="profile-pay" aria-labelledby="pf-pay">
               <h3 id="pf-pay">{t.payTitle}</h3>

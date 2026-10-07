@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { connectAccount, disconnectAccount } from './userdata.js';
+import { LEGAL_VERSION, isDraft } from './legal/version.js';
 
 // Login opcional com Google (Supabase). O app nunca exige conta. O cliente do Supabase só é carregado (import dinâmico) quando
 // há uma sessão guardada no aparelho ou uma volta de login (?code=) ou quando a pessoa clica em Entrar: quem só lê não
@@ -15,7 +16,9 @@ export function getClient() {
 }
 
 // status: 'off' (sem variáveis) | 'loading' (restaurando a sessão) | 'out' | 'in'
-let state = { status: authEnabled ? 'out' : 'off', user: null, error: null };
+// consent (Fase 7): 'unknown' | 'checking' | 'ok' | 'needed' | 'error'. Só com 'ok' os favoritos e a posição de leitura sincronizam
+// com a conta (connectAccount); antes disso o app fica em modo local. consentOpen = modal de consentimento aberto.
+let state = { status: authEnabled ? 'out' : 'off', user: null, error: null, consent: 'unknown', consentOpen: false, legal: null };
 const listeners = new Set();
 const set = (next) => { state = { ...state, ...next }; listeners.forEach((fn) => fn()); };
 const subscribe = (fn) => { listeners.add(fn); return () => listeners.delete(fn); };
@@ -28,7 +31,7 @@ const nameOf = (user) => user?.user_metadata?.full_name || user?.user_metadata?.
 
 export function useSession() {
   const s = useSyncExternalStore(subscribe, get, get);
-  return { enabled: authEnabled, status: s.status, user: s.user, name: nameOf(s.user), error: s.error, signedIn: s.status === 'in' };
+  return { enabled: authEnabled, status: s.status, user: s.user, name: nameOf(s.user), error: s.error, signedIn: s.status === 'in', consent: s.consent, consentOpen: s.consentOpen, legal: s.legal };
 }
 
 const RETURN_KEY = 'authReturnHash';
@@ -59,10 +62,65 @@ function cleanReturnUrl() {
 function applySession(client, session) {
   if (session?.user) {
     set({ status: 'in', user: session.user, error: null });
-    connectAccount(client, session.user.id);
+    afterSession(client, session.user);
   } else {
     set({ status: 'out', user: null });
   }
+}
+
+// ---- Fase 7: aceite dos Termos e consentimento sensível antes de sincronizar ----------------------------------------------------
+const PENDING_KEY = 'legalPending';
+const DISMISS_KEY = 'consentDismissed';
+const ss = {
+  get(k) { try { return sessionStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { sessionStorage.setItem(k, v); } catch { /* ignora */ } },
+  remove(k) { try { sessionStorage.removeItem(k); } catch { /* ignora */ } },
+};
+const readPending = () => { try { const p = JSON.parse(ss.get(PENDING_KEY)); return p && typeof p.version === 'string' ? p : null; } catch { return null; } };
+
+const consentOk = (p) => !!p?.terms_accepted_at && !!p?.sensitive_consent_at && (isDraft || p.terms_version === LEGAL_VERSION);
+
+// Depois do login: grava o aceite pendente (RPC accept_legal, a data é do servidor), confere o perfil e só então liga a sincronização.
+let gate = { userId: null, promise: null };
+function afterSession(client, user) {
+  if (gate.userId === user.id && gate.promise) return gate.promise;
+  const promise = (async () => {
+    set({ consent: 'checking' });
+    try {
+      const pending = readPending();
+      if (pending) {
+        const { error } = await client.rpc('accept_legal', { p_version: pending.version, p_marketing: pending.marketing });
+        if (error) throw error;
+        ss.remove(PENDING_KEY);
+      }
+      const { data, error } = await client.from('profiles').select('terms_version,terms_accepted_at,sensitive_consent_at,marketing_consent').eq('id', user.id).maybeSingle();
+      if (error) throw error;
+      if (consentOk(data)) { set({ consent: 'ok', legal: data }); connectAccount(client, user.id); }
+      else set({ consent: 'needed', legal: data ?? null, consentOpen: ss.get(DISMISS_KEY) !== '1' }); // modo local até aceitar
+    } catch {
+      set({ consent: 'error' }); // sem rede ou erro: não sincroniza; tenta de novo no próximo carregamento
+    }
+  })();
+  gate = { userId: user.id, promise };
+  return promise;
+}
+
+// Abre o consentimento (deslogado: antes do login; logado sem aceite: para concluir o cadastro)
+export const openConsent = () => { ss.remove(DISMISS_KEY); set({ consentOpen: true, error: null }); };
+export function dismissConsent() { if (state.status === 'in') ss.set(DISMISS_KEY, '1'); set({ consentOpen: false }); }
+
+// Logado sem aceite: grava o aceite agora e liga a sincronização. Devolve true se deu certo.
+export async function acceptLegalNow({ marketing }) {
+  try {
+    const client = await getClient();
+    const { error } = await client.rpc('accept_legal', { p_version: LEGAL_VERSION, p_marketing: marketing });
+    if (error) throw error;
+    gate = { userId: null, promise: null };
+    ss.remove(DISMISS_KEY);
+    set({ consentOpen: false });
+    if (state.user) await afterSession(client, state.user);
+    return true;
+  } catch { return false; }
 }
 
 let started = false;
@@ -77,10 +135,10 @@ async function start() {
     client.auth.onAuthStateChange((event, session) => {
       // não aguardar chamadas ao Supabase dentro deste callback (risco de travar): adia para o próximo ciclo
       setTimeout(() => {
-        if (event === 'SIGNED_OUT') { disconnectAccount(); set({ status: 'out', user: null }); }
+        if (event === 'SIGNED_OUT') { disconnectAccount(); gate = { userId: null, promise: null }; set({ status: 'out', user: null, consent: 'unknown', consentOpen: false, legal: null }); }
         else if (session?.user && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED')) {
           set({ status: 'in', user: session.user });
-          if (event === 'SIGNED_IN') connectAccount(client, session.user.id);
+          if (event === 'SIGNED_IN') afterSession(client, session.user);
         }
       }, 0);
     });
@@ -95,20 +153,43 @@ async function start() {
 }
 if (typeof window !== 'undefined') start();
 
-export async function signInWithGoogle() {
+// Entrar: antes de ir ao Google, mostra o consentimento (3 caixas). A tela chama startGoogleSignIn depois do "Continuar".
+export function signInWithGoogle() { openConsent(); return true; }
+
+export async function startGoogleSignIn({ marketing }) {
   try {
     const client = await getClient();
     if (!client) return false;
+    // as escolhas esperam a volta do OAuth e só então viram o aceite no banco (accept_legal)
+    ss.set(PENDING_KEY, JSON.stringify({ version: LEGAL_VERSION, marketing: !!marketing, at: new Date().toISOString() }));
     try { sessionStorage.setItem(RETURN_KEY, window.location.hash); } catch { /* ignora */ }
-    set({ error: null });
+    set({ error: null, consentOpen: false });
     // As rotas são por hash: o retorno é a origem + caminho, sem hash; a rota é restaurada por cleanReturnUrl()
     const { error } = await client.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + window.location.pathname } });
     if (error) throw error;
     return true;
   } catch {
+    ss.remove(PENDING_KEY);
     set({ error: 'auth' });
     return false;
   }
+}
+
+// Exclusão da conta (Fase 7): a Edge Function apaga os dados e o usuário no Auth; aqui limpa o que ficou neste aparelho.
+// Erros: 'email_mismatch' | 'last_admin' | 'internal'.
+export async function deleteAccount(email) {
+  const client = await getClient();
+  const { error } = await client.functions.invoke('delete-account', { body: { email } });
+  if (error) {
+    let code = '';
+    try { code = (await error.context.json())?.error ?? ''; } catch { /* sem corpo legível */ }
+    throw new Error(code === 'email_mismatch' || code === 'last_admin' ? code : 'internal');
+  }
+  await disconnectAccount(); // limpa o cache da conta neste aparelho (os favoritos do modo local, que nunca subiram, ficam)
+  try { await client.auth.signOut({ scope: 'local' }); } catch { /* o usuário já não existe no servidor */ }
+  try { localStorage.removeItem('planCache'); } catch { /* ignora */ }
+  gate = { userId: null, promise: null };
+  set({ status: 'out', user: null, consent: 'unknown', consentOpen: false, legal: null });
 }
 
 export async function signOut() {
@@ -117,5 +198,6 @@ export async function signOut() {
     await disconnectAccount({ flush: true }); // envia o que falta e limpa o cache da conta neste aparelho
     await client?.auth.signOut();
   } catch { /* mesmo com erro de rede, a sessão local é encerrada abaixo */ }
-  set({ status: 'out', user: null });
+  gate = { userId: null, promise: null };
+  set({ status: 'out', user: null, consent: 'unknown', consentOpen: false, legal: null });
 }

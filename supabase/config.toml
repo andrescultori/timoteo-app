@@ -19,3 +19,7 @@ verify_jwt = false
 # Conciliação diária (Fase 4): chamada pelo GitHub Actions com o segredo RECONCILE_SECRET no cabeçalho x-reconcile-secret.
 [functions.reconcile-payments]
 verify_jwt = false
+
+# Exclusão de conta (Fase 7): exige JWT do usuário (e o e-mail digitado, conferido no código).
+[functions.delete-account]
+verify_jwt = true

@@ -140,3 +140,34 @@ curl -sS -X POST -H "x-reconcile-secret: $RECONCILE_SECRET" \
 Resposta esperada: `{"read":N,"changed":M,"errors":0}` com HTTP 200. `read` = pagamentos reconferidos (até 200); `changed` = quantos mudaram de estado (por exemplo, um reembolso aplicado); `errors` > 0 devolve HTTP 500 (alguma consulta ao Mercado Pago falhou; as demais foram processadas e a linha com erro é tentada de novo na próxima). Nada de dado pessoal no resumo nem no log.
 - Quando algo mudar, o rastro está em Edge Functions → `reconcile-payments` → Logs: `reembolso aplicado`, `estorno aplicado`, `duplicate_payment`/`duplicate_entry` e `reembolso parcial`, sempre com o id do pagamento (o `payments.id`, que é o `external_reference`).
 - Para conferir um caso: depois da execução, o pagamento está `refunded`/`charged_back` e o `entitlements` do usuário voltou ao Essencial (se esse era o único com meses), com `usou_preco_de_entrada = false`.
+
+
+---
+
+# LGPD: aceite, exportar e excluir conta (Fase 7)
+
+Migration `20261010000000_fase7_lgpd.sql` (**idempotente**, aplique depois das anteriores) e a função `delete-account`. Nada é aplicado ou publicado automaticamente.
+
+## O que há
+- `profiles`: colunas `terms_version`, `terms_accepted_at`, `sensitive_consent_at`, `sensitive_consent_version`. O cliente **não** as grava direto; só a RPC `accept_legal(p_version, p_marketing)` (security definer, só `authenticated`, data do servidor).
+- `payments.user_id` agora é **nulo** quando a conta é excluída (FK `on delete set null`): o registro fiscal fica, sem ligação com a pessoa. `apply_payment` ganhou o resultado `orphan` (atualiza só o pagamento, nunca um plano).
+- `delete_account_data(uuid)` (só `service_role`): apaga favoritos, posição de leitura, "Avise-me", plano, perfil e a linha de `app_admins`; apaga pagamentos rejeitados e cancelados; **anonimiza** os demais (aprovados, reembolsados, estornados e **pendentes**); recusa o **único** admin. Idempotente.
+- `functions/delete-account` (`verify_jwt = true`): confere o JWT e o **e-mail digitado**, chama `delete_account_data` e apaga o usuário no Auth (`DELETE /auth/v1/admin/users/{id}`, com a `service_role` do ambiente da função). Se o Auth falhar depois da limpeza, é só repetir. Não reembolsa nem cancela o Pro. Usa o secret `APP_URL` (CORS), o mesmo da Fase 4.
+- Testes: `npm test` cobre `accept_legal`, a exclusão, o admin único, o pagamento órfão e a conciliação com órfão.
+
+## Aplicar e publicar
+1. Aplicar a migration (painel, CLI ou MCP, como nas outras).
+2. Publicar: `supabase functions deploy delete-account --project-ref zqxodmjrbzmyhnkqszqh`. Republicar `create-checkout`, `mp-webhook` e `reconcile-payments` (o primeiro agora exige o aceite dos Termos; os outros registram o pagamento órfão no log).
+3. Conferir no Advisors que não há alerta novo.
+
+## Testar com uma conta de teste
+1. Entre com uma conta Google de teste: o modal de consentimento aparece antes do Google; marque as caixas 1 e 2. Depois do login, em `profiles`, `terms_accepted_at` e `sensitive_consent_at` estão preenchidos.
+2. `#profile` → **Seus dados**: "Baixar meus dados" baixa um JSON (perfil, plano, favoritos, posição, "Avise-me" e pagamentos).
+3. Crie um favorito e um checkout de teste (deixe pendente). **Excluir minha conta**: digite o e-mail e confirme. Esperado: volta ao início deslogado; no SQL Editor, `select count(*) from auth.users where email = '...'` = 0, sem linhas em `favorites`, `profiles` etc., e o pagamento pendente com `user_id` nulo.
+4. Conta que já existia antes da Fase 7: ao entrar, o app abre o consentimento e fica em modo local (nada em `favorites` no Supabase) até aceitar.
+
+## Tratando pagamentos órfãos
+Pagamento de conta excluída que for **aprovado depois** (Pix pago tarde) aparece no log como `pagamento de conta excluída (órfão) aprovado, reembolsar à mão`. Reembolse no painel do Mercado Pago: o webhook ou a conciliação registram o reembolso, sem mexer em plano nenhum.
+
+## Antes de ligar a cobrança em produção
+O `npm run check` avisa enquanto os textos legais estiverem em rascunho. **Pré-requisito para `VITE_BILLING_ENABLED=true` em produção:** textos revisados e publicados (`LEGAL_VERSION` com data em `src/legal/version.js`, sem `[colchetes]` em `docs/legal/`), prazo fiscal confirmado com o contador e `refundContact` definitivo em `src/data/billing.json`.

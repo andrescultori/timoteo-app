@@ -50,3 +50,6 @@ Saíram do app o modo automático (que seguia o sistema) e os temas claro e escu
 ## Adicionar outro tema
 1. Crie `:root[data-theme='nome']` em `src/styles.css` com todos os tokens (copie o bloco `light`) e `color-scheme`.
 2. Inclua o valor em `THEMES`/`THEME_LABEL` e nas chaves `theme…` do `src/i18n.js`; ajuste o script do `index.html` e o ciclo do botão (`THEMES` em `App.jsx`).
+
+## Fontes
+Cormorant Garamond (títulos) e EB Garamond (texto) são **hospedadas no próprio app** (`src/fonts.css`, `src/fonts/`, só os subconjuntos latin e latin-ext; licença SIL OFL 1.1 em `public/licencas/`). Não carregar do Google Fonts: o navegador do visitante enviaria o IP a terceiros (a Política de Privacidade diz que não há isso).

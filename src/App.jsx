@@ -5,6 +5,7 @@ import BookModal from './BookModal.jsx';
 import Logo from './Logo.jsx';
 import { HeartIcon } from './icons.jsx';
 import Account from './Account.jsx';
+import ConsentModal from './ConsentModal.jsx';
 import { useSession, signInWithGoogle } from './auth.js';
 import { usePlan } from './plan.js';
 import ProInvite from './ProInvite.jsx';
@@ -22,6 +23,7 @@ const Genealogy = lazy(() => import('./Genealogy.jsx'));
 const Favorites = lazy(() => import('./Favorites.jsx'));
 const Profile = lazy(() => import('./Profile.jsx'));
 const Checkout = lazy(() => import('./Checkout.jsx'));
+const Legal = lazy(() => import('./Legal.jsx'));
 
 const store = {
   get(k, d) { try { return localStorage.getItem(k) ?? d; } catch { return d; } },
@@ -90,6 +92,7 @@ export default function App() {
   const [route, setRoute] = useState(parseHash);
   const [settings, setSettings] = useState(() => ({ showScholarly: store.get('showScholarly', '1') !== '0' }));
   const plan = usePlan();
+  const session = useSession();
   // A posição acadêmica é oculta para todos e visível só para o administrador (can('academic')); o interruptor das Configurações vale só para ele
   const effectiveSettings = { ...settings, showScholarly: plan.can('academic') && settings.showScholarly };
   const [showSettings, setShowSettings] = useState(false);
@@ -229,6 +232,11 @@ export default function App() {
           <Checkout lang={lang} t={t} />
         </Suspense>
       )}
+      {(route.kind === 'terms' || route.kind === 'privacy') && (
+        <Suspense fallback={<p className="soon page-wait">{t.loading}</p>}>
+          <Legal kind={route.kind} lang={lang} t={t} />
+        </Suspense>
+      )}
       {route.kind === 'favorites' && (
         <Suspense fallback={<p className="soon page-wait">{t.loading}</p>}>
           <Favorites lang={lang} t={t} />
@@ -254,8 +262,13 @@ export default function App() {
         <a href="https://github.com/andrescultori" target="_blank" rel="noopener noreferrer">André Scultori</a>
         {' · © 2026 · '}
         <a href="https://github.com/andrescultori/timoteo-app" target="_blank" rel="noopener noreferrer">GitHub</a>
+        {' · '}
+        <a href={hrefs.terms}>{t.termsLink}</a>
+        {' · '}
+        <a href={hrefs.privacy}>{t.privacyLink}</a>
       </footer>
       <DeviceNotice t={t} />
+      {session.consentOpen && <ConsentModal t={t} lang={lang} />}
       {showSettings && <SettingsModal t={t} settings={settings} canAcademic={plan.can('academic')} onChange={setSettings} onClose={() => setShowSettings(false)} />}
     </SettingsContext.Provider>
   );

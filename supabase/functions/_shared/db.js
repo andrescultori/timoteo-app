@@ -19,9 +19,17 @@ export function createDb({ url, serviceKey }) {
       const res = await fetch(`${url}/auth/v1/user`, { headers: { apikey: serviceKey, Authorization: `Bearer ${jwt}` }, signal: AbortSignal.timeout(10000) });
       if (!res.ok) return null;
       const u = await res.json();
-      return u?.id ? { id: u.id } : null;
+      return u?.id ? { id: u.id, email: typeof u.email === 'string' ? u.email : null } : null;
     },
     getEntitlement: (userId) => one(`entitlements?user_id=eq.${userId}&select=plan,expires_at,usou_preco_de_entrada`),
+    // Fase 7: aceite dos Termos (create-checkout exige) e exclusão de conta
+    getProfileTerms: (userId) => one(`profiles?id=eq.${userId}&select=terms_accepted_at`),
+    deleteAccountData: (userId) => rest('rpc/delete_account_data', { method: 'POST', body: JSON.stringify({ p_user_id: userId }) }),
+    // apaga o usuário no Auth (Admin API). 404 = já apagado (repetir é seguro).
+    async deleteAuthUser(userId) {
+      const res = await fetch(`${url}/auth/v1/admin/users/${userId}`, { method: 'DELETE', headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` }, signal: AbortSignal.timeout(10000) });
+      if (!res.ok && res.status !== 404) throw new Error(`auth respondeu ${res.status}`);
+    },
     getPayment: (id) => one(`payments?id=eq.${id}&select=*`),
     recentPayments: (userId) => rest(`payments?user_id=eq.${userId}&created_at=gte.${new Date(Date.now() - 3 * 864e5).toISOString()}&select=*&order=created_at.desc&limit=5`),
     // conciliação: ver a migration 20261009000000_fase4_conciliacao.sql

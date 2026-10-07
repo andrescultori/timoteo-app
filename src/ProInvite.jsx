@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import BackButton from './BackButton.jsx';
 import WaitlistButton from './WaitlistButton.jsx';
-import { useSession, signInWithGoogle } from './auth.js';
+import { useSession, signInWithGoogle, openConsent } from './auth.js';
+import billingCfg from './data/billing.json';
+import { hrefs } from './route.js';
 import { usePlan } from './plan.js';
 import { billingEnabled, proPrice, formatBRL, startCheckout } from './billing.js';
 import plans from './data/plans.json';
@@ -15,6 +17,7 @@ export function SubscribeBlock({ t, lang, renew = false }) {
   const { usedEntry, loading } = usePlan();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
+  const [needTerms, setNeedTerms] = useState(false);
   const entry = signedIn && !loading ? !usedEntry : true; // deslogado: mostra a oferta de entrada
   const price = (lang) => formatBRL(entry ? plans.plans.pro.entryPrice : plans.plans.pro.price, lang);
 
@@ -22,7 +25,8 @@ export function SubscribeBlock({ t, lang, renew = false }) {
     if (!signedIn) { signInWithGoogle(); return; }
     setBusy(true);
     setError(false);
-    try { await startCheckout(); } catch { setError(true); setBusy(false); }
+    setNeedTerms(false);
+    try { await startCheckout(); } catch (e) { if (e?.message === 'terms_required') setNeedTerms(true); else setError(true); setBusy(false); }
   };
 
   return (
@@ -37,6 +41,12 @@ export function SubscribeBlock({ t, lang, renew = false }) {
         {busy ? t.proSubscribeBusy : !signedIn ? t.proSubscribeLogin : renew ? t.proRenew : t.proSubscribe}
       </button>
       <p className="tl-warn">{t.proRedirectNote}</p>
+      <p className="tl-warn">{t.buyAccept} <a href={hrefs.terms}>{t.termsLink}</a>. {t.buyRefund.replace('{n}', billingCfg.refundDays)}</p>
+      {needTerms && (
+        <p role="alert" className="profile-err">{t.buyNeedTerms}{' '}
+          <button type="button" className="linklike" onClick={openConsent}>{t.buyAcceptBtn}</button>
+        </p>
+      )}
       {error && <p role="alert" className="profile-err">{t.proCheckoutError}</p>}
     </div>
   );
