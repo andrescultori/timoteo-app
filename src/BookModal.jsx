@@ -4,7 +4,6 @@ import { BOOKS, SECTIONS } from './data/books.js';
 import { VERSIONS, loadBook } from './data/bible.js';
 import { useSettings } from './settings.js';
 import BackButton from './BackButton.jsx';
-import Icon from './icons.jsx';
 import FavButton from './FavButton.jsx';
 import { favKey, setPosition, peekResume, getVersionPref, setVersionPref } from './userdata.js';
 import { usePlan } from './plan.js';
@@ -56,60 +55,73 @@ export default function BookModal({ book, lang, t, initialTab, initialPlace, onN
     [t.position, `${book.n} ${t.of} 66`],
   ];
 
+  const keyChapter = Number(String(info?.keyVerse ?? '').match(/^(\d+):/)?.[1]) || null;
+
   return (
-    <div className="page" style={{ '--c': `var(--s-${book.section})` }} role="region" aria-labelledby="book-title">
-      <div className="sheet">
-        <div className="head">
-          <div className="badge"><span>{book.n}</span><b>{book.ab[lang]}</b></div>
-          <div className="ttl">
-            <h1 id="book-title">{book.name[lang]}</h1>
-            <p>{section[lang]}</p>
+    <div className="page bookpage" style={{ '--c': `var(--s-${book.section})` }}>
+      <BackButton t={t} />
+      <header className="bk-head">
+        <div className="bk-badge" aria-hidden="true">{book.ab[lang]}</div>
+        <div className="bk-ttl">
+          <div className="bk-chips">
+            <span>{t[book.testament]}</span><span>{section[lang]}</span><span>{book.chapters} {t.chapters.toLowerCase()}</span>
           </div>
-          <FavButton favKey={favKey.book(book.slug)} t={t} />
-          <BackButton t={t} />
+          <h1 id="book-title">{book.name[lang]}</h1>
         </div>
+        <FavButton favKey={favKey.book(book.slug)} t={t} />
+      </header>
 
-        <div className="seg tabs" role="tablist">
-          {tabs.map((k) => (
-            <button key={k} type="button" role="tab" aria-selected={tab === k} aria-pressed={tab === k} onClick={() => setTab(k)}>{t[k]}{locked[k] && <span className="pro-tag">{t.proTag}</span>}</button>
-          ))}
-        </div>
+      <div className="bk-tabs" role="tablist" aria-label={t.bookTabs}>
+        {tabs.map((k) => (
+          <button key={k} type="button" role="tab" className="tab" aria-selected={tab === k} onClick={() => setTab(k)}>{t[k]}{locked[k] && <span className="pro-tag">{t.proTag}</span>}</button>
+        ))}
+      </div>
 
-        <div className="body">
-          {tab === 'summary' && (
-            <>
-              <dl className="facts">
-                {facts.map(([k, v]) => (<div key={k}><dt>{k}</dt><dd>{v}</dd></div>))}
-              </dl>
-              {!hasInfo(book.slug) && <p className="soon">{t.soon}</p>}
-            </>
-          )}
-          {tab === 'sheet' && <Sheet book={book} lang={lang} t={t} info={info} error={infoError} />}
-          {tab === 'map' && info?.map && locked.map && <ProInvite t={t} lang={lang} />}
-          {tab === 'map' && info?.map && !locked.map && (
+      <div className="bk-body" role="tabpanel">
+        {tab === 'summary' && (
+          <div className="card">
+            <h2>{t.bookData}</h2>
+            <dl className="facts">
+              {facts.map(([k, v]) => (<div key={k}><dt>{k}</dt><dd>{v}</dd></div>))}
+            </dl>
+            {!hasInfo(book.slug) && <p className="soon">{t.soon}</p>}
+          </div>
+        )}
+        {tab === 'sheet' && <Sheet book={book} lang={lang} t={t} info={info} error={infoError} keyChapter={keyChapter} />}
+        {tab === 'map' && info?.map && locked.map && <ProInvite t={t} lang={lang} />}
+        {tab === 'map' && info?.map && !locked.map && (
+          <div className="card">
             <Suspense fallback={<p className="soon">{t.loading}</p>}>
               <MapView book={book} map={info.map} lang={lang} t={t} initialPlace={initialPlace} onPlaceChange={(name) => sync(hrefs.book(book.slug, 'map', name))} onOpenTimeline={onOpenTimeline} onOpenPerson={onOpenPerson} />
             </Suspense>
-          )}
-          {tab === 'psalms' && book.slug === 'psa' && (
+          </div>
+        )}
+        {tab === 'psalms' && book.slug === 'psa' && (
+          <div className="card">
             <Suspense fallback={<p className="soon">{t.loading}</p>}>
               <PsalmsView key={initialTab === 'psalms' ? initialPlace : 'p'} lang={lang} t={t} initialN={initialPlace} onSelect={(n) => sync(hrefs.book('psa', 'psalms', String(n)))} onOpenPerson={onOpenPerson} />
             </Suspense>
-          )}
-          {tab === 'structure' && info?.structure && locked.structure && <ProInvite t={t} lang={lang} />}
-          {tab === 'structure' && info?.structure && !locked.structure && (
+          </div>
+        )}
+        {tab === 'structure' && info?.structure && locked.structure && <ProInvite t={t} lang={lang} />}
+        {tab === 'structure' && info?.structure && !locked.structure && (
+          <div className="card">
             <Suspense fallback={<p className="soon">{t.loading}</p>}>
               <StructureView book={book} structure={info.structure} lang={lang} t={t} />
             </Suspense>
-          )}
-          {tab === 'read' && <Reader key={initialTab === 'read' ? initialPlace : 'r'} book={book} lang={lang} t={t} initialChapter={initialTab === 'read' ? Number(initialPlace) : undefined} />}
-        </div>
-
-        <div className="foot">
-          <button type="button" className="ghost" disabled={!prev} onClick={() => prev && onNavigate(prev.slug)}>← {prev ? prev.name[lang] : ''}</button>
-          <button type="button" className="ghost" disabled={!next} onClick={() => next && onNavigate(next.slug)}>{next ? next.name[lang] : ''} →</button>
-        </div>
+          </div>
+        )}
+        {tab === 'read' && (
+          <div className="card">
+            <Reader key={initialTab === 'read' ? initialPlace : 'r'} book={book} lang={lang} t={t} initialChapter={initialTab === 'read' ? Number(initialPlace) : undefined} />
+          </div>
+        )}
       </div>
+
+      <nav className="foot" aria-label={t.bookNav}>
+        <a className="ghost" aria-disabled={!prev} href={prev ? hrefs.book(prev.slug) : undefined}>← {prev ? prev.name[lang] : ''}</a>
+        <a className="ghost" aria-disabled={!next} href={next ? hrefs.book(next.slug) : undefined}>{next ? next.name[lang] : ''} →</a>
+      </nav>
     </div>
   );
 }
@@ -135,7 +147,7 @@ function CharName({ c, lang }) {
   });
 }
 
-function Sheet({ book, lang, t, info, error }) {
+function Sheet({ book, lang, t, info, error, keyChapter }) {
   const { showScholarly } = useSettings();
   const index = useLinkIndex(book, info, lang);
   if (!hasInfo(book.slug)) return <p className="soon">{t.soon}</p>;
@@ -150,28 +162,44 @@ function Sheet({ book, lang, t, info, error }) {
       {showScholarly && <p><b>{t.scholarly}.</b> {rich(pair.scholarly)}</p>}
     </>
   );
-  const head = (icon, label) => <h3><Icon name={icon} />{label}</h3>;
-  const text = (icon, label, v) => (<section>{head(icon, label)}<p>{rich(v)}</p></section>);
+  const field = (label, body) => (<div className="bk-field"><span className="bk-label">{label}</span>{body}</div>);
+  const card = (title, body) => (<section className="card"><h2>{title}</h2>{body}</section>);
 
   return (
-    <div className="sheetinfo">
-      <section>{head('author', t.author)}{view(info.author)}</section>
-      <section>{head('date', t.date)}{view(info.date)}</section>
-      {text('place', t.place, info.place)}
-      {text('recipients', t.recipients, info.recipients)}
-      <section>{head('keyVerse', t.keyVerse)}<p>{ref(info.keyVerse)}</p></section>
-      {text('theme', t.theme, info.theme)}
-      {text('historicalContext', t.historicalContext, info.historicalContext)}
-      <section>
-        {head('characters', t.characters)}
-        <ul>{info.characters.map((c, i) => (<li key={i}><b><CharName c={c} lang={lang} /></b>: {rich(c.role)}</li>))}</ul>
-      </section>
-      <section>
-        {head('outline', t.outline)}
-        <ol className="outline">{info.outline.map((o, i) => (<li key={i}><span>{ref(o.ref)}</span> {pick(o.title, lang)}</li>))}</ol>
-      </section>
-      {text('connections', t.connections, info.connections)}
-      <p className="note">{t.sheetNote}</p>
+    <div className="bk-cols sheetinfo">
+      <div className="bk-main">
+        <section className="card">
+          <h2>{t.bookData}</h2>
+          <div className="bk-fields">
+            {field(t.author, view(info.author))}
+            {field(t.date, view(info.date))}
+            {field(t.place, <p>{rich(info.place)}</p>)}
+            {field(t.recipients, <p>{rich(info.recipients)}</p>)}
+          </div>
+        </section>
+        {card(t.theme, <p>{rich(info.theme)}</p>)}
+        {card(t.historicalContext, <p>{rich(info.historicalContext)}</p>)}
+        {card(t.characterRoles, <ul>{info.characters.map((c, i) => (<li key={i}><b><CharName c={c} lang={lang} /></b>: {rich(c.role)}</li>))}</ul>)}
+        {card(t.connections, <p>{rich(info.connections)}</p>)}
+        <p className="note">{t.sheetNote}</p>
+      </div>
+      <aside className="bk-side" aria-label={t.sheet}>
+        <section className="bk-key">
+          <h2>{t.keyVerse}</h2>
+          <span className="bk-keyref">{ref(info.keyVerse)}</span>
+          {keyChapter && <a href={hrefs.book(book.slug, 'read', String(keyChapter))}>{t.readChapter.replace('{n}', keyChapter)}</a>}
+        </section>
+        <section className="card small">
+          <h2>{t.characters}</h2>
+          <div className="chips">
+            {info.characters.map((c, i) => (<span key={i} className="chip"><CharName c={c} lang={lang} /></span>))}
+          </div>
+        </section>
+        <section className="card small">
+          <h2>{t.outline}</h2>
+          <ol className="outline">{info.outline.map((o, i) => (<li key={i}><span>{ref(o.ref)}</span> {pick(o.title, lang)}</li>))}</ol>
+        </section>
+      </aside>
     </div>
   );
 }
