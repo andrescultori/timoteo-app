@@ -50,7 +50,7 @@ export default function Checkout({ lang, t }) {
     <div className="page wide" role="region" aria-labelledby="co-title">
       <div className="sheet" style={{ '--c': 'var(--accent-2)' }}>
         <div className="head">
-          <div className="ttl"><h2 id="co-title">{t.checkoutTitle}</h2></div>
+          <div className="ttl"><h1 id="co-title">{t.checkoutTitle}</h1></div>
           <div className="head-actions"><BackButton t={t} /></div>
         </div>
         <div className="body">

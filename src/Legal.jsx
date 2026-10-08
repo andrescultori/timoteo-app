@@ -36,7 +36,7 @@ export default function Legal({ kind, lang, t }) {
       <div className="sheet" style={{ '--c': 'var(--line-strong)' }}>
         <div className="head">
           <div className="ttl">
-            <h2 id="legal-title">{title}</h2>
+            <h1 id="legal-title">{title}</h1>
             <p>{t.legalVersion}: {LEGAL_VERSION}</p>
           </div>
           <div className="head-actions"><BackButton t={t} /></div>

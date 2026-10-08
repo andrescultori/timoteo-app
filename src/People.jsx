@@ -64,7 +64,7 @@ export default function People({ lang, t, focusId, onOpenBook, onOpenTimeline, o
       <div className="sheet" style={{ '--c': 'var(--s-paulo)' }}>
         <div className="head">
           <div className="ttl">
-            <h2 id="pp-title">{person ? pick(person.name, lang) : t.people}</h2>
+            <h1 id="pp-title">{person ? pick(person.name, lang) : t.people}</h1>
             <p>{person ? t.people : t.peopleSub}</p>
           </div>
           <div className="head-actions">

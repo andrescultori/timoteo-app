@@ -67,7 +67,7 @@ export default function Timeline({ lang, t, focusId, onClose, onOpenBook, onOpen
       <div className="sheet" style={{ '--c': 'var(--s-historicos)' }}>
         <div className="head">
           <div className="ttl">
-            <h2 id="tl-title">{t.timeline}</h2>
+            <h1 id="tl-title">{t.timeline}</h1>
             <p>{t.timelineSub}</p>
           </div>
           <div className="head-actions">

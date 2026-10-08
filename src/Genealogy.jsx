@@ -70,7 +70,7 @@ export default function Genealogy({ lang, t, treeId, focusNode, onOpenBook, onOp
       <div className="sheet" style={{ '--c': 'var(--s-atos)' }}>
         <div className="head">
           <div className="ttl">
-            <h2 id="gn-title">{pick(tr.title, lang)}</h2>
+            <h1 id="gn-title">{pick(tr.title, lang)}</h1>
             <p>{t.genealogy}</p>
           </div>
           <div className="head-actions">
