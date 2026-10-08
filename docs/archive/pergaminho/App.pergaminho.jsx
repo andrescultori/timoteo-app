@@ -3,6 +3,7 @@ import { BOOKS, SECTIONS, bySlug } from './data/books.js';
 import { LANGS, T } from './i18n.js';
 import BookModal from './BookModal.jsx';
 import Logo from './Logo.jsx';
+import { HeartIcon } from './icons.jsx';
 import Account from './Account.jsx';
 import ConsentModal from './ConsentModal.jsx';
 import { useSession, signInWithGoogle } from './auth.js';
@@ -29,6 +30,10 @@ const store = {
   set(k, v) { try { localStorage.setItem(k, v); } catch { /* ignora */ } },
 };
 
+const THEMES = ['auto', 'dark', 'light']; // preferência: segue o sistema, Pergaminho escuro ou Pergaminho claro
+const THEME_LABEL = { auto: 'Auto', dark: '☾', light: '☀' };
+const systemDark = () => !window.matchMedia || window.matchMedia('(prefers-color-scheme: dark)').matches;
+
 const norm = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
 // Botão "Entrar com Google" dos avisos do aparelho (só quando o login existe)
@@ -51,18 +56,14 @@ function ContinueCard({ lang, t }) {
     go(hrefs.book(position.slug, 'read', String(position.chapter)));
   };
   return (
-    <div className="continue-card" role="region" aria-label={t.continueTitle}>
-      <div className="continue-main">
-        <span className="continue-kicker">{t.continueTitle}</span>
-        <span className="continue-title">{book.name[lang]} {position.chapter}{version ? ` · ${version.label}` : ''}</span>
-      </div>
-      <div className="continue-actions">
-        <a className="continue-go" href={hrefs.book(position.slug, 'read', String(position.chapter))} onClick={go_}>{t.continueLabel}</a>
-        <button type="button" className="ghost continue-x" onClick={dismissContinue} aria-label={t.continueDismiss} title={t.continueDismiss}>×</button>
-      </div>
+    <div className="continue-card" role="region" aria-label={t.continueLabel}>
+      <a href={hrefs.book(position.slug, 'read', String(position.chapter))} onClick={go_}>
+        {t.continueLabel}: <b>{book.name[lang]} {position.chapter}</b>{version ? ` (${version.label})` : ''}
+      </a>
       {!noticeShown && !signedIn && (
         <span className="continue-note">{t.favNotice} <button type="button" className="ghost" onClick={acknowledgeNotice}>{t.favNoticeOk}</button><SignInOffer t={t} /></span>
       )}
+      <button type="button" className="ghost continue-x" onClick={dismissContinue} aria-label={t.continueDismiss} title={t.continueDismiss}>×</button>
     </div>
   );
 }
@@ -83,6 +84,9 @@ function DeviceNotice({ t }) {
 
 export default function App() {
   const [lang, setLang] = useState(() => store.get('lang', navigator.language?.startsWith('en') ? 'en' : 'pt'));
+  // 'light' (ou 'parchment', como o Pergaminho claro se chamava antes) = claro; qualquer outro valor (auto, escuro antigo, inválido) = escuro
+  // preferência guardada: auto | dark | light ('parchment', o nome antigo do Pergaminho claro, vira light; valor inválido vira auto)
+  const [theme, setTheme] = useState(() => { const v = store.get('theme', 'light'); return v === 'parchment' ? 'light' : THEMES.includes(v) ? v : 'light'; });
   const [filter, setFilter] = useState('all');
   const [query, setQuery] = useState('');
   const [route, setRoute] = useState(parseHash);
@@ -98,6 +102,20 @@ export default function App() {
   usePageTitle([], t.title, route.kind === 'home');
   useEffect(() => { store.set('showScholarly', settings.showScholarly ? '1' : '0'); }, [settings]);
   useEffect(() => { document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en'; store.set('lang', lang); }, [lang]);
+  // O CSS só conhece data-theme = dark | light; no modo auto o valor é o do sistema e acompanha a troca dele
+  useEffect(() => {
+    store.set('theme', theme);
+    const mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+    const apply = () => {
+      const resolved = theme === 'auto' ? (systemDark() ? 'dark' : 'light') : theme;
+      document.documentElement.setAttribute('data-theme', resolved);
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', resolved === 'light' ? '#fbf9f3' : '#17130e');
+    };
+    apply();
+    if (theme !== 'auto' || !mq) return undefined;
+    mq.addEventListener('change', apply);
+    return () => mq.removeEventListener('change', apply);
+  }, [theme]);
   // A rota vem do hash. Ao sair da grade guardamos a rolagem para voltar ao mesmo ponto; páginas novas abrem no topo.
   const homeScroll = useRef(0);
   const peopleListScroll = useRef(0); // a lista de personagens também volta ao ponto em que estava, quando se volta de um personagem
@@ -128,6 +146,9 @@ export default function App() {
   const openPerson = (id = null) => go(hrefs.person(id));
   const openTree = (id, node) => go(hrefs.tree(id, node));
 
+  const toggleTheme = () => setTheme((x) => THEMES[(THEMES.indexOf(x) + 1) % THEMES.length]);
+  const themeName = { auto: t.themeAuto, dark: t.themeDark, light: t.themeLight }[theme];
+
   const groups = useMemo(() => {
     const q = norm(query.trim());
     return SECTIONS.map((s) => ({
@@ -139,76 +160,58 @@ export default function App() {
   }, [filter, query]);
 
 
-  const navKind = route.kind === 'book' ? 'home' : route.kind;
-  const nav = [
-    ['home', hrefs.home, t.navBooks],
-    ['timeline', hrefs.timeline(), t.timeline],
-    ['person', hrefs.person(), t.people],
-    ['tree', hrefs.tree(), t.genealogy],
-    ['favorites', hrefs.favorites, t.navFavorites],
-  ];
-
   return (
     <SettingsContext.Provider value={effectiveSettings}>
-      <header className="topbar">
-        <div className="topbar-in">
-          <a className="brand" href={hrefs.home} aria-label={t.home} title={t.home}>
-            <span className="logo"><Logo size={40} /></span>
-            <span className="wordmark">{t.title}</span>
-          </a>
-          <nav className="mainnav" aria-label={t.navMain}>
-            {nav.map(([k, href, label]) => (
-              <a key={k} href={href} aria-current={navKind === k ? 'page' : undefined}>{label}</a>
+      <header className="top">
+        <div className="brand">
+          <h1>
+            <a className="logo" href={hrefs.home} aria-label={t.home} title={t.home}><Logo size={36} /></a>
+            <a href={hrefs.home}><span className="wordmark">{t.title.split(' ')[0]}</span></a>
+          </h1>
+          <p>{t.subtitle}</p>
+        </div>
+        <div className="tools">
+          <div className="seg" role="group" aria-label="Idioma / Language">
+            {LANGS.map((l) => (
+              <button key={l.id} type="button" aria-pressed={lang === l.id} onClick={() => setLang(l.id)}>{l.label}</button>
             ))}
-          </nav>
-          <div className="tools">
-            <div className="seg" role="group" aria-label="Idioma / Language">
-              {LANGS.map((l) => (
-                <button key={l.id} type="button" aria-pressed={lang === l.id} onClick={() => setLang(l.id)}>{l.label}</button>
-              ))}
-            </div>
-            <Account t={t} onSettings={() => setShowSettings(true)} />
           </div>
+          <a className="ghost fav-link" href={hrefs.favorites} aria-label={t.favorites} title={t.favorites}><HeartIcon size={18} /></a>
+          <button type="button" className="ghost" onClick={toggleTheme} aria-label={`${t.toggleTheme}: ${themeName}`} title={`${t.toggleTheme}: ${themeName}`}>{THEME_LABEL[theme]}</button>
+          <Account t={t} onSettings={() => setShowSettings(true)} />
         </div>
       </header>
 
       {route.kind === 'home' && (
       <main>
-        <div className="hero">
-          <div className="hero-text">
-            <h1>{t.homeTitle}</h1>
-            <p>{t.homeLead}</p>
-          </div>
-          <div className="hero-tools">
-            <label className="search">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5" /><path d="M16 16l4 4" /></svg>
-              <input type="search" id="q" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t.search} aria-label={t.searchLabel} />
-            </label>
-            <div className="pills" role="group" aria-label={t.filterLabel}>
-              {['all', 'at', 'nt'].map((f) => (
-                <button key={f} type="button" className="pill" aria-pressed={filter === f} onClick={() => setFilter(f)}>{t[f]}</button>
-              ))}
-            </div>
-          </div>
-        </div>
         <ContinueCard lang={lang} t={t} />
+        <div className="controls">
+          <div className="seg" role="group">
+            {['all', 'at', 'nt'].map((f) => (
+              <button key={f} type="button" aria-pressed={filter === f} onClick={() => setFilter(f)}>{t[f]}</button>
+            ))}
+          </div>
+          <button type="button" className="ghost" onClick={() => openTimeline()}>{t.timeline}</button>
+          <button type="button" className="ghost" onClick={() => openPerson()}>{t.people}</button>
+          <button type="button" className="ghost" onClick={() => openTree()}>{t.genealogy}</button>
+          <input type="search" id="q" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t.search} aria-label={t.search} />
+        </div>
 
         {groups.length === 0 && <p className="empty">{t.noResults}</p>}
-        <div className="groups">
         {groups.map((g) => (
           <section key={g.id} className="group" style={{ '--c': `var(--s-${g.id})` }}>
-            <h2>{g[lang]}<span>{g.books.length} {g.books.length === 1 ? t.bookOne : t.bookMany}</span></h2>
+            <h2><i aria-hidden="true" />{g[lang]}<span>{g.books.length}</span></h2>
             <div className="tiles">
               {g.books.map((b) => (
-                <a key={b.slug} className="tile" href={hrefs.book(b.slug)} aria-label={b.name[lang]}>
+                <button key={b.slug} type="button" className="tile" onClick={() => open(b.slug)} aria-label={b.name[lang]}>
+                  <span className="num">{b.n}</span>
                   <span className="ab">{b.ab[lang]}</span>
                   <span className="nm">{b.name[lang]}</span>
-                </a>
+                </button>
               ))}
             </div>
           </section>
         ))}
-        </div>
       </main>
       )}
 
@@ -255,18 +258,14 @@ export default function App() {
         <BookModal key={route.slug} book={bySlug[route.slug]} lang={lang} t={t} initialTab={route.tab} initialPlace={route.place} onNavigate={open} onOpenTimeline={openTimeline} onOpenPerson={openPerson} />
       )}
       <footer className="assinatura">
-        <div className="assinatura-in">
-          <span className="assinatura-txt">
-            {t.madeBy}{' '}
-            <a href="https://github.com/andrescultori" target="_blank" rel="noopener noreferrer">André Scultori</a>
-            {' · © 2026 · '}
-            <a href="https://github.com/andrescultori/timoteo-app" target="_blank" rel="noopener noreferrer">GitHub</a>
-          </span>
-          <span>
-            <a href={hrefs.terms}>{t.termsLink}</a>
-            <a href={hrefs.privacy}>{t.privacyLink}</a>
-          </span>
-        </div>
+        {t.madeBy}{' '}
+        <a href="https://github.com/andrescultori" target="_blank" rel="noopener noreferrer">André Scultori</a>
+        {' · © 2026 · '}
+        <a href="https://github.com/andrescultori/timoteo-app" target="_blank" rel="noopener noreferrer">GitHub</a>
+        {' · '}
+        <a href={hrefs.terms}>{t.termsLink}</a>
+        {' · '}
+        <a href={hrefs.privacy}>{t.privacyLink}</a>
       </footer>
       <DeviceNotice t={t} />
       {session.consentOpen && <ConsentModal t={t} lang={lang} />}

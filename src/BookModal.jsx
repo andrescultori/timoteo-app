@@ -62,7 +62,7 @@ export default function BookModal({ book, lang, t, initialTab, initialPlace, onN
         <div className="head">
           <div className="badge"><span>{book.n}</span><b>{book.ab[lang]}</b></div>
           <div className="ttl">
-            <h2 id="book-title">{book.name[lang]}</h2>
+            <h1 id="book-title">{book.name[lang]}</h1>
             <p>{section[lang]}</p>
           </div>
           <FavButton favKey={favKey.book(book.slug)} t={t} />

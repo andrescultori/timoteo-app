@@ -67,7 +67,7 @@ export default function Favorites({ lang, t }) {
       <div className="sheet" style={{ '--c': 'var(--s-evangelhos)' }}>
         <div className="head">
           <div className="ttl">
-            <h2 id="fav-title">{t.favorites}</h2>
+            <h1 id="fav-title">{t.favorites}</h1>
             <p>{t.favSub}</p>
           </div>
           <div className="head-actions"><BackButton t={t} /></div>

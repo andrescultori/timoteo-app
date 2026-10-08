@@ -73,7 +73,7 @@ export default function Profile({ lang, t }) {
       <div className="sheet" style={{ '--c': 'var(--s-paulo)' }}>
         <div className="head">
           <div className="ttl">
-            <h2 id="pf-title">{t.profile}</h2>
+            <h1 id="pf-title">{t.profile}</h1>
             <p>{t.profileSub}</p>
           </div>
           <div className="head-actions"><BackButton t={t} /></div>

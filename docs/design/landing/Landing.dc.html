@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Timóteo App: estudo bíblico com contexto</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&amp;family=Source+Sans+3:wght@400;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F8F7F2;color:#1F2320;font-family:'Source Sans 3',system-ui,sans-serif}
+a{color:#0F2D24}a:hover{color:#2F5445}
+summary{cursor:pointer;list-style:none}
+summary::-webkit-details-marker{display:none}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:32px 24px}
+.feats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+@media (max-width:720px){.feats{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:720px){.stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:28px 16px}}
+</style>
+</helmet>
+
+<div style="width: 100%; box-sizing: border-box; background: #F8F7F2; color: #1F2320; font-family: 'Source Sans 3', system-ui, sans-serif; font-size: 18px; line-height: 1.55">
+
+<!-- NAV -->
+<div style="max-width: 1120px; margin: 0 auto; box-sizing: border-box; padding: 20px 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 16px 32px">
+<div style="display: flex; align-items: center; gap: 12px; flex-grow: 1">
+<img src="/_blob/6633a4dfc1c9baadb895cd1316263a20" alt="Logotipo do Timóteo App" style="height: 44px; width: auto; display: block">
+<span style="font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 700; font-size: 22px; letter-spacing: -0.01em; color: #0F2D24">Timóteo App</span>
+</div>
+<nav aria-label="Principal" style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 28px; font-size: 17px">
+<a href="#o-que-e" style="color: #2E3531; text-decoration: none; padding: 10px 0">O que é</a>
+<a href="#planos" style="color: #2E3531; text-decoration: none; padding: 10px 0">Planos</a>
+<a href="#perguntas" style="color: #2E3531; text-decoration: none; padding: 10px 0">Perguntas</a>
+<a href="#planos" style="background: {{accent}}; color: #F8F7F2; text-decoration: none; font-weight: 600; padding: 12px 22px; border-radius: 10px; min-height: 20px">Começar grátis</a>
+</nav>
+</div>
+
+<!-- HERO -->
+<div style="max-width: 1120px; margin: 0 auto; box-sizing: border-box; padding: 40px 24px 72px; display: flex; flex-wrap: wrap; align-items: center; gap: 48px">
+<div style="flex: 1 1 420px; min-width: 0; display: flex; flex-direction: column; gap: 24px">
+<div style="align-self: flex-start; background: #E4EBE6; color: #0F2D24; font-weight: 600; font-size: 15px; padding: 6px 14px; border-radius: 999px">Estudo bíblico interativo</div>
+<h1 style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 700; font-size: 56px; line-height: 1.05; letter-spacing: -0.025em; color: #0F2D24">Estude a Bíblia com contexto, em um só lugar</h1>
+<p style="margin: 0; font-size: 20px; color: #4F5853; max-width: 520px">Os 66 livros em uma tabela. Cada livro abre uma ficha de estudo, um mapa dos lugares, o texto para leitura e as pessoas e eventos ligados a ele.</p>
+<div style="display: flex; flex-wrap: wrap; gap: 12px">
+<a href="#planos" style="background: {{accent}}; color: #F8F7F2; text-decoration: none; font-weight: 600; padding: 15px 28px; border-radius: 12px">Começar grátis</a>
+<a href="#planos" style="background: #FFFFFF; color: #0F2D24; text-decoration: none; font-weight: 600; padding: 14px 28px; border-radius: 12px; border: 1.5px solid #B9BFB6">Ver planos</a>
+</div>
+<p style="margin: 0; font-size: 15px; color: #4F5853">Sem cadastro para ler. Linha evangélica, cânon de 66 livros.</p>
+</div>
+<div style="flex: 1 1 420px; min-width: 0">
+<div style="background: #FFFFFF; border: 1px solid #E2E1D8; border-radius: 20px; padding: 20px; box-shadow: 0 12px 32px rgba(15,45,36,0.08)">
+<div style="display: grid; grid-template-columns: repeat(11, minmax(0, 1fr)); gap: 6px" role="img" aria-label="Tabela com as siglas dos 66 livros da Bíblia, coloridas por seção">
+<sc-for list="{{tiles}}" as="t" hint-placeholder-count="66">
+<div style="{{t.style}}">{{t.abbr}}</div>
+</sc-for>
+</div>
+<div style="margin-top: 14px; font-size: 14px; color: #4F5853; display: flex; flex-wrap: wrap; gap: 6px 14px">
+<sc-for list="{{legend}}" as="l" hint-placeholder-count="7">
+<span style="display: inline-flex; align-items: center; gap: 6px"><span style="{{l.dot}}"></span>{{l.name}}</span>
+</sc-for>
+</div>
+</div>
+</div>
+</div>
+
+<!-- NÚMEROS -->
+<div style="background: #FFFFFF; border-top: 1px solid #E2E1D8; border-bottom: 1px solid #E2E1D8">
+<div class="stats" style="max-width: 1120px; margin: 0 auto; box-sizing: border-box; padding: 40px 24px">
+<sc-for list="{{numbers}}" as="n" hint-placeholder-count="4">
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+<div style="width: 48px; height: 48px; border-radius: 14px; background: #E4EBE6; display: flex; align-items: center; justify-content: center; margin-bottom: 8px">
+<sc-if value="{{n.isBook}}" hint-placeholder-val="{{true}}">
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0F2D24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6.5C10.5 5 8 4.5 4 4.5v13c4 0 6.5.5 8 2 1.5-1.5 4-2 8-2v-13c-4 0-6.5.5-8 2z"/><path d="M12 6.5v13"/></svg>
+</sc-if>
+<sc-if value="{{n.isPeople}}" hint-placeholder-val="{{false}}">
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0F2D24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 19c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.5"/><path d="M16 13.2c2.9.2 5 2.5 5 5.3"/></svg>
+</sc-if>
+<sc-if value="{{n.isTimeline}}" hint-placeholder-val="{{false}}">
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0F2D24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18"/><circle cx="6" cy="12" r="2" fill="#E4EBE6"/><circle cx="12" cy="12" r="2" fill="#E4EBE6"/><circle cx="18" cy="12" r="2" fill="#E4EBE6"/><path d="M6 10V6M12 14v4M18 10V7"/></svg>
+</sc-if>
+<sc-if value="{{n.isText}}" hint-placeholder-val="{{false}}">
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0F2D24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8.5 8h7M8.5 12h7M8.5 16h4"/></svg>
+</sc-if>
+</div>
+<div style="font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 700; font-size: 44px; line-height: 1; color: #0F2D24">{{n.value}}</div>
+<div style="font-size: 16px; color: #4F5853">{{n.label}}</div>
+</div>
+</sc-for>
+</div>
+</div>
+
+<!-- O QUE É -->
+<div id="o-que-e" style="max-width: 1120px; margin: 0 auto; box-sizing: border-box; padding: 88px 24px 48px; display: flex; flex-direction: column; gap: 48px">
+<div style="display: flex; flex-direction: column; gap: 12px; max-width: 640px">
+<h2 style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 700; font-size: 40px; line-height: 1.1; letter-spacing: -0.02em; color: #0F2D24">Tudo o que você consulta ao estudar um livro, junto</h2>
+<p style="margin: 0; color: #4F5853">Hoje o texto está em um lugar, o mapa em outro, a cronologia em outro. Aqui as peças se ligam: um clique leva de uma à outra.</p>
+</div>
+<div class="feats">
+<sc-for list="{{features}}" as="f" hint-placeholder-count="4">
+<div style="background: #FFFFFF; border: 1px solid #E2E1D8; border-radius: 18px; padding: 24px; display: flex; flex-direction: column; gap: 14px; min-width: 0">
+<div style="height: 168px; border-radius: 12px; background: #EEF0EA; border: 1.5px dashed #9AA39D; display: flex; align-items: center; justify-content: center; text-align: center; padding: 12px; box-sizing: border-box; color: #4F5853; font-size: 15px">[captura de tela: {{f.shot}}]</div>
+<h3 style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 700; font-size: 24px; color: #0F2D24">{{f.title}}</h3>
+<p style="margin: 0; color: #4F5853; font-size: 17px">{{f.text}}</p>
+</div>
+</sc-for>
+</div>
+</div>
+
+<!-- LIGAÇÕES + POSIÇÕES -->
+<div style="max-width: 1120px; margin: 0 auto; box-sizing: border-box; padding: 24px 24px 88px; display: flex; flex-wrap: wrap; gap: 24px">
+<div style="flex: 1 1 460px; min-width: 0; background: #0F2D24; color: #F8F7F2; border-radius: 20px; padding: 36px; display: flex; flex-direction: column; gap: 24px">
+<h3 style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 700; font-size: 28px; line-height: 1.15">Linha do tempo, mapa e personagens se ligam nos dois sentidos</h3>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+<span style="background: #F8F7F2; color: #0F2D24; font-weight: 600; padding: 10px 18px; border-radius: 999px">Linha do tempo</span>
+<span style="color: #A9C1B3; font-size: 22px" aria-hidden="true">⇄</span>
+<span style="background: #F8F7F2; color: #0F2D24; font-weight: 600; padding: 10px 18px; border-radius: 999px">Mapa</span>
+<span style="color: #A9C1B3; font-size: 22px" aria-hidden="true">⇄</span>
+<span style="background: #F8F7F2; color: #0F2D24; font-weight: 600; padding: 10px 18px; border-radius: 999px">Personagens</span>
+</div>
+<p style="margin: 0; color: #C9D8CF; font-size: 17px">Do Êxodo na linha do tempo, um clique leva ao mapa já no lugar certo. Do lugar no mapa, outro clique mostra os eventos e as pessoas ligados a ele.</p>
+</div>
+<div style="flex: 1 1 460px; min-width: 0; background: #FFFFFF; border: 1px solid #E2E1D8; border-radius: 20px; padding: 36px; display: flex; flex-direction: column; gap: 20px">
+<h3 style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 700; font-size: 28px; line-height: 1.15; color: #0F2D24">Onde há debate, a ficha mostra a incerteza</h3>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+<div style="background: #E4EBE6; border-radius: 12px; padding: 14px 16px">
+<div style="font-weight: 600; font-size: 15px; color: #0F2D24">Posição tradicional</div>
+<div style="margin-top: 8px; height: 8px; border-radius: 4px; background: #B7C9BE"></div>
+<div style="margin-top: 6px; height: 8px; width: 70%; border-radius: 4px; background: #B7C9BE"></div>
+</div>
+<div style="background: #F1F0E7; border: 1.5px dashed #6B8F7E; border-radius: 12px; padding: 14px 16px">
+<div style="font-weight: 600; font-size: 15px; color: #0F2D24">Posição acadêmica</div>
+<div style="margin-top: 8px; height: 8px; border-radius: 4px; background: #CFD6CB"></div>
+<div style="margin-top: 6px; height: 8px; width: 55%; border-radius: 4px; background: #CFD6CB"></div>
+<div style="margin-top: 10px; font-size: 13px; font-weight: 600; color: #0F2D24">Premium · em breve</div>
+</div>
+</div>
+<p style="margin: 0; color: #4F5853; font-size: 17px">Autoria, datação e localização debatidas aparecem com a incerteza marcada. A posição acadêmica, com autoria e datação segundo a crítica, chega com o plano Premium.</p>
+</div>
+</div>
+
+<!-- PLANOS -->
+<div id="planos" style="background: #FFFFFF; border-top: 1px solid #E2E1D8; border-bottom: 1px solid #E2E1D8">
+<div style="max-width: 1120px; margin: 0 auto; box-sizing: border-box; padding: 88px 24px; display: flex; flex-direction: column; gap: 48px">
+<div style="display: flex; flex-direction: column; gap: 12px; max-width: 640px">
+<h2 style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 700; font-size: 40px; line-height: 1.1; letter-spacing: -0.02em; color: #0F2D24">Escolha seu plano</h2>
+<p style="margin: 0; color: #4F5853">O texto bíblico é livre em todos os planos. O Pro libera o estudo completo, com pagamento anual.</p>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; align-items: stretch">
+<sc-for list="{{plans}}" as="p" hint-placeholder-count="3">
+<div style="{{p.cardStyle}}">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 32px">
+<h3 style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 700; font-size: 28px; color: #0F2D24">{{p.name}}</h3>
+<sc-if value="{{p.badge}}" hint-placeholder-val="{{true}}">
+<span style="{{p.badgeStyle}}">{{p.badge}}</span>
+</sc-if>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px; min-height: 104px">
+<sc-if value="{{p.priceOld}}" hint-placeholder-val="{{true}}">
+<div style="font-size: 16px; color: #4F5853; text-decoration: line-through">{{p.priceOld}}</div>
+</sc-if>
+<div style="font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 700; font-size: 44px; line-height: 1.1; color: #0F2D24">{{p.priceNow}}</div>
+<div style="font-size: 15px; color: #4F5853">{{p.priceNote}}</div>
+</div>
+<a href="{{p.href}}" style="{{p.ctaStyle}}">{{p.cta}}</a>
+<ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px">
+<sc-for list="{{p.items}}" as="it" hint-placeholder-count="10">
+<li style="display: flex; align-items: flex-start; gap: 12px">
+<span style="flex-shrink: 0; width: 24px; height: 24px; margin-top: 1px; display: inline-flex; align-items: center; justify-content: center">
+<sc-if value="{{it.isYes}}" hint-placeholder-val="{{true}}">
+<svg width="24" height="24" viewBox="0 0 24 24" role="img" aria-label="Incluído"><circle cx="12" cy="12" r="11" fill="#0F2D24"/><path d="M7 12.5l3.2 3.2L17 8.8" fill="none" stroke="#F8F7F2" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+</sc-if>
+<sc-if value="{{it.isNo}}" hint-placeholder-val="{{false}}">
+<svg width="24" height="24" viewBox="0 0 24 24" role="img" aria-label="Não incluído"><circle cx="12" cy="12" r="11" fill="#ECEBE3"/><path d="M8.5 8.5l7 7M15.5 8.5l-7 7" fill="none" stroke="#6C736F" stroke-width="2.2" stroke-linecap="round"/></svg>
+</sc-if>
+<sc-if value="{{it.isPart}}" hint-placeholder-val="{{false}}">
+<svg width="24" height="24" viewBox="0 0 24 24" role="img" aria-label="Incluído em parte"><circle cx="12" cy="12" r="11" fill="#E4EBE6"/><path d="M12 5.5a6.5 6.5 0 010 13z" fill="#0F2D24"/><circle cx="12" cy="12" r="6.5" fill="none" stroke="#0F2D24" stroke-width="1.8"/></svg>
+</sc-if>
+<sc-if value="{{it.isSoon}}" hint-placeholder-val="{{false}}">
+<svg width="24" height="24" viewBox="0 0 24 24" role="img" aria-label="Em breve"><circle cx="12" cy="12" r="11" fill="#E4EBE6"/><circle cx="12" cy="12" r="6.2" fill="none" stroke="#3F6553" stroke-width="2"/><path d="M12 8.6V12l2.4 1.6" fill="none" stroke="#3F6553" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+</sc-if>
+</span>
+<span style="display: flex; flex-direction: column; min-width: 0">
+<span style="font-size: 17px">{{it.label}}</span>
+<span style="font-size: 15px; color: #4F5853">{{it.note}}</span>
+</span>
+</li>
+</sc-for>
+</ul>
+</div>
+</sc-for>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px 24px; font-size: 15px; color: #4F5853">
+<span>Incluído</span><span>Não incluído</span><span>Incluído em parte</span><span>Em breve</span>
+</div>
+<p style="margin: 0; font-size: 15px; color: #4F5853; max-width: 720px">O pagamento é feito na página segura do Mercado Pago, com cartão ou Pix, sem digitar dados de cartão aqui. É um pagamento único por 12 meses, sem renovação automática, e o preço de entrada vale no primeiro pagamento. Reembolso em até 7 dias. Contas e compras para maiores de 18 anos.</p>
+</div>
+</div>
+
+<!-- PERGUNTAS -->
+<div id="perguntas" style="max-width: 820px; margin: 0 auto; box-sizing: border-box; padding: 88px 24px 48px; display: flex; flex-direction: column; gap: 32px">
+<h2 style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 700; font-size: 40px; line-height: 1.1; letter-spacing: -0.02em; color: #0F2D24">Perguntas frequentes</h2>
+<div style="display: flex; flex-direction: column; gap: 12px">
+<sc-for list="{{faq}}" as="q" hint-placeholder-count="6">
+<details style="background: #FFFFFF; border: 1px solid #E2E1D8; border-radius: 14px; padding: 4px 22px">
+<summary style="padding: 16px 0; font-weight: 600; font-size: 19px; display: flex; align-items: center; justify-content: space-between; gap: 16px"><span>{{q.q}}</span><span aria-hidden="true" style="color: #0F2D24; font-size: 24px; line-height: 1">+</span></summary>
+<p style="margin: 0 0 18px; color: #4F5853; font-size: 17px">{{q.a}}</p>
+</details>
+</sc-for>
+</div>
+</div>
+
+<!-- CTA FINAL -->
+<div style="max-width: 1120px; margin: 0 auto; box-sizing: border-box; padding: 24px 24px 88px">
+<div style="background: #0F2D24; color: #F8F7F2; border-radius: 24px; padding: 56px 40px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 20px">
+<img src="/_blob/7be699954e149dd4f702fa8460b003d1" alt="" style="height: 56px; width: auto; display: block">
+<h2 style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 700; font-size: 38px; line-height: 1.1; letter-spacing: -0.02em; max-width: 640px">Comece pelo Essencial. Passe ao Pro quando quiser ir mais fundo.</h2>
+<a href="#planos" style="background: #F8F7F2; color: #0F2D24; text-decoration: none; font-weight: 600; padding: 15px 30px; border-radius: 12px">Começar grátis</a>
+</div>
+</div>
+
+<!-- RODAPÉ -->
+<div style="border-top: 1px solid #E2E1D8; background: #FFFFFF">
+<div style="max-width: 1120px; margin: 0 auto; box-sizing: border-box; padding: 28px 24px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px 32px; font-size: 15px; color: #4F5853">
+<span>Desenvolvido por <a href="https://github.com/andrescultori">André Scultori</a> · © 2026 · <a href="https://github.com/andrescultori/timoteo-app">GitHub</a></span>
+<span style="display: flex; flex-wrap: wrap; gap: 8px 20px"><a href="#termos">Termos de uso</a><a href="#privacidade">Política de privacidade</a><a href="#contato">Contato</a></span>
+</div>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#0F2D24","options":["#0F2D24","#2F5445","#6B8F7E","#1F2320"]},"$preview":{"width":1440,"height":4500}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const accent = this.props.accent ?? '#0F2D24';
+
+    // Siglas dos 66 livros, na ordem canônica, e a seção de cada um (só para cor do mockup).
+    const abbr = ['Gn','Êx','Lv','Nm','Dt','Js','Jz','Rt','1Sm','2Sm','1Rs','2Rs','1Cr','2Cr','Ed','Ne','Et','Jó','Sl','Pv','Ec','Ct','Is','Jr','Lm','Ez','Dn','Os','Jl','Am','Ob','Jn','Mq','Na','Hc','Sf','Ag','Zc','Ml','Mt','Mc','Lc','Jo','At','Rm','1Co','2Co','Gl','Ef','Fp','Cl','1Ts','2Ts','1Tm','2Tm','Tt','Fm','Hb','Tg','1Pe','2Pe','1Jo','2Jo','3Jo','Jd','Ap'];
+    const sec = (i) => i < 5 ? 0 : i < 17 ? 1 : i < 22 ? 2 : i < 39 ? 3 : i < 44 ? 4 : i < 65 ? 5 : 6;
+    // Cores de dado, fora do brand book: tons fechados e dessaturados, com o verde-escuro da marca na Lei.
+    const names = ['Pentateuco', 'Históricos', 'Poéticos', 'Profetas', 'Evangelhos e Atos', 'Epístolas', 'Apocalipse'];
+    const pal = [
+      ['#0F2D24', '#F8F7F2'],
+      ['#7A4A2B', '#F8F7F2'],
+      ['#6B3F63', '#F8F7F2'],
+      ['#2F4F8A', '#F8F7F2'],
+      ['#8E3B3B', '#F8F7F2'],
+      ['#55733A', '#F8F7F2'],
+      ['#1F2320', '#F8F7F2']
+    ];
+    const tiles = abbr.map((a, i) => {
+      const c = pal[sec(i)];
+      return { abbr: a, style: 'aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 12px; font-weight: 600; background: ' + c[0] + '; color: ' + c[1] };
+    });
+    const legend = names.map((n, i) => ({ name: n, dot: 'display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: ' + pal[i][0] }));
+
+    const numbers = [
+      { value: '66', label: 'livros, cada um com ficha de estudo em português e inglês', isBook: true, isPeople: false, isTimeline: false, isText: false },
+      { value: '210', label: 'personagens, com resumo, livros, eventos e lugares', isBook: false, isPeople: true, isTimeline: false, isText: false },
+      { value: '69', label: 'eventos em 13 períodos na linha do tempo', isBook: false, isPeople: false, isTimeline: true, isText: false },
+      { value: '5', label: 'versões do texto bíblico, de licença clara', isBook: false, isPeople: false, isTimeline: false, isText: true }
+    ];
+
+    const features = [
+      { shot: 'tabela dos 66 livros', title: 'Ficha de estudo', text: 'Autor, data, lugar, destinatários, versículo-chave, tema, contexto histórico, esboço e conexões de cada livro.' },
+      { shot: 'mapa de um livro', title: 'Mapa dos lugares', text: 'Os lugares citados em cada livro, desenhados em mapa, com a localização debatida marcada como incerta.' },
+      { shot: 'linha do tempo', title: 'Linha do tempo', text: 'Períodos e eventos com as datas e a base de cada uma. Onde a cronologia é debatida, as duas leituras aparecem.' },
+      { shot: 'página de personagem e genealogia', title: 'Personagens e genealogia', text: 'Quem é cada pessoa, onde aparece e a que eventos e lugares se liga. A árvore de Adão a Jesus, com referência em cada ligação.' }
+    ];
+
+    const row = (label, ess, pro, prem) => ({ label, v: [ess, pro, prem] });
+    // tipo: y (incluído), n (não incluído), p (em parte), s (em breve)
+    const rows = [
+      row('Bíblia em todas as versões disponíveis', ['y', ''], ['y', ''], ['y', '']),
+      row('Fichas dos 66 livros', ['p', 'Mapas e estrutura dos livros poéticos limitados'], ['y', 'Completas, com mapas e estruturas'], ['y', 'Completas']),
+      row('Mapas dos lugares bíblicos', ['p', 'Só Evangelhos e Pentateuco'], ['y', 'Todos os livros com mapa'], ['y', 'Todos os livros com mapa']),
+      row('Estrutura dos livros poéticos', ['p', 'Livro de Salmos completo'], ['y', 'Salmos, Jó, Provérbios, Eclesiastes e Cantares'], ['y', '']),
+      row('Fichas de personagens', ['p', '50 principais'], ['y', 'Mais de 200'], ['y', 'Mais de 200']),
+      row('Leitura gamificada e mais', ['s', 'Em breve'], ['s', 'Em breve'], ['y', '']),
+      row('Linha do tempo', ['n', ''], ['y', ''], ['y', '']),
+      row('Genealogia', ['n', ''], ['y', 'Em expansão'], ['y', 'Em expansão']),
+      row('Posição acadêmica (autoria e datação)', ['n', ''], ['n', ''], ['y', '']),
+      row('10 devocionais ou pregações por mês, com IA, em PDF', ['n', ''], ['n', ''], ['s', 'Em breve'])
+    ];
+    const mk = (k) => rows.map((r) => ({
+      label: r.label,
+      note: r.v[k][1],
+      isYes: r.v[k][0] === 'y',
+      isNo: r.v[k][0] === 'n',
+      isPart: r.v[k][0] === 'p',
+      isSoon: r.v[k][0] === 's'
+    }));
+
+    const card = 'background: #FFFFFF; border: 1.5px solid #E2E1D8; border-radius: 20px; padding: 28px; display: flex; flex-direction: column; gap: 20px; min-width: 0';
+    const cardPro = 'background: #FFFFFF; border: 2.5px solid ' + accent + '; border-radius: 20px; padding: 28px; display: flex; flex-direction: column; gap: 20px; min-width: 0; box-shadow: 0 16px 40px rgba(15,45,36,0.12)';
+    const cardSoon = 'background: #F8F7F2; border: 1.5px dashed #9AA39D; border-radius: 20px; padding: 28px; display: flex; flex-direction: column; gap: 20px; min-width: 0';
+    const btnMain = 'display: block; text-align: center; text-decoration: none; font-weight: 600; padding: 14px 20px; border-radius: 12px; background: ' + accent + '; color: #F8F7F2';
+    const btnLine = 'display: block; text-align: center; text-decoration: none; font-weight: 600; padding: 12.5px 20px; border-radius: 12px; background: #FFFFFF; color: #0F2D24; border: 1.5px solid #9AA39D';
+
+    const plans = [
+      { name: 'Essencial', badge: '', badgeStyle: '', priceOld: '', priceNow: 'R$ 0', priceNote: 'Grátis, sem prazo', cta: 'Começar grátis', href: '#essencial', cardStyle: card, ctaStyle: btnLine, items: mk(0) },
+      { name: 'Pro', badge: 'Estudo completo', badgeStyle: 'background: #0F2D24; color: #F8F7F2; font-weight: 600; font-size: 14px; padding: 4px 12px; border-radius: 999px; white-space: nowrap', priceOld: 'R$ 49,90', priceNow: 'R$ 29,90', priceNote: 'no primeiro ano · depois R$ 49,90 por ano', cta: 'Escolher Pro', href: '#pro', cardStyle: cardPro, ctaStyle: btnMain, items: mk(1) },
+      { name: 'Premium', badge: 'Em breve', badgeStyle: 'background: #E4EBE6; color: #0F2D24; font-weight: 600; font-size: 14px; padding: 4px 12px; border-radius: 999px; white-space: nowrap', priceOld: 'R$ 79,90', priceNow: 'R$ 49,90', priceNote: 'no primeiro ano · depois R$ 79,90 por ano', cta: 'Avise-me quando chegar', href: '#avise-me', cardStyle: cardSoon, ctaStyle: btnLine, items: mk(2) }
+    ];
+
+    const faq = [
+      { q: 'Preciso me cadastrar para ler?', a: 'Não. A leitura da Bíblia e as fichas do plano Essencial são abertas. O cadastro é opcional e serve para salvar seu progresso e favoritos entre aparelhos. Contas e compras são para maiores de 18 anos.' },
+      { q: 'Como funciona o pagamento?', a: 'O pagamento é feito na página segura do Mercado Pago, com cartão ou Pix. Nenhum dado de cartão passa por aqui. Você paga uma vez e ganha 12 meses de acesso, sem renovação automática.' },
+      { q: 'Posso pedir reembolso?', a: 'Sim, em até 7 dias após o pagamento, sem perguntas. Ao reembolsar, os 12 meses concedidos por aquele pagamento são retirados.' },
+      { q: 'O que acontece quando o Pro vence?', a: 'Sua conta volta ao plano Essencial e você mantém seu progresso e seus favoritos. Para recuperar o acesso completo, basta renovar antes ou depois do vencimento.' },
+      { q: 'Quais versões da Bíblia estão disponíveis?', a: 'KJV, WEB, ASV, Bíblia Livre e a Almeida 1911 atualizada na ortografia. O texto bíblico é livre em todos os planos.' },
+      { q: 'Para quem é o Timóteo App?', a: 'Para quem estuda a Bíblia sozinho, em grupo ou prepara aulas e mensagens, e quer o contexto de cada livro sem abrir várias fontes. O conteúdo segue a linha evangélica, com o cânon de 66 livros.' }
+    ];
+
+    return { accent, tiles, legend, numbers, features, plans, faq };
+  }
+}
+</script>
+</body>
+</html>

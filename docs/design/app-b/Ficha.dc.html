@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Timóteo App: ficha de João</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&amp;family=Source+Sans+3:wght@400;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F8F7F2;color:#1F2320;font-family:'Source Sans 3',system-ui,sans-serif}
+a{color:#0F2D24}a:hover{color:#2F5445}
+.cols{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+</style>
+</helmet>
+
+<div style="width: 100%; box-sizing: border-box; background: #F8F7F2; color: #1F2320; font-family: 'Source Sans 3', system-ui, sans-serif; font-size: 17px; line-height: 1.55">
+
+<!-- TOPO -->
+<div style="background: #FFFFFF; border-bottom: 1px solid #E2E1D8">
+<div style="max-width: 1180px; margin: 0 auto; box-sizing: border-box; padding: 14px 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 28px">
+<a href="Grade.dc.html" style="display: flex; align-items: center; gap: 12px; text-decoration: none; flex-grow: 1">
+<img src="/_blob/f715c80836450e0d61c35f2b399e394c" alt="Timóteo App, início" style="height: 40px; width: auto; display: block">
+<span style="font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 700; font-size: 21px; letter-spacing: -0.01em; color: #0F2D24">Timóteo App</span>
+</a>
+<nav aria-label="Principal" style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 22px; font-size: 16px">
+<a href="Grade.dc.html" style="color: #0F2D24; font-weight: 600; text-decoration: none; padding: 10px 0; border-bottom: 2px solid #0F2D24">Livros</a>
+<a href="Ficha.dc.html" style="color: #2E3531; text-decoration: none; padding: 10px 0">Linha do tempo</a>
+<a href="Ficha.dc.html" style="color: #2E3531; text-decoration: none; padding: 10px 0">Personagens</a>
+<a href="Ficha.dc.html" style="color: #2E3531; text-decoration: none; padding: 10px 0">Genealogia</a>
+<a href="Ficha.dc.html" style="color: #2E3531; text-decoration: none; padding: 10px 0">Favoritos</a>
+</nav>
+<div style="display: flex; align-items: center; gap: 10px">
+<span style="font-size: 14px; font-weight: 600; border: 1.5px solid #9AA39D; border-radius: 999px; padding: 6px 12px; color: #0F2D24">PT</span>
+<span style="font-size: 14px; font-weight: 600; background: #0F2D24; color: #F8F7F2; border-radius: 999px; padding: 7px 13px">PRO</span>
+</div>
+</div>
+</div>
+
+<div style="max-width: 1180px; margin: 0 auto; box-sizing: border-box; padding: 28px 24px 72px; display: flex; flex-direction: column; gap: 28px">
+
+<a href="Grade.dc.html" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; font-weight: 600; padding: 8px 0">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0F2D24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Voltar</a>
+
+<!-- CABEÇALHO DO LIVRO -->
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 20px 28px">
+<div style="width: 96px; height: 96px; border-radius: 18px; background: #8E3B3B; color: #F8F7F2; display: flex; align-items: center; justify-content: center; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 700; font-size: 40px; flex-shrink: 0">Jo</div>
+<div style="flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+<div style="display: flex; flex-wrap: wrap; gap: 8px; font-size: 14px; font-weight: 600">
+<span style="background: #E4EBE6; color: #0F2D24; padding: 3px 12px; border-radius: 999px">Novo Testamento</span>
+<span style="background: #E4EBE6; color: #0F2D24; padding: 3px 12px; border-radius: 999px">Evangelhos</span>
+<span style="background: #E4EBE6; color: #0F2D24; padding: 3px 12px; border-radius: 999px">21 capítulos</span>
+</div>
+<h1 style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 700; font-size: 44px; line-height: 1.05; letter-spacing: -0.02em; color: #0F2D24">Evangelho de João</h1>
+</div>
+<button type="button" style="display: inline-flex; align-items: center; gap: 8px; background: #FFFFFF; border: 1.5px solid #9AA39D; color: #0F2D24; font: inherit; font-weight: 600; padding: 11px 20px; border-radius: 12px; cursor: pointer">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0F2D24" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.6-7 10-7 10z"/></svg>Adicionar aos favoritos</button>
+</div>
+
+<!-- ABAS -->
+<div role="tablist" aria-label="Seções do livro" style="display: flex; flex-wrap: wrap; gap: 8px; border-bottom: 1px solid #E2E1D8; padding-bottom: 12px">
+<span role="tab" aria-selected="false" style="padding: 9px 20px; border-radius: 999px; color: #2E3531; font-weight: 600">Resumo</span>
+<span role="tab" aria-selected="true" style="padding: 9px 20px; border-radius: 999px; background: #0F2D24; color: #F8F7F2; font-weight: 600">Ficha</span>
+<span role="tab" aria-selected="false" style="padding: 9px 20px; border-radius: 999px; color: #2E3531; font-weight: 600">Mapa</span>
+<span role="tab" aria-selected="false" style="padding: 9px 20px; border-radius: 999px; color: #2E3531; font-weight: 600">Ler</span>
+</div>
+
+<div class="cols">
+
+<!-- COLUNA PRINCIPAL -->
+<div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+
+<div style="background: #FFFFFF; border: 1px solid #E2E1D8; border-radius: 18px; padding: 28px; display: flex; flex-direction: column; gap: 22px">
+<h2 style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 700; font-size: 26px; color: #0F2D24">Dados do livro</h2>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 22px 28px">
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+<span style="font-size: 14px; font-weight: 600; color: #3F6553; letter-spacing: 0.04em; text-transform: uppercase">Autor</span>
+<span style="font-size: 17px; line-height: 1.55">João, filho de Zebedeu, o apóstolo, segundo a tradição antiga (Ireneu). O texto fala do "discípulo a quem Jesus amava" (21:20–24) como testemunha por trás do livro, sem dar o nome.</span>
+<span style="align-self: flex-start; font-size: 13px; font-weight: 600; background: #F1F0E7; border: 1.5px dashed #6B8F7E; color: #0F2D24; padding: 2px 10px; border-radius: 999px">Autoria debatida</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+<span style="font-size: 14px; font-weight: 600; color: #3F6553; letter-spacing: 0.04em; text-transform: uppercase">Data</span>
+<span style="font-size: 17px; line-height: 1.55">Em geral c. 80–95 d.C. na tradição, em Éfeso. Alguns defendem uma data anterior a 70 d.C.</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+<span style="font-size: 14px; font-weight: 600; color: #3F6553; letter-spacing: 0.04em; text-transform: uppercase">Local</span>
+<span style="font-size: 17px; line-height: 1.55">Tradicionalmente Éfeso, na Ásia Menor. Outras propostas incluem a Síria.</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+<span style="font-size: 14px; font-weight: 600; color: #3F6553; letter-spacing: 0.04em; text-transform: uppercase">Destinatários</span>
+<span style="font-size: 17px; line-height: 1.55">Comunidades cristãs em conflito com a sinagoga e em dúvida sobre a identidade de Jesus.</span>
+</div>
+</div>
+</div>
+
+<div style="background: #FFFFFF; border: 1px solid #E2E1D8; border-radius: 18px; padding: 28px; display: flex; flex-direction: column; gap: 12px">
+<h2 style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 700; font-size: 26px; color: #0F2D24">Tema</h2>
+<p style="margin: 0; font-family: 'Source Sans 3', system-ui, sans-serif; font-size: 17px; line-height: 1.55">Jesus como a Palavra feita carne e o Filho de Deus, em sinais e discursos "eu sou"; a vida eterna vem de crer nele.</p>
+</div>
+
+<div style="background: #FFFFFF; border: 1px solid #E2E1D8; border-radius: 18px; padding: 28px; display: flex; flex-direction: column; gap: 12px">
+<h2 style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 700; font-size: 26px; color: #0F2D24">Contexto histórico</h2>
+<p style="margin: 0; font-family: 'Source Sans 3', system-ui, sans-serif; font-size: 17px; line-height: 1.55">É bem diferente dos Sinóticos na estrutura e nos temas: poucos milagres (sete "sinais"), longos discursos e uma cronologia própria do ministério. O prólogo (1:1–18) apresenta Jesus como o Logos. Os manuscritos mais antigos não trazem 7:53–8:11 (a mulher adúltera); muitas Bíblias os mantêm com nota.</p>
+</div>
+
+</div>
+
+<!-- COLUNA LATERAL -->
+<div style="flex: 1 1 300px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+
+<div style="background: #0F2D24; color: #F8F7F2; border-radius: 18px; padding: 24px; display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 14px; font-weight: 600; color: #A9C1B3; letter-spacing: 0.04em; text-transform: uppercase">Versículo-chave</span>
+<span style="font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 700; font-size: 34px; line-height: 1">João 20:31</span>
+<a href="Ficha.dc.html" style="color: #F8F7F2; font-weight: 600">Ler no capítulo 20</a>
+</div>
+
+<div style="background: #FFFFFF; border: 1px solid #E2E1D8; border-radius: 18px; padding: 24px; display: flex; flex-direction: column; gap: 14px">
+<h2 style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 700; font-size: 22px; color: #0F2D24">Personagens</h2>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<a href="Ficha.dc.html" style="background: #E4EBE6; color: #0F2D24; text-decoration: none; font-weight: 600; padding: 7px 14px; border-radius: 999px">Jesus</a>
+<a href="Ficha.dc.html" style="background: #E4EBE6; color: #0F2D24; text-decoration: none; font-weight: 600; padding: 7px 14px; border-radius: 999px">João Batista</a>
+<a href="Ficha.dc.html" style="background: #E4EBE6; color: #0F2D24; text-decoration: none; font-weight: 600; padding: 7px 14px; border-radius: 999px">Pedro</a>
+<a href="Ficha.dc.html" style="background: #E4EBE6; color: #0F2D24; text-decoration: none; font-weight: 600; padding: 7px 14px; border-radius: 999px">Tomé</a>
+<a href="Ficha.dc.html" style="background: #E4EBE6; color: #0F2D24; text-decoration: none; font-weight: 600; padding: 7px 14px; border-radius: 999px">Maria Madalena</a>
+</div>
+</div>
+
+<div style="background: #FFFFFF; border: 1px solid #E2E1D8; border-radius: 18px; padding: 24px; display: flex; flex-direction: column; gap: 12px">
+<h2 style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 700; font-size: 22px; color: #0F2D24">Esboço</h2>
+<ol style="margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 8px">
+<li>Prólogo: a Palavra feita carne (1:1–18)</li>
+<li>O livro dos sinais (1:19–12:50)</li>
+<li>O livro da glória: discurso de despedida, paixão e ressurreição (13–20)</li>
+<li>Epílogo (21)</li>
+</ol>
+<span style="font-size: 14px; color: #4F5853">Esboço de estudo; a divisão do livro é debatida.</span>
+</div>
+
+</div>
+</div>
+
+</div>
+
+<!-- RODAPÉ -->
+<div style="border-top: 1px solid #E2E1D8; background: #FFFFFF">
+<div style="max-width: 1180px; margin: 0 auto; box-sizing: border-box; padding: 24px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 32px; font-size: 15px; color: #4F5853">
+<span>Desenvolvido por <a href="https://github.com/andrescultori">André Scultori</a> · © 2026 · <a href="https://github.com/andrescultori/timoteo-app">GitHub</a></span>
+<span style="display: flex; flex-wrap: wrap; gap: 8px 20px"><a href="Grade.dc.html">Termos de uso</a><a href="Grade.dc.html">Política de privacidade</a></span>
+</div>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1700}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -47,7 +47,7 @@ From the Exodus on the timeline, for example, one click opens the Exodus map alr
 - **Structure of Job, Proverbs, Ecclesiastes and Song of Songs**: chapters colored by part (in Job, by speaker), the list of parts and, in Ecclesiastes and Song of Songs, the readings side by side.
 - **A text reader** in KJV, WEB and ASV (English), Bíblia Livre (Portuguese), with the credit and license of each.
 - **Favorites and continue where you left off**: a heart on books, chapters, people and map places, a "My favorites" page and a card to resume reading. Kept on the device; with an optional Google sign-in they sync across devices. The app does not require an account.
-- Two themes, dark parchment and light parchment (serif type), plus an automatic mode that follows the system; PT and EN.
+- A clean, light look (Bricolage Grotesque, Source Sans 3 and Literata, self-hosted); PT and EN.
 
 ![Timeline, with the two readings of the Exodus date](docs/images/linha-do-tempo.png)
 

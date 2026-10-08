@@ -73,7 +73,7 @@ export default function ProInvite({ t, lang = 'pt', title, page = false, feature
     <div className="page wide" role="region" aria-labelledby="pro-title">
       <div className="sheet" style={{ '--c': 'var(--line-strong)' }}>
         <div className="head">
-          <div className="ttl"><h2 id="pro-title">{title}</h2></div>
+          <div className="ttl"><h1 id="pro-title">{title}</h1></div>
           <div className="head-actions"><BackButton t={t} /></div>
         </div>
         <div className="body">{box}</div>
