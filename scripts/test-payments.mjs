@@ -8,7 +8,7 @@ import { PGlite } from '@electric-sql/pglite';
 import { PRICE_CENTS, priceKind, priceCents, ITEM_TITLE } from '../supabase/functions/_shared/pricing.js';
 import { buildManifest, parseSignature, hmacHex, verifySignature, mapStatus, preferenceBody } from '../supabase/functions/_shared/mp.js';
 import { applyMpPayment, applyAll } from '../supabase/functions/_shared/payments.js';
-import { handleReconcile } from '../supabase/functions/_shared/reconcile.js';
+import { handleReconcile, reconcileRow } from '../supabase/functions/_shared/reconcile.js';
 import { secretMatches } from '../supabase/functions/_shared/http.js';
 import { cleanPrefs, resolvePrefs, DEFAULTS, SIZES, SPACINGS, WIDTHS, FONTS, READ_THEMES, SITE_THEMES } from '../src/readingPrefs.js';
 import { resolveSite } from '../src/siteTheme.js';
@@ -218,6 +218,70 @@ const driftSec = async (user, months) => Number((await q(
   const p2 = await newPay(u2);
   await apply(p2, 'approved', 2990, 'mpP');
   eq((await ent(u2)).plan, 'premium', 'Premium vigente não vira Pro');
+}
+
+// Fase 6 (ajuste, 20261016): reembolso não apaga cortesia; pagamento que não concede nada é sinalizado
+{
+  const admin = await newUser();
+  const edited = async (user) => (await q(`select updated_by, note from public.entitlements where user_id = $1`, [user]))[0];
+  // 1) pagou, o admin mudou a data à mão depois (cortesia), o pagamento é reembolsado: nada é desfeito
+  const u1 = await newUser();
+  const p1 = await newPay(u1);
+  await apply(p1, 'approved', 2990, 'mpFX1');
+  eq(await edited(u1), { updated_by: null, note: null }, 'concessão por pagamento: sem marca de edição manual');
+  await q(`update public.entitlements set expires_at = now() + interval '5 years', updated_by = $2, note = 'cortesia' where user_id = $1`, [u1, admin]);
+  const exp1 = (await ent(u1)).expires_at.toISOString();
+  const r1 = await apply(p1, 'refunded', 2990, 'mpFX1');
+  eq(r1.result, 'reversed_manual_kept', 'reembolso de plano editado à mão: resultado próprio');
+  eq([(await ent(u1)).plan, (await ent(u1)).expires_at.toISOString()], ['pro', exp1], 'cortesia (data do admin) não é encurtada nem apagada');
+  eq((await pay(p1)).status, 'refunded', 'o pagamento fica reembolsado');
+  eq((await edited(u1)).note, 'cortesia', 'o motivo da cortesia continua');
+  // cortesia que cairia no passado também não rebaixa
+  const u1b = await newUser();
+  const p1b = await newPay(u1b);
+  await apply(p1b, 'approved', 2990, 'mpFX1b');
+  await q(`update public.entitlements set expires_at = now() + interval '3 months', updated_by = $2 where user_id = $1`, [u1b, admin]);
+  eq((await apply(p1b, 'refunded', 2990, 'mpFX1b')).result, 'reversed_manual_kept', 'idem, data curta');
+  eq((await ent(u1b)).plan, 'pro', 'a cortesia curta não vai para Essencial por causa do reembolso');
+  // 2) sem edição manual, o reembolso continua desfazendo os meses
+  const u2 = await newUser();
+  const p2 = await newPay(u2);
+  await apply(p2, 'approved', 2990, 'mpFX2');
+  eq((await apply(p2, 'refunded', 2990, 'mpFX2')).result, 'reversed', 'sem edição manual: reembolso normal');
+  eq((await ent(u2)).plan, 'essencial', 'sem edição manual: volta ao Essencial');
+  // 3) cortesia com data futura + pagamento: soma 12 meses à data da cortesia e passa a "vir do pagamento"; o reembolso volta à data da cortesia
+  const u3 = await newUser();
+  await q(`update public.entitlements set plan = 'pro', expires_at = now() + interval '2 months', updated_by = $2, note = 'amigo' where user_id = $1`, [u3, admin]);
+  const exp3 = (await ent(u3)).expires_at;
+  const p3 = await newPay(u3);
+  eq((await apply(p3, 'approved', 2990, 'mpFX3')).result, 'granted', 'cortesia com prazo + pagamento: concede 12 meses');
+  ok(Math.abs(Number((await q(`select extract(epoch from expires_at - $2::timestamptz) as d from public.entitlements where user_id = $1`, [u3, exp3]))[0].d) - 365 * 86400) < 2 * 86400, 'soma 12 meses à data da cortesia');
+  eq(await edited(u3), { updated_by: null, note: null }, 'depois do pagamento, a marca de edição manual sai');
+  eq((await apply(p3, 'refunded', 2990, 'mpFX3')).result, 'reversed', 'reembolso desfaz só os 12 meses do pagamento');
+  eq((await ent(u3)).expires_at.toISOString(), exp3.toISOString(), 'volta à data da cortesia');
+  eq((await ent(u3)).plan, 'pro', 'a cortesia continua Pro');
+  // 4) cortesia sem prazo (ou Premium) + pagamento: 0 meses, plano intacto, resultado sinalizado e marca de edição mantida
+  const u4 = await newUser();
+  await q(`update public.entitlements set plan = 'pro', expires_at = null, updated_by = $2, note = 'amigo' where user_id = $1`, [u4, admin]);
+  const p4 = await newPay(u4);
+  const r4 = await apply(p4, 'approved', 2990, 'mpFX4');
+  eq([r4.result, r4.months], ['already_active', 0], 'cortesia sem prazo + pagamento: já ativo, 0 meses');
+  eq([(await ent(u4)).plan, (await ent(u4)).expires_at], ['pro', null], 'plano e prazo intactos');
+  eq((await edited(u4)).note, 'amigo', 'a cortesia continua marcada');
+  eq((await pay(p4)).status, 'approved', 'o pagamento fica registrado como aprovado (reembolsar à mão)');
+  eq((await apply(p4, 'refunded', 2990, 'mpFX4')).result, 'reversed', 'reembolso desse pagamento (0 meses) não mexe no plano');
+  eq([(await ent(u4)).plan, (await ent(u4)).expires_at], ['pro', null], 'a cortesia sobrevive ao reembolso');
+  // conciliação e webhook: os dois casos novos vão para o log
+  const logs5 = [];
+  const rid = '3f1b2c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d';
+  const stubDb = { markReconciled: async () => {}, getPayment: async () => ({ id: rid, amount_cents: 2990 }), applyPayment: async () => ({ result: 'already_active' }) };
+  const mpRow = { id: 4242, status: 'approved', external_reference: rid, transaction_amount: 29.9, currency_id: 'BRL' };
+  await reconcileRow({ id: rid }, { search: async () => [mpRow], db: stubDb, log: (m) => logs5.push(m) });
+  ok(logs5.some((m) => m.includes('reembolsar à mão') && m.includes(rid)), 'conciliação registra pagamento que não concedeu nada');
+  stubDb.applyPayment = async () => ({ result: 'reversed_manual_kept' });
+  logs5.length = 0;
+  await reconcileRow({ id: rid }, { search: async () => [{ ...mpRow, status: 'refunded' }], db: stubDb, log: (m) => logs5.push(m) });
+  ok(logs5.some((m) => m.includes('decidir à mão') && m.includes(rid)), 'conciliação registra reembolso de cortesia');
 }
 
 // preço de entrada pago duas vezes
