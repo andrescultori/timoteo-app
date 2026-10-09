@@ -21,11 +21,12 @@ export default function YourData({ t, lang }) {
     try {
       const c = await getClient();
       const one = async (q) => { const { data, error } = await q; if (error) throw error; return data; };
-      const [profile, entitlement, favorites, position, waitlist, payments] = await Promise.all([
+      const [profile, entitlement, favorites, position, prefs, waitlist, payments] = await Promise.all([
         one(c.from('profiles').select('*').eq('id', user.id).maybeSingle()),
         one(c.from('entitlements').select('*').eq('user_id', user.id).maybeSingle()),
         one(c.from('favorites').select('key,created_at').eq('user_id', user.id)),
         one(c.from('reading_position').select('*').eq('user_id', user.id).maybeSingle()),
+        one(c.from('reading_prefs').select('prefs,updated_at').eq('user_id', user.id).maybeSingle()).catch(() => null), // tabela pode não existir ainda
         one(c.from('waitlist').select('feature,created_at').eq('user_id', user.id)),
         one(c.from('payments').select('id,plan,amount_cents,price_kind,status,created_at,approved_at,months_granted').eq('user_id', user.id)),
       ]);
@@ -34,7 +35,7 @@ export default function YourData({ t, lang }) {
         _sobre: t.dataExportNote.replace('{d}', now.toISOString()),
         exportado_em: now.toISOString(),
         conta: { id: user.id, email: user.email },
-        perfil: profile, plano: entitlement, favoritos: favorites, posicao_de_leitura: position, avise_me: waitlist, pagamentos: payments,
+        perfil: profile, plano: entitlement, favoritos: favorites, posicao_de_leitura: position, ajustes_de_leitura: prefs, avise_me: waitlist, pagamentos: payments,
       };
       const url = URL.createObjectURL(new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' }));
       const a = document.createElement('a');

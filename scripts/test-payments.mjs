@@ -10,6 +10,7 @@ import { buildManifest, parseSignature, hmacHex, verifySignature, mapStatus, pre
 import { applyMpPayment, applyAll } from '../supabase/functions/_shared/payments.js';
 import { handleReconcile } from '../supabase/functions/_shared/reconcile.js';
 import { secretMatches } from '../supabase/functions/_shared/http.js';
+import { cleanPrefs, resolvePrefs, DEFAULTS, SIZES, SPACINGS, WIDTHS, FONTS, READ_THEMES } from '../src/readingPrefs.js';
 
 const root = path.resolve(import.meta.dirname, '..');
 let failed = 0;
@@ -574,6 +575,109 @@ const driftSec = async (user, months) => Number((await q(
   await db.exec(`reset role; set role service_role;`);
   eq((await q(`select public.apply_payment($1, 'mpS', 'approved', 2990) as r`, [p]))[0].r.result, 'granted', 'service_role executa apply_payment');
   await db.exec(`reset role;`);
+}
+
+
+// Ajustes de leitura (visual B): validação no cliente e a tabela reading_prefs no banco
+{
+  eq(cleanPrefs({ size: 23, theme: 'sepia' }), { size: 23, theme: 'sepia' }, 'ajustes: valores permitidos passam');
+  eq(cleanPrefs({ size: 21, spacing: 1.7, width: 660, font: 'serif', verseLines: false, theme: 'light' }), {}, 'ajustes: o padrão não é guardado');
+  eq(cleanPrefs({ size: 99, theme: 'neon', font: 'comic', extra: 1, verseLines: 'sim' }), {}, 'ajustes: valor ou chave inválida é descartada');
+  eq(cleanPrefs('x'), {}, 'ajustes: texto solto vira vazio');
+  eq(cleanPrefs([1]), {}, 'ajustes: lista vira vazio');
+  eq(resolvePrefs({ width: 820 }), { ...DEFAULTS, width: 820 }, 'ajustes: resolve sobre o padrão');
+
+  const as = async (uid, fn) => {
+    await db.exec(`set role ${uid === 'anon' ? 'anon' : 'authenticated'}; select set_config('request.jwt.claim.sub', '${uid && uid !== 'anon' ? uid : ''}', false);`);
+    try { return await fn(); } finally { await db.exec(`reset role; select set_config('request.jwt.claim.sub', '', false);`); }
+  };
+  const valid = async (j) => (await q(`select public.reading_prefs_valid($1::jsonb) as v`, [JSON.stringify(j)]))[0].v;
+  // o SQL aceita exatamente os valores que o cliente aceita
+  for (const v of SIZES) ok(await valid({ size: v }), `SQL aceita size ${v}`);
+  for (const v of SPACINGS) ok(await valid({ spacing: v }), `SQL aceita spacing ${v}`);
+  for (const v of WIDTHS) ok(await valid({ width: v }), `SQL aceita width ${v}`);
+  for (const v of FONTS) ok(await valid({ font: v }), `SQL aceita font ${v}`);
+  for (const v of READ_THEMES) ok(await valid({ theme: v }), `SQL aceita theme ${v}`);
+  ok(await valid({ verseLines: true }) && await valid({ verseLines: false }) && await valid({}), 'SQL aceita verseLines e objeto vazio');
+  for (const bad of [{ size: 20 }, { size: '21' }, { spacing: 1.5 }, { width: 700 }, { font: 'mono' }, { theme: 'x' }, { verseLines: 1 }, { other: 1 }, [], 'x', 5]) {
+    ok(!(await valid(bad)), `SQL recusa ${JSON.stringify(bad)}`);
+  }
+  ok(!(await valid({ size: 21, junk: 'x'.repeat(400) })), 'SQL recusa JSON grande');
+
+  const a = await newUser();
+  const b = await newUser();
+  await as(a, () => q(`insert into public.reading_prefs (user_id, prefs) values ($1, '{"size":23,"theme":"sepia"}')`, [a]));
+  await as(a, () => q(`update public.reading_prefs set prefs = '{"width":820}', updated_at = now() where user_id = $1`, [a]));
+  eq((await as(a, () => q(`select prefs from public.reading_prefs`))).length, 1, 'dono lê a própria linha');
+  eq((await as(b, () => q(`select prefs from public.reading_prefs`))).length, 0, 'outro usuário não vê a linha');
+  await rejects(() => as(b, () => q(`insert into public.reading_prefs (user_id, prefs) values ($1, '{}')`, [a])), 'ninguém grava na linha de outro');
+  await rejects(() => as(a, () => q(`update public.reading_prefs set prefs = '{"size":20}' where user_id = $1`, [a])), 'o banco recusa ajuste inválido');
+  await rejects(() => as('anon', () => q(`select * from public.reading_prefs`)), 'anon não lê reading_prefs');
+  await q(`select public.delete_account_data($1)`, [a]);
+  eq(Number((await q(`select count(*) as n from public.reading_prefs where user_id = $1`, [a]))[0].n), 0, 'exclusão de conta apaga os ajustes de leitura');
+}
+
+
+// Sincronização dos ajustes de leitura (src/userdata.js, com um cliente Supabase de mentira)
+{
+  const U = await import('../src/userdata.js');
+  const sent = [];
+  let remotePrefs = null; // { prefs, updated_at } ou 'missing' (tabela não existe)
+  const client = {
+    from: (table) => ({
+      select: () => {
+        const res = table === 'reading_prefs'
+          ? (remotePrefs === 'missing' ? { data: null, error: { message: 'relation does not exist' } } : { data: remotePrefs, error: null })
+          : { data: table === 'favorites' ? [] : null, error: null };
+        return Object.assign(Promise.resolve(res), { maybeSingle: () => Promise.resolve(res) });
+      },
+      upsert: (row) => { sent.push([table, row]); return Promise.resolve({ error: null }); },
+    }),
+  };
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  U.setPrefs({ size: 26 });
+  eq(U.getPrefs(), { size: 26 }, 'sem conta: ajuste fica no aparelho');
+  U.setPrefs({ size: 21, theme: 'sepia' });
+  eq(U.getPrefs(), { theme: 'sepia' }, 'voltar ao padrão tira a chave');
+  U.resetPrefs();
+  eq(U.getPrefs(), {}, 'restaurar padrão limpa tudo');
+  eq(sent.length, 0, 'sem conta nada é enviado');
+
+  // login: a conta é mais nova que o aparelho => vale a da conta
+  U.setPrefs({ width: 540 });
+  remotePrefs = { prefs: { theme: 'dark', size: 23 }, updated_at: new Date(Date.now() + 60000).toISOString() };
+  await U.connectAccount(client, 'u-1');
+  eq(U.getPrefs(), { size: 23, theme: 'dark' }, 'login: ajustes mais recentes da conta vencem');
+  eq(sent.filter(([t]) => t === 'reading_prefs').length, 0, 'login: nada sobe quando a conta é mais nova');
+
+  // com conta: alteração sobe (com atraso curto, várias viram uma)
+  U.setPrefs({ spacing: 2 }); U.setPrefs({ spacing: 1.45 });
+  await wait(1700);
+  const up = sent.filter(([t]) => t === 'reading_prefs');
+  eq(up.length, 1, 'com conta: cliques seguidos viram uma gravação');
+  eq(up[0][1].prefs, { size: 23, spacing: 1.45, theme: 'dark' }, 'com conta: sobe o estado final');
+  await U.disconnectAccount();
+  eq(U.getPrefs(), {}, 'logout: cache de ajustes é limpo');
+
+  // aparelho mais novo que a conta => sobe
+  sent.length = 0;
+  remotePrefs = { prefs: { size: 17 }, updated_at: new Date(Date.now() - 600000).toISOString() };
+  U.setPrefs({ font: 'sans' });
+  await U.connectAccount(client, 'u-2');
+  await wait(50);
+  eq(sent.filter(([t]) => t === 'reading_prefs').map(([, r]) => r.prefs), [{ font: 'sans' }], 'login: ajustes do aparelho mais novos sobem para a conta');
+  await U.disconnectAccount();
+
+  // tabela ainda não criada: não quebra nada e não envia
+  sent.length = 0;
+  remotePrefs = 'missing';
+  await U.connectAccount(client, 'u-3');
+  U.setPrefs({ size: 30 });
+  await wait(1700);
+  eq(U.getPrefs(), { size: 30 }, 'sem a tabela: o ajuste vale no aparelho');
+  eq(sent.filter(([t]) => t === 'reading_prefs').length, 0, 'sem a tabela: nada é enviado');
+  await U.disconnectAccount();
 }
 
 console.log(failed ? `\n${failed} teste(s) falharam, ${passed} passaram.` : `OK: ${passed} testes de cobrança passaram.`);
