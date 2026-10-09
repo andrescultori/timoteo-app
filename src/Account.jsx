@@ -5,7 +5,7 @@ import { usePlan } from './plan.js';
 
 // Botão de conta do cabeçalho: "Entrar" (Google) quando deslogado; logado, o nome (com PRO ou PREMIUM ao lado, se tiver o plano) e um menu pequeno
 // com Favoritos, Perfil, Configurações e Sair. Não aparece sem Supabase.
-export default function Account({ t, onSettings }) {
+export default function Account({ t }) {
   const { enabled, status, name, error, consent } = useSession();
   const pending = consent === 'needed'; // sem o aceite dos Termos: favoritos só neste aparelho
   const { plan } = usePlan(); // plano efetivo: Pro ou Premium vencido já conta como Essencial
@@ -43,7 +43,7 @@ export default function Account({ t, onSettings }) {
           {pending && <button type="button" role="menuitem" onClick={() => { setOpen(false); openConsent(); }}>{t.consentPending}</button>}
           <a role="menuitem" href={hrefs.favorites} onClick={() => setOpen(false)}>{t.favorites}</a>
           <a role="menuitem" href={hrefs.profile} onClick={() => setOpen(false)}>{t.profile}</a>
-          <button type="button" role="menuitem" onClick={() => { setOpen(false); onSettings?.(); }}>{t.settings}</button>
+          <a role="menuitem" href={hrefs.settings} onClick={() => setOpen(false)}>{t.settings}</a>
           <button type="button" role="menuitem" onClick={() => { setOpen(false); signOut(); }}>{t.signOut}</button>
         </div>
       )}

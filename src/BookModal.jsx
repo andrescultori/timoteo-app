@@ -10,6 +10,7 @@ import { usePlan } from './plan.js';
 import ProInvite from './ProInvite.jsx';
 import { useLinkIndex, Rich } from './linkify.jsx';
 import { hrefs, sync } from './route.js';
+import { sectionsAt } from './outline.js';
 
 // Fichas carregadas sob demanda: cada src/data/info/<slug>.json vira um chunk separado.
 const INFO = import.meta.glob('./data/info/*.json');
@@ -58,7 +59,7 @@ export default function BookModal({ book, lang, t, initialTab, initialPlace, onN
   const keyChapter = Number(String(info?.keyVerse ?? '').match(/^(\d+):/)?.[1]) || null;
 
   return (
-    <div className="page bookpage" style={{ '--c': `var(--s-${book.section})` }}>
+    <div className={`page bookpage${tab === 'read' ? ' compact' : ''}`} style={{ '--c': `var(--s-${book.section})` }}>
       <BackButton t={t} />
       <header className="bk-head">
         <div className="bk-badge" aria-hidden="true">{book.ab[lang]}</div>
@@ -112,9 +113,7 @@ export default function BookModal({ book, lang, t, initialTab, initialPlace, onN
           </div>
         )}
         {tab === 'read' && (
-          <div className="card">
-            <Reader key={initialTab === 'read' ? initialPlace : 'r'} book={book} lang={lang} t={t} initialChapter={initialTab === 'read' ? Number(initialPlace) : undefined} />
-          </div>
+          <Reader key={initialTab === 'read' ? initialPlace : 'r'} book={book} lang={lang} t={t} info={info} keyChapter={keyChapter} initialChapter={initialTab === 'read' ? Number(initialPlace) : undefined} />
         )}
       </div>
 
@@ -145,6 +144,36 @@ function CharName({ c, lang }) {
     const id = ids[i / 2];
     return id ? <a key={i} className="plink" href={hrefs.person(id)}>{x}</a> : x;
   });
+}
+
+// Lateral da Ficha e do Ler: versículo-chave, personagens e esboço. Com `chapter` (no leitor), a(s) seção(ões) do esboço
+// que contêm o capítulo ficam em negrito e destacadas.
+function Aside({ book, lang, t, info, keyChapter, chapter }) {
+  const here = chapter ? sectionsAt(info.outline, chapter) : [];
+  const ref = (r) => `${book.ab[lang]} ${r}`;
+  return (
+    <aside className="bk-side" aria-label={chapter ? t.bookCharacters : t.sheet}>
+      <section className="bk-key">
+        <h2>{t.keyVerse}</h2>
+        <span className="bk-keyref">{ref(info.keyVerse)}</span>
+        {keyChapter && <a href={hrefs.book(book.slug, 'read', String(keyChapter))}>{t.readChapter.replace('{n}', keyChapter)}</a>}
+      </section>
+      <section className="card small">
+        <h2>{chapter ? t.bookCharacters : t.characters}</h2>
+        <div className="chips">
+          {info.characters.map((c, i) => (<span key={i} className="chip"><CharName c={c} lang={lang} /></span>))}
+        </div>
+        {chapter && <a className="side-link" href={hrefs.book(book.slug, 'sheet')}>{t.seeSheet}</a>}
+      </section>
+      <section className="card small">
+        <h2>{t.outline}</h2>
+        <ol className="outline">{info.outline.map((o, i) => (
+          <li key={i} className={here.includes(i) ? 'here' : undefined} aria-current={here.includes(i) ? 'location' : undefined}><span>{ref(o.ref)}</span> {pick(o.title, lang)}</li>
+        ))}</ol>
+        {chapter && here.length > 0 && <p className="side-note">{t.hereNow.replace('{n}', chapter)}</p>}
+      </section>
+    </aside>
+  );
 }
 
 function Sheet({ book, lang, t, info, error, keyChapter }) {
@@ -183,23 +212,7 @@ function Sheet({ book, lang, t, info, error, keyChapter }) {
         {card(t.connections, <p>{rich(info.connections)}</p>)}
         <p className="note">{t.sheetNote}</p>
       </div>
-      <aside className="bk-side" aria-label={t.sheet}>
-        <section className="bk-key">
-          <h2>{t.keyVerse}</h2>
-          <span className="bk-keyref">{ref(info.keyVerse)}</span>
-          {keyChapter && <a href={hrefs.book(book.slug, 'read', String(keyChapter))}>{t.readChapter.replace('{n}', keyChapter)}</a>}
-        </section>
-        <section className="card small">
-          <h2>{t.characters}</h2>
-          <div className="chips">
-            {info.characters.map((c, i) => (<span key={i} className="chip"><CharName c={c} lang={lang} /></span>))}
-          </div>
-        </section>
-        <section className="card small">
-          <h2>{t.outline}</h2>
-          <ol className="outline">{info.outline.map((o, i) => (<li key={i}><span>{ref(o.ref)}</span> {pick(o.title, lang)}</li>))}</ol>
-        </section>
-      </aside>
+      <Aside book={book} lang={lang} t={t} info={info} keyChapter={keyChapter} />
     </div>
   );
 }
@@ -216,12 +229,14 @@ function pickVersion(versions, lang) {
   return (inLang.find((v) => v.id === readPref(lang)) ?? inLang[0] ?? versions[0]).id;
 }
 
-function Reader({ book, lang, t, initialChapter }) {
+function Reader({ book, lang, t, info, keyChapter, initialChapter }) {
   const versions = VERSIONS.filter((v) => v.available && (!v.books || v.books.includes(book.n)));
   const [version, setVersion] = useState(() => { const r = peekResume(book.slug); return versions.some((v) => v.id === r) ? r : pickVersion(versions, lang); });
   const [chapter, setChapter] = useState(initialChapter >= 1 && initialChapter <= book.chapters ? initialChapter : 1);
   const [data, setData] = useState(null);
   const [error, setError] = useState(false);
+  const top = useRef(null);
+  const first = useRef(true);
 
   useEffect(() => {
     let alive = true;
@@ -232,6 +247,11 @@ function Reader({ book, lang, t, initialChapter }) {
 
   // "Continuar de onde parei": grava a posição ao abrir um capítulo no leitor (não ao só abrir a ficha)
   useEffect(() => { setPosition({ version, slug: book.slug, chapter }); }, [version, book.slug, chapter]);
+  // ao trocar de capítulo, volta ao topo da leitura (não na abertura da aba)
+  useEffect(() => {
+    if (first.current) { first.current = false; return; }
+    top.current?.scrollIntoView({ block: 'start' });
+  }, [chapter]);
 
   const current = versions.find((v) => v.id === version);
   const groups = [lang, ...Object.keys(LANG_NAME).filter((l) => l !== lang)]
@@ -242,52 +262,63 @@ function Reader({ book, lang, t, initialChapter }) {
     setVersion(id);
     writePref(versions.find((v) => v.id === id).lang, id);
   };
+  const arrow = (d) => (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={d} /></svg>);
+  const prevBtn = (<button type="button" className="ghost icon-btn" aria-label={t.prevChapter} title={t.prevChapter} disabled={chapter <= 1} onClick={() => setChapter(chapter - 1)}>{arrow('M15 5l-7 7 7 7')}</button>);
+  const nextBtn = (<button type="button" className="ghost icon-btn" aria-label={t.nextChapter} title={t.nextChapter} disabled={chapter >= book.chapters} onClick={() => setChapter(chapter + 1)}>{arrow('M9 5l7 7-7 7')}</button>);
 
   return (
-    <div className="reader">
-      <div className="row">
-        <label htmlFor="ver">{t.version}</label>
-        <select id="ver" value={version} onChange={(e) => choose(e.target.value)} title={current.full}>
-          {groups.map(([l, vs]) => (
-            <optgroup key={l} label={LANG_NAME[l]}>
-              {vs.map((v) => <option key={v.id} value={v.id}>{v.label}</option>)}
-            </optgroup>
-          ))}
-        </select>
-        <span className="pair">
-          <label htmlFor="chap">{t.chapter}</label>
-          <select id="chap" value={chapter} onChange={(e) => setChapter(Number(e.target.value))}>
-            {Array.from({ length: book.chapters }, (_, i) => <option key={i} value={i + 1}>{i + 1}</option>)}
-          </select>
-        </span>
-      </div>
-      {error && <p className="soon">{t.loadError}</p>}
-      {!error && !verses && <p className="soon">{t.loading}</p>}
-      <div className="chap-title">
-        <h3>{book.name[lang]} {chapter}</h3>
-        <FavButton favKey={favKey.chapter(book.slug, chapter)} t={t} />
-      </div>
-      {verses && (
-        // O número vem da posição: versículo que a versão não tem é null e fica sem texto, sem deslocar os seguintes.
-        <div className="text" lang={current.lang}>
-          {verses.map((v, i) => (v === null ? null : <p key={i}><sup>{i + 1}</sup>{v}</p>))}
+    <div className="bk-cols reader">
+      <div className="bk-main reader-card" ref={top}>
+        <div className="reader-bar">
+          <span className="pair">
+            <label htmlFor="chap">{t.chapter}</label>
+            <select id="chap" value={chapter} onChange={(e) => setChapter(Number(e.target.value))}>
+              {Array.from({ length: book.chapters }, (_, i) => <option key={i} value={i + 1}>{i + 1}</option>)}
+            </select>
+          </span>
+          <span className="pair">
+            <label htmlFor="ver">{t.version}</label>
+            <select id="ver" value={version} onChange={(e) => choose(e.target.value)} title={current.full}>
+              {groups.map(([l, vs]) => (
+                <optgroup key={l} label={LANG_NAME[l]}>
+                  {vs.map((v) => <option key={v.id} value={v.id}>{v.label}</option>)}
+                </optgroup>
+              ))}
+            </select>
+          </span>
+          <span className="bar-end">
+            {prevBtn}{nextBtn}
+            <a className="ghost" href={hrefs.settings} aria-label={t.readSettingsLabel}><span className="aa" aria-hidden="true">Aa</span>{t.readSettings}</a>
+          </span>
         </div>
-      )}
-      {verses && (
-        <div className="row pager">
-          <button type="button" className="ghost" disabled={chapter <= 1} onClick={() => setChapter(chapter - 1)}>←</button>
-          <span>{book.name[lang]} {chapter}</span>
-          <button type="button" className="ghost" disabled={chapter >= book.chapters} onClick={() => setChapter(chapter + 1)}>→</button>
+        {error && <p className="soon">{t.loadError}</p>}
+        {!error && !verses && <p className="soon">{t.loading}</p>}
+        <article className="reader-text">
+          <div className="chap-title">
+            <h2>{book.name[lang]} {chapter}</h2>
+            <FavButton favKey={favKey.chapter(book.slug, chapter)} t={t} />
+          </div>
+          {verses && (
+            // O número vem da posição: versículo que a versão não tem é null e fica sem texto, sem deslocar os seguintes.
+            <div className="text" lang={current.lang}>
+              <p>{verses.map((v, i) => (v === null ? null : <span key={i}><sup>{i + 1}</sup>{v} </span>))}</p>
+            </div>
+          )}
+        </article>
+        <div className="reader-foot">
+          <span className="chapof">{t.chapterOf.replace('{n}', chapter).replace('{m}', book.chapters)}</span>
+          <span className="bar-end">{prevBtn}{nextBtn}</span>
         </div>
-      )}
-      <div className="credit">
-        <p>
-          {pick(current.credit, lang)} {pick(current.license, lang)}
-          {current.licenseUrl && <> (<a href={current.licenseUrl} target="_blank" rel="noreferrer">{t.verLicense}</a>)</>}.
-          {current.sourceUrl && <> <a href={current.sourceUrl} target="_blank" rel="noreferrer">{t.verSource}</a>.</>}
-        </p>
-        {current.note && <p>{pick(current.note, lang)}</p>}
+        <div className="credit">
+          <p>
+            {pick(current.credit, lang)} {pick(current.license, lang)}
+            {current.licenseUrl && <> (<a href={current.licenseUrl} target="_blank" rel="noreferrer">{t.verLicense}</a>)</>}.
+            {current.sourceUrl && <> <a href={current.sourceUrl} target="_blank" rel="noreferrer">{t.verSource}</a>.</>}
+          </p>
+          {current.note && <p>{pick(current.note, lang)}</p>}
+        </div>
       </div>
+      {info && <Aside book={book} lang={lang} t={t} info={info} keyChapter={keyChapter} chapter={chapter} />}
     </div>
   );
 }

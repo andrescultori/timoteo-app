@@ -10,7 +10,6 @@ import { usePlan } from './plan.js';
 import ProInvite from './ProInvite.jsx';
 import { VERSIONS } from './data/bible.js';
 import { useUserData, dismissContinue, dismissNotice, acknowledgeNotice, setResume } from './userdata.js';
-import SettingsModal from './SettingsModal.jsx';
 import { SettingsContext } from './settings.js';
 import { parseHash, hrefs, go } from './route.js';
 import { usePageTitle } from './pageTitle.js';
@@ -23,6 +22,7 @@ const Favorites = lazy(() => import('./Favorites.jsx'));
 const Profile = lazy(() => import('./Profile.jsx'));
 const Checkout = lazy(() => import('./Checkout.jsx'));
 const Legal = lazy(() => import('./Legal.jsx'));
+const SettingsPage = lazy(() => import('./SettingsPage.jsx'));
 
 const store = {
   get(k, d) { try { return localStorage.getItem(k) ?? d; } catch { return d; } },
@@ -91,7 +91,6 @@ export default function App() {
   const session = useSession();
   // A posição acadêmica é oculta para todos e visível só para o administrador (can('academic')); o interruptor das Configurações vale só para ele
   const effectiveSettings = { ...settings, showScholarly: plan.can('academic') && settings.showScholarly };
-  const [showSettings, setShowSettings] = useState(false);
   const t = T[lang];
 
   // Livro, linha do tempo e personagens ajustam o título com o detalhe (aba, evento, pessoa); aqui fica o da grade.
@@ -167,7 +166,7 @@ export default function App() {
                 <button key={l.id} type="button" aria-pressed={lang === l.id} onClick={() => setLang(l.id)}>{l.label}</button>
               ))}
             </div>
-            <Account t={t} onSettings={() => setShowSettings(true)} />
+            <Account t={t} />
           </div>
         </div>
       </header>
@@ -234,6 +233,11 @@ export default function App() {
           <Legal kind={route.kind} lang={lang} t={t} />
         </Suspense>
       )}
+      {route.kind === 'settings' && (
+        <Suspense fallback={<p className="soon page-wait">{t.loading}</p>}>
+          <SettingsPage t={t} settings={settings} canAcademic={plan.can('academic')} onChange={setSettings} />
+        </Suspense>
+      )}
       {route.kind === 'favorites' && (
         <Suspense fallback={<p className="soon page-wait">{t.loading}</p>}>
           <Favorites lang={lang} t={t} />
@@ -270,7 +274,6 @@ export default function App() {
       </footer>
       <DeviceNotice t={t} />
       {session.consentOpen && <ConsentModal t={t} lang={lang} />}
-      {showSettings && <SettingsModal t={t} settings={settings} canAcademic={plan.can('academic')} onChange={setSettings} onClose={() => setShowSettings(false)} />}
     </SettingsContext.Provider>
   );
 }

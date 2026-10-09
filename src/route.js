@@ -7,6 +7,7 @@ import { bySlug } from './data/books.js';
 //   #psa/psalms/51  #psa/read/23   Salmos: aba da tabela com o salmo selecionado; leitor no capítulo
 //   #timeline  #timeline/exodo     linha do tempo (e evento em foco)
 //   #person  #person/davi          personagens (e pessoa)
+//   #settings                      configurações
 //   #favorites                     meus favoritos
 //   #profile                       meu perfil (conta)
 //   #terms  #privacy               Termos de Uso e Política de Privacidade
@@ -20,6 +21,7 @@ export function parseHash(hash = location.hash) {
   if (a === 'timeline') return { kind: 'timeline', id: b || null };
   if (a === 'person') return { kind: 'person', id: b || null };
   if (a === 'favorites') return { kind: 'favorites' };
+  if (a === 'settings') return { kind: 'settings' };
   if (a === 'profile') return { kind: 'profile' };
   if (a === 'checkout') return { kind: 'checkout' };
   if (a === 'terms') return { kind: 'terms' };
@@ -35,6 +37,7 @@ export const hrefs = {
   timeline: (id) => (id ? `#timeline/${id}` : '#timeline'),
   person: (id) => (id ? `#person/${id}` : '#person'),
   favorites: '#favorites',
+  settings: '#settings',
   profile: '#profile',
   checkout: '#checkout/retorno',
   terms: '#terms',
