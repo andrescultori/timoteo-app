@@ -627,3 +627,4 @@ a.ghost[aria-disabled='true'] { opacity: 0.4; pointer-events: none; }
 .ow-s { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--r-accent, var(--accent-2)); }
 .ow-g { color: var(--r-fg, var(--fg)); max-width: 11em; }
 @media (max-width: 720px) { .ostrip { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 8px; scrollbar-width: thin; } }
+.reader-bar .bar-end, .reader-foot .bar-end { flex-wrap: wrap; }
