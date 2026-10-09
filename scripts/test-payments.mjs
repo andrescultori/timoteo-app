@@ -12,6 +12,7 @@ import { handleReconcile } from '../supabase/functions/_shared/reconcile.js';
 import { secretMatches } from '../supabase/functions/_shared/http.js';
 import { cleanPrefs, resolvePrefs, DEFAULTS, SIZES, SPACINGS, WIDTHS, FONTS, READ_THEMES, SITE_THEMES } from '../src/readingPrefs.js';
 import { resolveSite } from '../src/siteTheme.js';
+import { rpcProblem, addMonths, shortcutExpiry, toDateInput, fromDateInput, planView, downgradesPaid, barRows, cents, SEX_ORDER, AGE_ORDER } from '../src/adminData.js';
 import { readColors } from '../src/readingPrefs.js';
 
 const root = path.resolve(import.meta.dirname, '..');
@@ -696,6 +697,200 @@ const driftSec = async (user, months) => Number((await q(
   eq(U.getPrefs(), { size: 30 }, 'sem a tabela: o ajuste vale no aparelho');
   eq(sent.filter(([t]) => t === 'reading_prefs').length, 0, 'sem a tabela: nada é enviado');
   await U.disconnectAccount();
+}
+
+// Página de administração: funções puras (src/adminData.js)
+{
+  eq(rpcProblem(null), null, 'sem erro');
+  eq(rpcProblem({ code: '42501', message: 'acesso negado' }), 'denied', 'acesso negado (42501)');
+  eq(rpcProblem({ message: 'Acesso negado' }), 'denied', 'acesso negado pelo texto');
+  eq(rpcProblem({ code: 'PGRST202', message: 'Could not find the function public.admin_kpis(p_min) in the schema cache' }), 'missing', 'função inexistente: migration não aplicada');
+  eq(rpcProblem({ code: '42883', message: 'function does not exist' }), 'missing', 'função inexistente no Postgres');
+  eq(rpcProblem({ code: '08006', message: 'falha de rede' }), 'other', 'outro erro');
+  const iso = (d) => d.toISOString();
+  eq(iso(addMonths('2026-10-08T12:00:00Z', 12)), '2027-10-08T12:00:00.000Z', '+12 meses');
+  eq(iso(addMonths('2027-01-31T00:00:00Z', 1)), '2027-02-28T00:00:00.000Z', 'fim de mês não transborda');
+  eq(iso(addMonths('2028-01-31T00:00:00Z', 1)), '2028-02-29T00:00:00.000Z', 'fevereiro bissexto');
+  const now = new Date('2026-10-10T12:00:00Z');
+  eq(iso(shortcutExpiry('2027-01-10T12:00:00Z', 3, now)), '2027-04-10T12:00:00.000Z', 'atalho soma ao vencimento que ainda vale');
+  eq(iso(shortcutExpiry('2026-01-10T12:00:00Z', 3, now)), '2027-01-10T12:00:00.000Z', 'vencido: soma a partir de agora');
+  eq(iso(shortcutExpiry(null, 1, now)), '2026-11-10T12:00:00.000Z', 'sem vencimento: soma a partir de agora');
+  eq(toDateInput(new Date(2026, 9, 5, 15)), '2026-10-05', 'data para o campo date (local)');
+  const f = fromDateInput('2026-10-05');
+  eq([f.getFullYear(), f.getMonth(), f.getDate(), f.getHours(), f.getMinutes()], [2026, 9, 5, 23, 59], 'o vencimento vale até o fim do dia');
+  eq([fromDateInput(''), fromDateInput('xx'), fromDateInput(null)], [null, null, null], 'data inválida vira nulo');
+  eq(planView({ plan: 'pro', effective_plan: 'pro', expires_at: null, has_paid: false }), { plan: 'pro', expired: false, until: null, origin: 'courtesy' }, 'Pro sem pagamento = cortesia');
+  eq(planView({ plan: 'pro', effective_plan: 'pro', expires_at: '2027-01-01', has_paid: true }).origin, 'paid', 'Pro com pagamento = pago');
+  eq(planView({ plan: 'pro', effective_plan: 'essencial', expires_at: '2025-01-01', has_paid: true }), { plan: 'essencial', expired: true, until: '2025-01-01', origin: null }, 'Pro vencido: vencido e sem origem');
+  eq(planView({ plan: 'essencial', effective_plan: 'essencial', expires_at: null, has_paid: false }).expired, false, 'Essencial não é "vencido"');
+  const paid = { has_paid: true, effective_plan: 'pro', expires_at: '2027-06-01T00:00:00Z' };
+  eq(downgradesPaid(paid, 'essencial', null), true, 'pago → Essencial rebaixa');
+  eq(downgradesPaid(paid, 'pro', '2027-01-01T00:00:00Z'), true, 'pago: prazo menor rebaixa');
+  eq(downgradesPaid(paid, 'pro', null), false, 'pago: sem vencimento não rebaixa');
+  eq(downgradesPaid(paid, 'premium', null), false, 'pago → Premium não rebaixa');
+  eq(downgradesPaid({ ...paid, has_paid: false }, 'essencial', null), false, 'sem pagamento: nunca avisa');
+  eq(downgradesPaid({ has_paid: true, effective_plan: 'essencial', expires_at: null }, 'essencial', null), false, 'pago já no Essencial: nada a rebaixar');
+  const rows = barRows({ female: 6, male: 3, other: 0, unspecified: 1 }, SEX_ORDER);
+  eq(rows.map((r) => [r.key, r.n, r.width, r.pct]), [['female', 6, 100, 60], ['male', 3, 50, 30], ['unspecified', 1, 17, 10]], 'barras: ordem fixa, sem grupos vazios, largura relativa ao maior');
+  eq(AGE_ORDER, ['18-24', '25-34', '35-44', '45-54', '55-64', '65+', 'unspecified'], 'faixas etárias em ordem fixa');
+  eq(barRows(undefined, AGE_ORDER), [], 'sem dados: sem barras');
+  eq([cents(4189000), cents(null)], [41890, 0], 'centavos em reais');
+}
+
+// Fase 6: painel de administração (20261015)
+{
+  const as = async (uid, fn) => {
+    await db.exec(`set role ${uid === 'anon' ? 'anon' : 'authenticated'}; select set_config('request.jwt.claim.sub', '${uid && uid !== 'anon' ? uid : ''}', false);`);
+    try { return await fn(); } finally { await db.exec(`reset role; select set_config('request.jwt.claim.sub', '', false);`); }
+  };
+  const denied = async (fn, msg) => { try { await fn(); ok(false, `${msg} (não lançou erro)`); } catch (e) { ok(/acesso negado/.test(e.message), `${msg} (erro: ${e.message})`); } };
+  const failsWith = async (fn, re, msg) => { try { await fn(); ok(false, `${msg} (não lançou erro)`); } catch (e) { ok(re.test(e.message), `${msg} (erro: ${e.message})`); } };
+  const adminId = await newUser();
+  await q(`insert into public.app_admins (user_id) values ($1)`, [adminId]);
+  const common = await newUser();
+  const target = await newUser();
+  const kpis = () => as(adminId, async () => (await q(`select public.admin_kpis(5) as k`))[0].k);
+  const srt = (o) => Object.fromEntries(Object.entries(o).sort(([a], [b]) => (a < b ? -1 : 1))); // jsonb não guarda a ordem das chaves
+  const audit = async (u) => (await q(`select action, details from public.admin_audit where target_user = $1 order by id`, [u]));
+
+  // 1) quem não é admin é recusado em todas as funções; anônimo nem executa
+  await as(common, async () => {
+    await denied(() => q(`select public.admin_kpis(5)`), 'não-admin: admin_kpis');
+    await denied(() => q(`select * from public.admin_search_users('', 20, 0)`), 'não-admin: admin_search_users');
+    await denied(() => q(`select public.admin_set_plan($1, 'pro', null, null)`, [target]), 'não-admin: admin_set_plan');
+    await denied(() => q(`select public.admin_set_role($1, 'editor', true)`, [target]), 'não-admin: admin_set_role');
+    await denied(() => q(`select * from public.admin_recent_changes(30)`), 'não-admin: admin_recent_changes');
+    eq((await q(`select * from public.user_roles`)).length, 0, 'não-admin: user_roles só mostra os próprios papéis (nenhum)');
+    await rejects(() => q(`select * from public.admin_audit`), 'cliente não lê admin_audit');
+    await rejects(() => q(`insert into public.user_roles (user_id, role) values ($1, 'editor')`, [common]), 'cliente não grava user_roles');
+    await rejects(() => q(`update public.entitlements set plan = 'pro' where user_id = $1`, [common]), 'cliente não grava entitlements');
+  });
+  await as('anon', async () => {
+    await rejects(() => q(`select public.admin_kpis(5)`), 'anon não executa admin_kpis');
+    await rejects(() => q(`select public.admin_set_plan($1, 'pro', null, null)`, [target]), 'anon não executa admin_set_plan');
+  });
+  eq((await q(`select count(*)::int as n from public.admin_audit`))[0].n, 0, 'nenhuma tentativa recusada deixou registro');
+
+  // 2) admin_set_plan
+  const before = await kpis();
+  await as(adminId, () => q(`select public.admin_set_plan($1, 'pro', null, 'cortesia, amigo')`, [target]));
+  let e1 = (await q(`select plan, expires_at, note, updated_by from public.entitlements where user_id = $1`, [target]))[0];
+  eq([e1.plan, e1.expires_at, e1.note, e1.updated_by], ['pro', null, 'cortesia, amigo', adminId], 'Pro sem vencimento: plano, motivo e quem mudou');
+  const k1 = await kpis();
+  eq([k1.plan.pro - before.plan.pro, k1.plan.pro_cortesia - before.plan.pro_cortesia, k1.plan.pro_pago - before.plan.pro_pago], [1, 1, 0], 'sem pagamento aprovado: conta como cortesia');
+  await as(adminId, () => q(`select public.admin_set_plan($1, 'pro', now() + interval '30 days', null)`, [target]));
+  e1 = (await q(`select expires_at, note from public.entitlements where user_id = $1`, [target]))[0];
+  ok(e1.expires_at && e1.note === null, 'Pro com data futura: grava a data e o motivo some se vier vazio');
+  await as(adminId, () => q(`select public.admin_set_plan($1, 'essencial', now() + interval '30 days', 'x')`, [target]));
+  e1 = (await q(`select plan, expires_at from public.entitlements where user_id = $1`, [target]))[0];
+  eq([e1.plan, e1.expires_at], ['essencial', null], 'Essencial zera o vencimento');
+  await as(adminId, async () => {
+    await failsWith(() => q(`select public.admin_set_plan($1, 'pro', now() - interval '1 day', null)`, [target]), /data futura/, 'vencimento passado é recusado');
+    await failsWith(() => q(`select public.admin_set_plan($1, 'ouro', null, null)`, [target]), /plano inválido/, 'plano inválido é recusado');
+    await failsWith(() => q(`select public.admin_set_plan('00000000-0000-4000-8000-000000000000', 'pro', null, null)`), /não encontrado/, 'usuário inexistente é recusado');
+    await failsWith(() => q(`select public.admin_set_plan($1, 'pro', null, $2)`, [target, 'x'.repeat(301)]), /300|longo|check/i, 'motivo acima de 300 caracteres é recusado');
+  });
+  eq((await audit(target)).map((a) => a.action), ['set_plan', 'set_plan', 'set_plan'], 'cada mudança de plano é registrada (e as recusadas não)');
+  eq(srt((await audit(target))[0].details), srt({ from_plan: 'essencial', from_expires_at: null, to_plan: 'pro', to_expires_at: null, note: 'cortesia, amigo' }), 'o registro guarda o antes, o depois e o motivo');
+  // com pagamento aprovado: conta como pago
+  const paidUser = await newUser();
+  await apply(await newPay(paidUser), 'approved', 2990, 'mpAdm1');
+  const k2 = await kpis();
+  eq([k2.plan.pro_pago - k1.plan.pro_pago >= 1, k2.payments.aprovados - before.payments.aprovados], [true, 1], 'pagamento aprovado entra em pro_pago e em aprovados');
+  eq(k2.payments.aprovado_centavos - before.payments.aprovado_centavos, 2990, 'valor aprovado em centavos');
+
+  // 3) papéis
+  const roleOf = async (u) => (await q(`select role from public.user_roles where user_id = $1 order by role`, [u])).map((r) => r.role);
+  eq(srt((await as(adminId, () => q(`select public.admin_set_role($1, 'editor', true) as r`, [target])))[0].r), srt({ role: 'editor', granted: true, changed: true }), 'conceder editor');
+  eq((await as(adminId, () => q(`select public.admin_set_role($1, 'editor', true) as r`, [target])))[0].r.changed, false, 'conceder de novo não muda nada');
+  await as(adminId, () => q(`select public.admin_set_role($1, 'revisor', true)`, [target]));
+  eq(await roleOf(target), ['editor', 'revisor'], 'dois papéis');
+  eq((await audit(target)).filter((a) => a.action === 'grant_role').length, 2, 'repetir a concessão não gera registro novo');
+  await as(adminId, async () => {
+    await failsWith(() => q(`select public.admin_set_role($1, 'admin', true)`, [target]), /papel inválido/, 'admin não é concedido por aqui');
+    await failsWith(() => q(`select public.admin_set_role($1, null, true)`, [target]), /papel inválido/, 'papel nulo é recusado');
+    await failsWith(() => q(`select public.admin_set_role('00000000-0000-4000-8000-000000000000', 'editor', true)`), /não encontrado/, 'papel para usuário inexistente');
+  });
+  eq((await as(adminId, () => q(`select public.admin_set_role($1, 'editor', false) as r`, [target])))[0].r.changed, true, 'retirar editor');
+  eq((await as(adminId, () => q(`select public.admin_set_role($1, 'editor', false) as r`, [target])))[0].r.changed, false, 'retirar de novo não muda');
+  eq(await roleOf(target), ['revisor'], 'sobra só o revisor');
+  eq((await kpis()).roles.revisor >= 1, true, 'KPI de papéis conta o revisor');
+  await as(target, async () => eq((await q(`select role from public.user_roles`)).map((r) => r.role), ['revisor'], 'o próprio usuário lê só os seus papéis'));
+
+  // 4) busca: sem sexo, idade ou cidade; "%" e "_" são texto
+  const special = (await q(`insert into auth.users (email, raw_user_meta_data) values ('ana%teste_x@t.com', '{"full_name":"Ana 100% Teste"}') returning id`))[0].id;
+  await q(`update public.profiles set sex = 'female', age_band = '25-34', city_state = 'Maringá, PR' where id = $1`, [special]);
+  const search = (qs, limit = 20, offset = 0) => as(adminId, () => q(`select * from public.admin_search_users($1, $2, $3)`, [qs, limit, offset]));
+  const hit = await search('ana%teste');
+  eq(hit.map((r) => r.id), [special], '"%" na busca é texto, não curinga');
+  eq((await search('%')).map((r) => r.id), [special], 'só "%" acha só quem tem "%" no e-mail ou nome');
+  eq((await search('teste_x')).map((r) => r.id), [special], '"_" na busca é texto');
+  eq((await search('100% teste')).map((r) => r.id), [special], 'busca por nome, sem diferenciar maiúsculas');
+  eq(Object.keys(hit[0]).sort(), ['created_at', 'effective_plan', 'email', 'expires_at', 'has_paid', 'id', 'is_admin', 'name', 'note', 'plan', 'roles'].sort(), 'a busca nunca devolve sexo, idade nem cidade');
+  ok(!JSON.stringify(hit).includes('Maringá') && !JSON.stringify(hit).includes('25-34'), 'nenhum dado demográfico no resultado');
+  const all = await search('', 50);
+  ok(all.length >= 20 && all[0].created_at >= all[all.length - 1].created_at, 'vazio = mais recentes primeiro');
+  const pg1 = await search('', 5, 0), pg2 = await search('', 5, 5);
+  ok(pg1.length === 5 && pg2.length === 5 && !pg1.some((r) => pg2.some((x) => x.id === r.id)), 'paginação sem repetir usuários');
+  eq((await search('', 500)).length <= 50, true, 'o limite máximo é 50');
+  eq((await search(adminId.slice(0, 8) + 'x')).length, 0, 'busca sem resultado');
+  const adm = (await search((await q(`select email from public.profiles where id = $1`, [adminId]))[0].email)).find((r) => r.id === adminId);
+  eq([adm.is_admin, adm.roles], [true, []], 'selo de admin');
+  const tgt = (await search((await q(`select email from public.profiles where id = $1`, [target]))[0].email)).find((r) => r.id === target);
+  eq([tgt.roles, tgt.plan, tgt.effective_plan], [['revisor'], 'essencial', 'essencial'], 'papéis e plano na linha');
+
+  // plano vencido: efetivo Essencial, mas o plano guardado aparece, e conta em "vencidos"
+  const exp = await newUser();
+  await q(`update public.entitlements set plan = 'pro', expires_at = now() - interval '1 day' where user_id = $1`, [exp]);
+  const er = (await search((await q(`select email from public.profiles where id = $1`, [exp]))[0].email))[0];
+  eq([er.plan, er.effective_plan], ['pro', 'essencial'], 'vencido: plano guardado Pro, efetivo Essencial');
+  ok((await kpis()).plan.vencidos >= 1, 'KPI conta vencidos');
+
+  // 5) sexo e faixa etária: grupo pequeno some inteiro; grupo grande aparece
+  await q(`update public.profiles set sex = 'female', age_band = '25-34'`);
+  let kk = await kpis();
+  eq([kk.sex.hidden, kk.age.hidden, Object.keys(kk.sex.items), Object.keys(kk.age.items)], [false, false, ['female'], ['25-34']], 'grupos grandes aparecem');
+  eq(kk.sex.items.female, kk.total_users, 'a soma do gráfico é o total de usuários');
+  await q(`update public.profiles set sex = 'male', age_band = '65+' where id in ($1, $2)`, [common, target]);
+  kk = await kpis();
+  eq([kk.sex.hidden, kk.age.hidden], [true, true], 'um grupo com menos de 5 pessoas esconde o gráfico inteiro');
+  eq([kk.sex.items, kk.age.items, kk.sex.min], [undefined, undefined, 5], 'oculto: nenhum número sai (só hidden e min)');
+  eq(Object.keys(kk.sex).sort(), ['hidden', 'min'], 'oculto: só hidden e min');
+  const wide = await as(adminId, async () => (await q(`select public.admin_kpis(1) as k`))[0].k);
+  eq(wide.sex.min, 2, 'p_min nunca cai abaixo de 2');
+  eq(wide.sex.hidden, false, 'com o mínimo em 2, grupos de 2 pessoas já aparecem');
+  await q(`update public.profiles set sex = null, age_band = null`);
+  kk = await kpis();
+  eq([kk.sex.hidden, kk.age.hidden], [false, false], 'Não informado também é um grupo (grande) e aparece');
+  eq([Object.keys(kk.sex.items), kk.sex.items.unspecified === kk.total_users], [['unspecified'], true], 'chave "unspecified" para quem não informou');
+  eq(typeof kk.marketing_consent, 'number', 'consentimento de novidades é só uma contagem');
+
+  // 6) exclusão de conta: limpa user_roles e o detalhe do registro; o rastro fica sem dado
+  const gone = await newUser();
+  await as(adminId, async () => {
+    await q(`select public.admin_set_plan($1, 'pro', null, 'dado que não deve sobrar')`, [gone]);
+    await q(`select public.admin_set_role($1, 'editor', true)`, [gone]);
+  });
+  eq((await audit(gone)).length, 2, 'registro antes da exclusão');
+  await q(`select public.delete_account_data($1)`, [gone]);
+  eq((await roleOf(gone)).length, 0, 'user_roles do excluído some');
+  const left = await audit(gone);
+  eq([left.length, left.every((a) => JSON.stringify(a.details) === '{}')], [2, true], 'o rastro fica, sem o detalhe (motivo, planos)');
+  const recent = await as(adminId, () => q(`select * from public.admin_recent_changes(100)`));
+  ok(recent.length >= 2 && recent[0].at >= recent[recent.length - 1].at, 'histórico: mais recentes primeiro');
+  const goneRows = recent.filter((r) => JSON.stringify(r.details) === '{}');
+  ok(goneRows.length >= 2 && goneRows.every((r) => r.target_email === null), 'histórico de conta excluída: sem e-mail do alvo');
+  ok(recent.some((r) => r.admin_email && r.target_email), 'histórico traz quem mudou e em quem');
+  eq((await as(adminId, () => q(`select * from public.admin_recent_changes(1)`))).length, 1, 'p_limit respeitado');
+
+  // 7) cortesia sem prazo e pagamento: o plano não muda
+  const friend = await newUser();
+  await as(adminId, () => q(`select public.admin_set_plan($1, 'pro', null, 'cortesia')`, [friend]));
+  const fp = await newPay(friend);
+  eq((await apply(fp, 'approved', 2990, 'mpAdm2')).months, 0, 'cortesia sem prazo: pagamento não soma meses');
+  eq([(await ent(friend)).plan, (await ent(friend)).expires_at], ['pro', null], 'cortesia sem prazo continua igual depois do pagamento');
+  await as(adminId, () => q(`select public.admin_set_plan($1, 'essencial', null, 'rebaixado')`, [friend]));
+  eq([(await ent(friend)).plan, (await q(`select exists(select 1 from public.payments where user_id = $1 and status = 'approved') as p`, [friend]))[0].p], ['essencial', true], 'rebaixar quem tem pagamento aprovado funciona (a tela avisa)');
 }
 
 console.log(failed ? `\n${failed} teste(s) falharam, ${passed} passaram.` : `OK: ${passed} testes de cobrança passaram.`);

@@ -11,7 +11,7 @@ import ProInvite from './ProInvite.jsx';
 import { VERSIONS } from './data/bible.js';
 import { useUserData, dismissContinue, dismissNotice, acknowledgeNotice, setResume } from './userdata.js';
 import { SettingsContext } from './settings.js';
-import { parseHash, hrefs, go } from './route.js';
+import { parseHash, hrefs, go, replaceHome } from './route.js';
 import { usePageTitle } from './pageTitle.js';
 import { useApplySiteTheme } from './siteTheme.js';
 
@@ -21,6 +21,7 @@ const People = lazy(() => import('./People.jsx'));
 const Genealogy = lazy(() => import('./Genealogy.jsx'));
 const Favorites = lazy(() => import('./Favorites.jsx'));
 const Profile = lazy(() => import('./Profile.jsx'));
+const Admin = lazy(() => import('./Admin.jsx'));
 const Checkout = lazy(() => import('./Checkout.jsx'));
 const Legal = lazy(() => import('./Legal.jsx'));
 const SettingsPage = lazy(() => import('./SettingsPage.jsx'));
@@ -80,6 +81,12 @@ function DeviceNotice({ t }) {
       <SignInOffer t={t} />
     </div>
   );
+}
+
+// #admin sem ser admin (digitado na barra, ou cache de plano velho): vai ao início sem mostrar nada
+function LeaveAdmin() {
+  useEffect(() => { replaceHome(); }, []);
+  return null;
 }
 
 export default function App() {
@@ -225,6 +232,11 @@ export default function App() {
           <Profile lang={lang} t={t} />
         </Suspense>
       )}
+      {route.kind === 'admin' && (plan.loading ? <p className="soon page-wait">{t.loading}</p> : plan.isAdmin ? (
+        <Suspense fallback={<p className="soon page-wait">{t.loading}</p>}>
+          <Admin lang={lang} t={t} />
+        </Suspense>
+      ) : <LeaveAdmin />)}
       {route.kind === 'checkout' && (
         <Suspense fallback={<p className="soon page-wait">{t.loading}</p>}>
           <Checkout lang={lang} t={t} />
