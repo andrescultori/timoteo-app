@@ -11,7 +11,7 @@
 
 Uma tabela dos 66 livros da Bíblia, em que cada livro abre uma ficha de estudo (autor, data, tema, esboço), um mapa dos lugares citados e o texto para leitura. Uma linha do tempo e páginas de personagens se ligam aos livros e aos mapas. Tudo é estático (React + Vite), publicado no GitHub Pages, com interface em português e inglês.
 
-**▶ Demo ao vivo: <https://andrescultori.github.io/timoteo-app/>**
+**▶ Demo ao vivo: <https://estudo.timoteo.app.br/>**
 
 > **Sobre o conteúdo.** É um projeto pessoal e original. Fichas, datas e resumos de personagens são rascunhos em revisão manual: onde autoria, datação ou localização são debatidas, o site mostra as posições (tradicional e acadêmica) lado a lado e marca a incerteza. O texto bíblico só entra com licença clara.
 

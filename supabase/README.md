@@ -40,7 +40,7 @@ where user_id = (select id from auth.users where email = 'EMAIL-DO-USUARIO');
 `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY`: em `.env.example` para desenvolvimento (copie para `.env.local`) e nas variáveis do projeto do Cloudflare Pages para produção. Sem elas o app funciona só no aparelho (sem login).
 
 ## Login com Google
-Já está configurado no painel (credencial OAuth e URLs de retorno). O app usa `redirectTo = origem + caminho` (sem o hash); essa URL precisa estar em Authentication → URL Configuration → Redirect URLs (a de produção, `https://timoteo-app.pages.dev/`, e `http://localhost:5173/` para desenvolvimento).
+Já está configurado no painel (credencial OAuth e URLs de retorno). O app usa `redirectTo = origem + caminho` (sem o hash); essa URL precisa estar em Authentication → URL Configuration → Redirect URLs (a de produção, `https://estudo.timoteo.app.br/` (mais o Site URL igual; `https://timoteo-app.pages.dev/` pode ficar como reserva), e `http://localhost:5173/` para desenvolvimento).
 
 
 ---
@@ -65,7 +65,7 @@ No painel de desenvolvedores do Mercado Pago, na sua aplicação: **Credenciais 
 supabase secrets set --project-ref zqxodmjrbzmyhnkqszqh \
   MP_ACCESS_TOKEN='<access token de teste>' \
   MP_WEBHOOK_SECRET='<assinatura secreta do webhook>' \
-  APP_URL='https://timoteo-app.pages.dev'
+  APP_URL='https://estudo.timoteo.app.br'
 ```
 (ou Edge Functions → Secrets no painel). `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` já existem no ambiente das funções: **não** os defina nem os copie para lugar nenhum. `APP_URL` é a origem do app, sem barra no fim e sem hash. Para desenvolvimento local, `http://localhost:5173` já é aceito no CORS.
 

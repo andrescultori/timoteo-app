@@ -41,7 +41,7 @@ Links externos (quando entrar): vídeos do BibleProject por livro e busca em con
 
 - **[decidido]** Texto bíblico disponível em todos os planos, inclusive o Essencial (importante para as licenças de uso).
 - **[decidido]** Cobrança **anual** (substitui o "vitalício" de antes). Renovação: **[proposto, confirmar]** 12 meses de acesso pagos manualmente (Pix ou cartão no checkout do Mercado Pago), com aviso por e-mail perto do vencimento. Assinatura recorrente fica como possibilidade futura. Ao vencer, a conta volta ao Essencial sem perder progresso.
-- **[decidido]** Hospedagem no **Cloudflare Pages**, em `*.pages.dev`, **sem domínio por ora**. A venda é testada antes. A landing e o app serão **dois projetos separados** do Cloudflare Pages, para que o domínio seja só anexado depois (`timoteo.com.br` na landing e `app.timoteo.com.br` no app; `timoteo.com.br` estava livre em 02/10/2026).
+- **[decidido]** Hospedagem no **Cloudflare Pages**, em dois projetos separados (landing e app). Em 09/10/2026 o André registrou **`timoteo.app.br`** (Registro.br, DNS no Cloudflare): landing em `timoteo.app.br` e app em **`estudo.timoteo.app.br`**; os `*.pages.dev` ficam como reserva. Contato: `contato@timoteo.app.br` (Email Routing). Antes disso a hospedagem era só em `*.pages.dev`.
 - **[decidido]** **Supabase em projeto dedicado** (login, banco, regras de acesso por plano).
 - **[decidido]** Cobrança por **Mercado Pago**, com checkout hospedado por eles.
 - **[decidido]** Cadastro **opcional**: nome e e-mail obrigatórios; sexo, faixa etária e cidade/estado opcionais. Leitura e fichas do Essencial abertas, sem login. Ganchos de cadastro: salvar progresso e favoritos entre aparelhos, "Avise-me" nos recursos "em breve" e uma caixa separada e desmarcada para novidades e promoções (consentimento próprio, com descadastro em todo e-mail). Idade só em faixas, não data de nascimento.
@@ -78,7 +78,7 @@ Cada fase vira uma branch e um PR; o merge é do André. O Code diagnostica e es
 - Conferir na fonte as taxas atuais do Mercado Pago e o preço e os limites do Supabase pago, e ver se R$49,90/ano cobre o custo fixo.
 - Confirmar os itens "proposto".
 
-**Fase 1: site atual no Cloudflare Pages (sem reescrever) — FEITA** (https://timoteo-app.pages.dev/)
+**Fase 1: site atual no Cloudflare Pages (sem reescrever) — FEITA** (hoje em https://estudo.timoteo.app.br/; antes https://timoteo-app.pages.dev/)
 - Build `npm run build`, saída `dist`. O `base: './'` do Vite já funciona na raiz.
 - Projeto do app no Cloudflare Pages (build `npm run build`, saída `dist`, branch de produção `main`), no ar em `timoteo-app.pages.dev`; o GitHub Pages segue no ar até validar.
 - Conferir hash (`#joh`), `public/bible/` e fichas.
@@ -168,7 +168,7 @@ Cada fase vira uma branch e um PR; o merge é do André. O Code diagnostica e es
 - Taxas do Mercado Pago e preço do Supabase: não verificados.
 - O plano gratuito do Supabase pausa projetos inativos e não é adequado com clientes pagantes; prever o plano pago antes do lançamento.
 - Sem domínio, o link mágico depende de envio confiável; ver Fase 2.
-- Pagar em `*.pages.dev` funciona, mas passa menos confiança no checkout; revisar quando houver vendas.
+- Pagar em `*.pages.dev` passava menos confiança no checkout; resolvido com o domínio próprio (`estudo.timoteo.app.br`).
 - Idade e cidade: dados opcionais, em faixas; coletar só o necessário.
 - Custo da IA no Premium: o limite mensal precisa caber na receita anual.
 - Nome: checar INPI (classes 9, 41, 42 e 45) e os perfis de Instagram e Facebook antes de divulgar; as ferramentas de Claude não conseguiram verificar essas redes.

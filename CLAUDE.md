@@ -1,6 +1,6 @@
 # Timóteo App (repo `timoteo-app`)
 
-Nome comercial: **Timóteo App** (em inglês, **Timoteo App**). "TaBíblia" era só o nome de trabalho, inspirado no "TaBíblia Periódica", e não é o nome do produto. O repositório é `andrescultori/timoteo-app` (renomeado de `biblia`) e o site fica em andrescultori.github.io/timoteo-app/.
+Nome comercial: **Timóteo App** (em inglês, **Timoteo App**). "TaBíblia" era só o nome de trabalho, inspirado no "TaBíblia Periódica", e não é o nome do produto. O repositório é `andrescultori/timoteo-app` (renomeado de `biblia`) e o app fica em estudo.timoteo.app.br (a landing em timoteo.app.br; o GitHub Pages andrescultori.github.io/timoteo-app/ segue no ar como cópia).
 
 Tabela interativa dos 66 livros da Bíblia (inspirada no "TaBíblia Periódica"), com ficha de estudo e leitor de texto, para uso público em estudo bíblico. Stack: React 18 + Vite, sem backend. Publicação: GitHub Pages via GitHub Actions.
 
@@ -59,7 +59,7 @@ Tabela interativa dos 66 livros da Bíblia (inspirada no "TaBíblia Periódica")
 
 ## Decisões em aberto
 - Versões em português: no site, Bíblia Livre (CC BY 3.0 Brasil, a licença que os autores escrevem no repositório oficial; atribuição obrigatória). A Almeida 1911 com a grafia original foi retirada a pedido do André (ortografia antiga). Em seu lugar há a **Almeida 1911 atualizada** (`alm1911a`, só ortografia), nos 66 livros (gerada por script, revisão do André em andamento, correções via `scripts/data/alm1911-ortografia.json`); ver `docs/ortografia-alm1911.md`. O André vai pedir a ARA e a NAA à SBB. ARA e NAA aguardam autorização da SBB (André vai pedir). TB não entra (a SBB declara copyright sobre a edição de 2010). ARC de 1898: sem fonte digital confiável. Detalhes em `docs/licencas-texto-biblico.md`.
-- Comercialização: produto **Timóteo App**, planos Essencial (grátis), Pro (R$49,90/ano, R$29,90 no 1º pagamento) e Premium (depois). Cloudflare Pages (app no ar em `timoteo-app.pages.dev`, build `npm run build`, saída `dist`, branch `main`; landing e app em projetos separados, `*.pages.dev`, sem domínio por ora) e Supabase dedicado. Hoje o conteúdo é público sob MIT; a mudança de licença e o repositório privado só vêm depois do Cloudflare no ar. Ver `docs/comercializacao.md` e `docs/landing-brief.md`.
+- Comercialização: produto **Timóteo App**, planos Essencial (grátis), Pro (R$49,90/ano, R$29,90 no 1º pagamento) e Premium (depois). Cloudflare Pages (app no ar em `estudo.timoteo.app.br`, build `npm run build`, saída `dist`, branch `main`; landing em `timoteo.app.br` (projeto separado, root `landing`); domínio `timoteo.app.br` registrado no Registro.br com DNS no Cloudflare; os `*.pages.dev` seguem como reserva; contato `contato@timoteo.app.br` via Email Routing) e Supabase dedicado. Hoje o conteúdo é público sob MIT; a mudança de licença e o repositório privado só vêm depois do Cloudflare no ar. Ver `docs/comercializacao.md` e `docs/landing-brief.md`.
 - Supabase: projeto dedicado `zqxodmjrbzmyhnkqszqh` (região sa-east-1; URL e chave publishable são públicas, nada secreto no repositório). Fase 2 (login, perfil, plano, lista de espera, favoritos e posição sincronizados) com migrations prontas, aplicação e teste pelo André.
 - ESV e NKJV: avaliadas, não adicionadas. ESV só via API não comercial e exigiria proxy; NKJV exige permissão escrita.
 
