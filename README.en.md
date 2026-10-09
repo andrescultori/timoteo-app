@@ -11,7 +11,7 @@
 
 A table of the 66 books of the Bible, where each book opens a study sheet (author, date, theme, outline), a map of the places it mentions and the text for reading. A timeline and people pages link back to the books and the maps. Everything is static (React + Vite), published on GitHub Pages, with a Portuguese and English interface.
 
-**▶ Live demo: <https://andrescultori.github.io/timoteo-app/>**
+**▶ Live demo: <https://estudo.timoteo.app.br/>**
 
 > **About the content.** This is an original personal project. Study sheets, dates and people summaries are drafts under manual review: where authorship, dating or location are debated, the site shows the positions (traditional and scholarly) side by side and flags the uncertainty. Bible text is only included under a clear license.
 
