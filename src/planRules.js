@@ -13,6 +13,7 @@ export const FEATURE_ROW = {
   genealogy: 'genealogy',
   family: 'genealogy',
   academic: 'academic',
+  originals: 'originals',
 };
 
 export const PLAN_ORDER = ['essencial', 'pro', 'premium'];

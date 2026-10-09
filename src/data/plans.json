@@ -97,6 +97,20 @@
       }
     },
     {
+      "id": "originals",
+      "label": {
+        "pt": "Originais em hebraico e grego",
+        "en": "Hebrew and Greek originals"
+      },
+      "essencial": false,
+      "pro": "soon",
+      "premium": "soon",
+      "note": {
+        "pt": "Palavra a palavra, com número de Strong, abaixo de cada versículo na aba Ler. Em breve.",
+        "en": "Word by word, with Strong's numbers, under each verse in the Read tab. Coming soon."
+      }
+    },
+    {
       "id": "timeline",
       "label": {
         "pt": "Linha do tempo",
