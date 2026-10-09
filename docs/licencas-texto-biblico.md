@@ -90,7 +90,7 @@ Dados em `public/interlinear/`, gerados por `scripts/build-interlinear.mjs` a pa
 | Léxico hebraico (glosa curta, transliteração, Strong) | Open Scriptures Hebrew Lexicon, github.com/openscriptures/HebrewLexicon (`LexicalIndex.xml`, `HebrewStrong.xml`) | **CC BY 4.0**; o texto de BDB e do Strong permanece em domínio público | `readme.md` do repositório |
 | Texto grego do NT (Nestlé 1904) | github.com/biblicalhumanities/Nestle1904 | Domínio público (o site de origem declara) | `xhtml/README.md` |
 | Morfologia, lema e Strong do NT | mesmo repositório (`morph/`), Dr. Ulrik Sandborg-Petersen | **CC0** | `morph/README.md` |
-| Glosas por palavra do NT | mesmo repositório (`glosses/`), extraídas da Berean Interlinear Bible | Domínio público, segundo o README do repositório ("This is now in the public domain", com link para berean.bible/licensing.htm, que **não pôde ser aberto** do ambiente de trabalho: conferir no navegador) | `glosses/README.md` |
+| Glosas por palavra do NT | mesmo repositório (`glosses/`), extraídas da Berean Interlinear Bible | Domínio público: README do repositório ("This is now in the public domain") e página de licenciamento da Berean (berean.bible/licensing.htm, lida pelo André em 09/10/2026): "The Berean Bible and Majority Bible texts are officially placed into the public domain as of April 30, 2023… Licensing is not required for any use." (a frase trata da Berean Bible; as glosas da Berean Interlinear são do mesmo projeto) | `glosses/README.md` |
 | Strong grego (lema, transliteração, definição) | github.com/morphgnt/strongs-dictionary-xml | **CC0** | `README.md` do repositório |
 
 **Atribuição exibida no app** (quando a faixa de originais está ligada):
@@ -100,3 +100,5 @@ Dados em `public/interlinear/`, gerados por `scripts/build-interlinear.mjs` a pa
 **Mudanças feitas por este projeto:** o texto do OSHB foi reorganizado na numeração da KJV (os marcadores `KJV:` do próprio OSHB indicam onde começa cada versículo da KJV), o qere substitui o ketiv, e o formato foi compactado. O texto das palavras não foi alterado.
 
 **Avaliado e não usado:** MorphGNT/SBLGNT (texto sob o EULA do SBLGNT; parsing CC BY-SA), OpenGNT (CC BY-SA 4.0) e a STEPBible-Data (o TAGNT usa a grafia do NA28, que tem direitos, e colunas derivadas do OpenGNT; o TIPNR e o TBCWG têm texto gerado por IA). A STEP só entra se autorizar por escrito; ver a conversa de 09/10/2026.
+
+**Fonte tipográfica dos originais:** Cardo, de David J. Perry (SIL Open Font License 1.1, sem Reserved Font Name; `public/licencas/OFL-Cardo.txt`). Escolhida porque cobre todos os sinais usados (vogais e acentos de cantilação do hebraico e o grego politônico) num único desenho; subsetada em `src/fonts/cardo-hebrew.woff2` (7 KB) e `cardo-greek.woff2` (25 KB) com `pyftsubset` (fonttools), mantendo as tabelas de posicionamento. Hospedada no app, nunca pelo Google.

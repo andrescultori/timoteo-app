@@ -55,7 +55,7 @@
       { "ids": ["maps"], "label": "Mapas dos lugares bíblicos", "notes": { "essencial": "Só Evangelhos e Pentateuco", "pro": "Todos os livros com mapa", "premium": "Todos os livros com mapa" } },
       { "ids": ["structure"], "label": "Estrutura dos livros poéticos", "notes": { "essencial": "Livro de Salmos completo", "pro": "Salmos, Jó, Provérbios, Eclesiastes e Cantares" } },
       { "ids": ["characters"], "label": "Fichas de personagens", "notes": { "essencial": "50 principais", "pro": "Mais de 200", "premium": "Mais de 200" } },
-      { "ids": ["originals"], "label": "Originais em hebraico e grego", "notes": { "pro": "Em breve", "premium": "Em breve" } },
+      { "ids": ["originals"], "label": "Originais em hebraico e grego", "notes": { "pro": "Palavra a palavra, com Strong", "premium": "Palavra a palavra, com Strong" } },
       { "ids": ["gamification", "links"], "label": "Leitura gamificada e mais", "notes": { "essencial": "Em breve", "pro": "Em breve" } },
       { "ids": ["timeline"], "label": "Linha do tempo", "notes": {} },
       { "ids": ["genealogy"], "label": "Genealogia", "notes": { "pro": "Em expansão", "premium": "Em expansão" } },
