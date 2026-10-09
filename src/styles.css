@@ -571,7 +571,7 @@ a.ghost[aria-disabled='true'] { opacity: 0.4; pointer-events: none; }
 .text sup { color: var(--r-accent, var(--accent-2)); font-size: 0.55em; vertical-align: 0.5em; margin-right: 0.35em; }
 .cfg-preview .text { max-width: var(--r-width, 660px); }
 .text.lines span { display: block; margin-bottom: 0.5em; }
-@media (max-width: 520px) { .reader-text > .chap-title, .reader-text > .text { padding-inline: 16px; } .text { font-size: min(var(--r-size, 21px), 22px); } }
+@media (max-width: 520px) { .reader-text > .chap-title, .reader-text > .text { padding-inline: 16px; } }
 .cfg-cols .cfg-card { flex: 1 1 340px; max-width: 460px; gap: 24px; }
 .cfg-cols .cfg-side { flex: 999 1 480px; }
 .cfg-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
