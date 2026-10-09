@@ -49,7 +49,7 @@ export default function Checkout({ lang, t }) {
   return (
     <div className="page bookpage" role="region" aria-labelledby="co-title">
       <PageHead t={t} id="co-title" title={t.checkoutTitle} />
-      <div className="card pg-card" style={{ '--c': 'var(--accent-2)' }}>
+      <div className="pg-card" style={{ '--c': 'var(--accent-2)' }}>
         <div className="body">
           <div className="pro-invite" role="status" aria-live="polite">
             {wait && <p>{t.checkoutChecking}</p>}

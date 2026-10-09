@@ -34,7 +34,7 @@ export default function Legal({ kind, lang, t }) {
   return (
     <div className="page bookpage" role="region" aria-labelledby="legal-title">
       <PageHead t={t} id="legal-title" title={title} sub={`${t.legalVersion}: ${LEGAL_VERSION}`} />
-      <div className="card pg-card" style={{ '--c': 'var(--line-strong)' }}>
+      <div className="pg-card" style={{ '--c': 'var(--line-strong)' }}>
         <div className="body legal">
           {isDraft && <p className="legal-draft" role="note"><b>{t.legalDraft}</b></p>}
           {lang !== 'pt' && <p className="legal-note" role="note">{t.legalPtOnly}</p>}

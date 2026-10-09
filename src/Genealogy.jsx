@@ -68,7 +68,7 @@ export default function Genealogy({ lang, t, treeId, focusNode, onOpenBook, onOp
   return (
     <div className="page bookpage" role="region" aria-labelledby="gn-title">
       <PageHead t={t} id="gn-title" title={pick(tr.title, lang)} sub={t.genealogy} actions={<a className="ghost" href="#person">{t.people}</a>} />
-      <div className="card pg-card" style={{ '--c': 'var(--s-atos)' }}>
+      <div className="pg-card" style={{ '--c': 'var(--s-atos)' }}>
         <div className="body">
           {trees.length > 1 && (
             <div className="tl-chips" role="group" aria-label={t.genealogy}>

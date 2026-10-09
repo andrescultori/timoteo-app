@@ -65,7 +65,7 @@ export default function Favorites({ lang, t }) {
   return (
     <div className="page bookpage" role="region" aria-labelledby="fav-title">
       <PageHead t={t} id="fav-title" title={t.favorites} sub={t.favSub} />
-      <div className="card pg-card" style={{ '--c': 'var(--s-evangelhos)' }}>
+      <div className="pg-card" style={{ '--c': 'var(--s-evangelhos)' }}>
         <div className="body">
           {!signedIn && (
             <p className="fav-device" role="note">{t.favNotice} {enabled && <button type="button" className="ghost" onClick={signInWithGoogle}>{t.signInGoogle}</button>}</p>

@@ -72,7 +72,7 @@ export default function ProInvite({ t, lang = 'pt', title, page = false, feature
   return (
     <div className="page bookpage" role="region" aria-labelledby="pro-title">
       <PageHead t={t} id="pro-title" title={title} />
-      <div className="card pg-card" style={{ '--c': 'var(--line-strong)' }}>
+      <div className="pg-card" style={{ '--c': 'var(--line-strong)' }}>
         <div className="body">{box}</div>
       </div>
     </div>

@@ -65,7 +65,7 @@ export default function Timeline({ lang, t, focusId, onClose, onOpenBook, onOpen
   return (
     <div className="page bookpage" role="region" aria-labelledby="tl-title">
       <PageHead t={t} id="tl-title" title={t.timeline} sub={t.timelineSub} actions={<a className="ghost" href={hrefs.person()}>{t.people}</a>} />
-      <div className="card pg-card" style={{ '--c': 'var(--s-historicos)' }}>
+      <div className="pg-card" style={{ '--c': 'var(--s-historicos)' }}>
 
         <div className="tl-strip" role="group" aria-label={t.timelineStrip}>
           {layout.map(({ b, ps }) => (

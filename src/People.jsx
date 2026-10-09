@@ -67,7 +67,7 @@ export default function People({ lang, t, focusId, onOpenBook, onOpenTimeline, o
           <a className="ghost" href={hrefs.timeline()}>{t.timeline}</a>
         </>
       )} />
-      <div className="card pg-card" style={{ '--c': 'var(--s-paulo)' }}>
+      <div className="pg-card" style={{ '--c': 'var(--s-paulo)' }}>
 
         {!person && (
           <>

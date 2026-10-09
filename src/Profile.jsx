@@ -71,7 +71,7 @@ export default function Profile({ lang, t }) {
   return (
     <div className="page bookpage" role="region" aria-labelledby="pf-title">
       <PageHead t={t} id="pf-title" title={t.profile} sub={t.profileSub} />
-      <div className="card pg-card" style={{ '--c': 'var(--s-paulo)' }}>
+      <div className="pg-card" style={{ '--c': 'var(--s-paulo)' }}>
         <div className="body">
           {(!enabled || status === 'out' || status === 'off') && (
             <div className="profile-out">
