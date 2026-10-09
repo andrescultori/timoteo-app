@@ -171,3 +171,25 @@ Pagamento de conta excluída que for **aprovado depois** (Pix pago tarde) aparec
 
 ## Antes de ligar a cobrança em produção
 O `npm run check` avisa enquanto os textos legais estiverem em rascunho. **Pré-requisito para `VITE_BILLING_ENABLED=true` em produção:** textos revisados e publicados (`LEGAL_VERSION` com data em `src/legal/version.js`, sem `[colchetes]` em `docs/legal/`), prazo fiscal confirmado com o contador e `refundContact` definitivo em `src/data/billing.json`.
+
+---
+
+# Ajustes de leitura sincronizados (visual B)
+
+Migration `20261011000000_reading_prefs.sql` (**idempotente**, aplique depois da `20261010000000_fase7_lgpd.sql`). **Não é aplicada pelo repositório.**
+
+## O que há
+- Tabela `reading_prefs`: uma linha por usuário (`prefs` em JSONB + `updated_at`), RLS "só o dono" (mesmo molde de `reading_position`), sem acesso de `anon`.
+- Função `reading_prefs_valid(jsonb)` e um `check` na coluna: só aceita as chaves `size` (17, 19, 21, 23, 26, 30), `spacing` (1,45, 1,7, 2), `width` (540, 660, 820), `font` (`serif`, `sans`), `verseLines` (booleano) e `theme` (`light`, `sepia`, `dark`). Os testes (`npm test`) conferem que o SQL aceita exatamente o que `src/readingPrefs.js` aceita.
+- `delete_account_data` é recriada **com** `reading_prefs` na lista do que se apaga (o resto é idêntico à da Fase 7). A exportação "Seus dados" (`src/YourData.jsx`) passa a incluir `ajustes_de_leitura`.
+
+## Aplicar
+SQL Editor do Supabase: cole o conteúdo do arquivo e rode. (Pelo assistente do MCP, a parte com `delete from` já travou antes; prefira o SQL Editor.) Nenhuma função de borda muda.
+
+## Como o app se comporta
+- Sem conta, ou sem o aceite dos Termos: os ajustes ficam só no aparelho (`localStorage.readingPrefs`).
+- Com conta e aceite: o mais recente vence no login; mudanças sobem com ~1,5 s de atraso; o cache é limpo no logout.
+- **Se a migration ainda não foi aplicada**, o app ignora a tabela (os ajustes ficam no aparelho) e favoritos e posição seguem normais. Dá para publicar o app antes ou depois da migration.
+
+## Atenção: texto legal (decisão de vocês, não alterei)
+A Política de Privacidade (item 3, "Preferências no aparelho") diz que preferências como tema e idioma ficam **só no navegador**. Com esta mudança, os **ajustes de leitura** de quem tem conta passam a ser guardados no servidor (dado pessoal comum, não sensível, apagado com a conta). Revisar o texto (e a tabela do item 3) antes de publicar a sincronização, e depois atualizar `LEGAL_VERSION`.

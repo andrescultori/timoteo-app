@@ -1,17 +1,19 @@
 import { useSyncExternalStore } from 'react';
 export { favKey, parseFavKey, FAV_TYPES } from './favKeys.js';
+import { cleanPrefs } from './readingPrefs.js';
 
-// Dados do usuário: favoritos e posição de leitura. A API que os componentes usam (isFav, toggleFav, listFavs, getPosition,
+// Dados do usuário: favoritos, posição de leitura e ajustes de leitura. A API que os componentes usam (isFav, toggleFav, listFavs, getPosition,
 // setPosition, subscribe, useUserData) é a mesma com ou sem conta.
 //   Sem conta: tudo fica só no aparelho (localStorage), como na Fase 2A.
 //   Com conta (Fase 2B): o localStorage vira CACHE e o Supabase é a fonte. No login faz-se a UNIÃO dos dados do aparelho com os da conta.
 //
 // localStorage: 'favorites' = [{ key, at }] (at = ISO), 'readingPosition' = { version, slug, chapter, at },
+// 'readingPrefs' = { v: ajustes, at } (só o que difere do padrão; ver readingPrefs.js),
 // 'favNoticeShown' = '1', 'continueDismissed' = o `at` da posição dispensada, 'syncQueue' = operações ainda não enviadas,
 // 'syncAccount' = id da conta cujos dados estão no cache.
 // Se o localStorage falhar (modo privado), tudo continua funcionando na sessão, sem salvar.
 
-const K = { favs: 'favorites', pos: 'readingPosition', notice: 'favNoticeShown', dismissed: 'continueDismissed', queue: 'syncQueue', acc: 'syncAccount' };
+const K = { favs: 'favorites', pos: 'readingPosition', notice: 'favNoticeShown', dismissed: 'continueDismissed', queue: 'syncQueue', acc: 'syncAccount', prefs: 'readingPrefs' };
 
 const local = {
   get(k) { try { return localStorage.getItem(k); } catch { return null; } },
@@ -33,7 +35,10 @@ function load() {
   const p = parse(backend.get(K.pos));
   const position = p && isStr(p.version) && isStr(p.slug) && Number.isInteger(p.chapter) && p.chapter >= 1 && isStr(p.at)
     ? { version: p.version, slug: p.slug, chapter: p.chapter, at: p.at } : null;
-  return { favs, keys: new Set(favs.map((f) => f.key)), position, noticeShown: backend.get(K.notice) === '1', dismissedAt: backend.get(K.dismissed), noticePending: false };
+  const rp = parse(backend.get(K.prefs));
+  const prefs = cleanPrefs(rp?.v);
+  const prefsAt = rp && isStr(rp.at) ? rp.at : null;
+  return { favs, keys: new Set(favs.map((f) => f.key)), position, prefs, prefsAt, noticeShown: backend.get(K.notice) === '1', dismissedAt: backend.get(K.dismissed), noticePending: false };
 }
 
 let state = { ...load(), account: null };
@@ -68,6 +73,18 @@ export function toggleFav(key) {
 }
 
 export const getPosition = () => state.position;
+
+// Ajustes de leitura (tamanho, espaçamento, largura, fonte, versículo por linha, tema da leitura). Guardados só com o que difere do padrão.
+// Sem conta: localStorage. Com conta (e aceite): também na tabela reading_prefs, a mais recente vence (mesma regra da posição).
+export const getPrefs = () => state.prefs;
+function writePrefs(prefs) {
+  const at = new Date().toISOString();
+  backend.set(K.prefs, JSON.stringify({ v: prefs, at }));
+  commit({ prefs, prefsAt: at });
+  schedulePrefs();
+}
+export const setPrefs = (patch) => writePrefs(cleanPrefs({ ...state.prefs, ...patch }));
+export const resetPrefs = () => writePrefs({});
 
 // Retomar a leitura pelo cartão "Continuar": o leitor abre na versão gravada, mesmo que ela não seja do idioma da interface.
 // Vale até o leitor gravar a posição (setPosition limpa).
@@ -157,18 +174,44 @@ function schedulePosition() {
   if (posTimer) return;
   posTimer = setTimeout(sendPosition, Math.max(0, POS_MIN_MS - (Date.now() - lastPosSent)));
 }
+
+// Ajustes de leitura: envio com atraso curto (vários cliques seguidos viram uma gravação). Se a tabela ainda não existe no
+// banco (migration não aplicada), prefsReady fica falso e os ajustes seguem só no aparelho, sem quebrar favoritos nem posição.
+const PREFS_DELAY_MS = 1500;
+let prefsTimer = null;
+let prefsDirty = false;
+let prefsReady = false;
+async function sendPrefs() {
+  clearTimeout(prefsTimer);
+  prefsTimer = null;
+  if (!account || !prefsReady || !prefsDirty || !state.prefsAt) return;
+  prefsDirty = false;
+  try {
+    const { error } = await account.client.from('reading_prefs').upsert({ user_id: account.userId, prefs: state.prefs, updated_at: state.prefsAt });
+    if (error) throw error;
+  } catch { prefsDirty = true; }
+}
+function schedulePrefs() {
+  if (!account || !prefsReady) return;
+  prefsDirty = true;
+  if (!prefsTimer) prefsTimer = setTimeout(sendPrefs, PREFS_DELAY_MS);
+}
 if (typeof document !== 'undefined') {
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') { sendPosition(); flush(); } });
-  window.addEventListener('online', () => { flush(); if (posDirty) schedulePosition(); });
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') { sendPosition(); sendPrefs(); flush(); } });
+  window.addEventListener('online', () => { flush(); if (posDirty) schedulePosition(); if (prefsDirty) schedulePrefs(); });
 }
 
 function clearCache() {
-  [K.favs, K.pos, K.queue, K.acc, K.dismissed].forEach(backend.remove);
+  [K.favs, K.pos, K.queue, K.acc, K.dismissed, K.prefs].forEach(backend.remove);
   queue = [];
   clearTimeout(posTimer);
   posTimer = null;
   posDirty = false;
-  commit({ favs: [], keys: new Set(), position: null, dismissedAt: null, noticePending: false });
+  clearTimeout(prefsTimer);
+  prefsTimer = null;
+  prefsDirty = false;
+  prefsReady = false;
+  commit({ favs: [], keys: new Set(), position: null, dismissedAt: null, noticePending: false, prefs: {}, prefsAt: null });
 }
 
 const older = (a, b) => (a < b ? a : b);
@@ -215,8 +258,21 @@ export function connectAccount(client, userId) {
       if (remotePos && (!position || remotePos.at > position.at)) { position = remotePos; backend.set(K.pos, JSON.stringify(position)); }
       else if (position && (!remotePos || position.at > remotePos.at)) posDirty = true; // a do aparelho é mais recente: sobe para a conta
 
+      // ajustes de leitura: o mais recente vence. Falha aqui (ex.: tabela ainda não criada) não derruba o resto.
+      let prefs = state.prefs;
+      let prefsAt = state.prefsAt;
+      try {
+        const { data, error } = await client.from('reading_prefs').select('prefs,updated_at').maybeSingle();
+        if (error) throw error;
+        prefsReady = true;
+        const remoteAt = data ? new Date(data.updated_at).toISOString() : null;
+        if (data && (!prefsAt || remoteAt > prefsAt)) { prefs = cleanPrefs(data.prefs); prefsAt = remoteAt; backend.set(K.prefs, JSON.stringify({ v: prefs, at: prefsAt })); }
+        else if (prefsAt && (!remoteAt || prefsAt > remoteAt)) prefsDirty = true; // o do aparelho é mais novo: sobe para a conta
+      } catch { prefsReady = false; }
+
       backend.set(K.acc, userId);
-      commit({ ...saveFavs(favs), position });
+      commit({ ...saveFavs(favs), position, prefs, prefsAt });
+      if (prefsDirty) sendPrefs();
       if (posDirty) sendPosition();
       flush();
     } catch {
@@ -230,10 +286,11 @@ export function connectAccount(client, userId) {
 // Logout: envia o que falta e limpa o cache da conta neste aparelho, para os dados não passarem de uma pessoa para outra.
 export async function disconnectAccount({ flush: send = false } = {}) {
   if (send && account) {
-    await Promise.race([Promise.all([flush(), sendPosition()]), new Promise((r) => setTimeout(r, 4000))]).catch(() => {});
+    await Promise.race([Promise.all([flush(), sendPosition(), sendPrefs()]), new Promise((r) => setTimeout(r, 4000))]).catch(() => {});
   }
   const wasConnected = !!account || !!backend.get(K.acc); // sem conta ligada (modo local, ainda sem o aceite dos Termos), os favoritos são só do aparelho: não apagar
   account = null;
+  prefsReady = false;
   connecting = null;
   commit({ account: null });
   if (wasConnected) clearCache();
