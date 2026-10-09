@@ -125,3 +125,24 @@ A chave opcional `structure` da ficha (`src/data/info/<slug>.json`) mostra a aba
 ## Versões parciais
 
 Uma versão em `src/data/bible.js` pode ter `books: [19, 43]` (números 1 a 66). Ela só aparece no leitor desses livros, e o `npm run check` só exige os arquivos deles. Hoje nenhuma versão usa isso (a Almeida 1911 atualizada já cobre os 66 livros), mas o recurso continua disponível para versões parciais.
+
+## Originais em hebraico e grego (`public/interlinear/`)
+
+Gerados por `node scripts/build-interlinear.mjs [--src /home/user]` a partir de clones das fontes (fora do repositório; licenças e atribuição em `docs/licencas-texto-biblico.md`). Determinístico, sem rede e sem IA: só o que as fontes trazem; onde não há Strong ou glosa, a palavra fica sem eles. `npm run check` confere os arquivos contra a KJV e os léxicos; `npm test` confere a versificação em casos conhecidos e que gerar de novo dá os mesmos arquivos.
+
+**`<n>.json`** (n = 1 a 66, ordem canônica):
+```
+{ "v": 1, "lang": "he" | "grc", "src": { revisões (commit) das fontes },
+  "m": ["HR/Ncfsa", ...],                       tabela de morfologia (OSHB no AT; Robinson no NT)
+  "w": [capítulo][versículo] -> [ [texto, strong, idxMorf, glosa?], ... ],   numeração da KJV, posição i = versículo i+1
+  "t": { "51": [ [texto, strong, idxMorf], ... ] } }                          só Salmos: título não numerado na KJV
+```
+- `strong`: `"H7225"`, `"H1254a"` (a letra distingue sentidos, como no OSHB) ou `"G3056"`; `null` se a fonte não traz. É a chave dos léxicos, e fica pronta para o recurso de clicar nas palavras.
+- Hebraico em ordem lógica (a direção RTL é da interface). O texto mantém vogais e acentos de cantilação, sem normalização (o OSHB desaconselha NFC); o maqqef e o sof pasuq ficam colados à palavra. O qere substitui o ketiv.
+- `glosa` (só NT): a glosa da Berean Interlinear para aquela palavra (contextual); ausente quando a fonte traz "-" ou não alinha. O hebraico não tem glosa por palavra: a glosa curta vem do léxico.
+- **Numeração da KJV:** o OSHB marca (`<note>KJV:Sl.51.1</note>`) onde começa cada versículo da KJV; o script usa essas marcas e o deslocamento da última marca. Palavras que vêm antes do 1º versículo da KJV de um salmo são o título (`t`). Nestlé 1904: exceções manuais em `NT_EXCEPTIONS` no script (3Jo 15 → 14, Ap 12:18 → 13:1; a "conclusão curta" de Marcos, 16:99, não existe na KJV e fica de fora).
+- Versículos sem palavras (esperados e conferidos pelo `check`): Ne 7:68 (não existe no WLC), omissões de crítica textual do Nestlé 1904 (Mt 17:21, 18:11, 23:14; Mc 7:16, 9:44, 9:46, 11:26, 15:28; Lc 17:36, 23:17; At 8:37, 15:34, 24:7, 28:29; Rm 16:24) e dois versículos que o Nestlé junta ao anterior (At 19:41, 2Co 13:14).
+
+**`lex-h.json`, `lex-g.json`**: `{ v, src, e: { "H7225": [lema, transliteração, glosa], "G3056": [lema, transliteração, definição do Strong] } }`, só com os números usados. Carregam sob demanda (cerca de 135 e 165 KB gzip).
+
+**Peso:** 16,4 MB brutos e 3,9 MB gzip no total; por livro, de 3 KB (Obadias) a 172 KB (Salmos) gzip. Nada vai no pacote inicial.

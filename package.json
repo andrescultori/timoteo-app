@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "data:kjv": "node scripts/build-bible-data.mjs kjv",
     "check": "node scripts/check-data.mjs && node landing/build.mjs --check",
-    "test": "node scripts/test-payments.mjs",
+    "test": "node scripts/test-payments.mjs && node scripts/test-interlinear.mjs",
     "landing": "node landing/build.mjs"
   },
   "dependencies": {
