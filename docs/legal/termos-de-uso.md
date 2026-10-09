@@ -36,7 +36,7 @@ Você concorda em: (a) usar o app só para estudo pessoal e não comercial; (b) 
 
 ## 8. Conteúdo e direitos autorais
 - O desenho do app, as fichas, os resumos, os mapas, a linha do tempo, o logo e os textos de estudo são de **André Scultori**, [todos os direitos reservados / licença atual do repositório: decidir, ver Fase 8].
-- O texto bíblico vem de versões com licenças próprias, indicadas no leitor: **KJV** (domínio público), **WEB**, **ASV**, **Bíblia Livre** (CC BY 4.0) e **Almeida 1911 atualizada** (adaptação ortográfica). [Atualizar a lista se entrarem outras versões.] Essas versões seguem as licenças delas.
+- O texto bíblico vem de versões com licenças próprias, indicadas no leitor: **KJV** (domínio público), **WEB**, **ASV**, **Bíblia Livre** (CC BY 3.0 Brasil) e **Almeida 1911 atualizada** (adaptação ortográfica). [Atualizar a lista se entrarem outras versões.] Essas versões seguem as licenças delas.
 - Coordenadas dos lugares do mapa: **OpenBible.info** (CC BY 4.0).
 - Você pode **citar** trechos com a fonte, para estudo e ensino, nos limites da lei.
 
