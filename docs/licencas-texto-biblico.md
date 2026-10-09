@@ -79,3 +79,24 @@ Passo a passo:
 - ESV API: api.esv.org
 - NKJV, termos de citação (StudyLight): studylight.org/site-resources/copyright-statements/eng/nkj.html
 - Situação das versões em português: github.com/damarals/biblias (informação de terceiros, a confirmar em fonte primária)
+
+## Originais em hebraico e grego (interlinear)
+
+Dados em `public/interlinear/`, gerados por `scripts/build-interlinear.mjs` a partir de clones das fontes abaixo (feito em 09/10/2026; a revisão exata de cada fonte fica gravada em cada arquivo, no campo `src`). Licenças lidas nos arquivos das próprias fontes (não em páginas de terceiros).
+
+| Dado | Fonte | Licença | Evidência |
+|---|---|---|---|
+| Texto hebraico (WLC), lema e morfologia | Open Scriptures Hebrew Bible (OSHB), github.com/openscriptures/morphhb | WLC: domínio público. Lema e morfologia: **CC BY 4.0** | `LICENSE.md` e `README.md` do repositório |
+| Léxico hebraico (glosa curta, transliteração, Strong) | Open Scriptures Hebrew Lexicon, github.com/openscriptures/HebrewLexicon (`LexicalIndex.xml`, `HebrewStrong.xml`) | **CC BY 4.0**; o texto de BDB e do Strong permanece em domínio público | `readme.md` do repositório |
+| Texto grego do NT (Nestlé 1904) | github.com/biblicalhumanities/Nestle1904 | Domínio público (o site de origem declara) | `xhtml/README.md` |
+| Morfologia, lema e Strong do NT | mesmo repositório (`morph/`), Dr. Ulrik Sandborg-Petersen | **CC0** | `morph/README.md` |
+| Glosas por palavra do NT | mesmo repositório (`glosses/`), extraídas da Berean Interlinear Bible | Domínio público, segundo o README do repositório ("This is now in the public domain", com link para berean.bible/licensing.htm, que **não pôde ser aberto** do ambiente de trabalho: conferir no navegador) | `glosses/README.md` |
+| Strong grego (lema, transliteração, definição) | github.com/morphgnt/strongs-dictionary-xml | **CC0** | `README.md` do repositório |
+
+**Atribuição exibida no app** (quando a faixa de originais está ligada):
+- Hebraico: "Texto hebraico: Open Scriptures Hebrew Bible Project (github.com/openscriptures/morphhb), CC BY 4.0; texto do Westminster Leningrad Codex, domínio público. Léxico: Open Scriptures Hebrew Lexicon, CC BY 4.0."
+- Grego: "Texto grego: Nestle 1904 (domínio público); morfologia e Strong: biblicalhumanities.org, CC0; glosas: Berean Interlinear Bible (domínio público)."
+
+**Mudanças feitas por este projeto:** o texto do OSHB foi reorganizado na numeração da KJV (os marcadores `KJV:` do próprio OSHB indicam onde começa cada versículo da KJV), o qere substitui o ketiv, e o formato foi compactado. O texto das palavras não foi alterado.
+
+**Avaliado e não usado:** MorphGNT/SBLGNT (texto sob o EULA do SBLGNT; parsing CC BY-SA), OpenGNT (CC BY-SA 4.0) e a STEPBible-Data (o TAGNT usa a grafia do NA28, que tem direitos, e colunas derivadas do OpenGNT; o TIPNR e o TBCWG têm texto gerado por IA). A STEP só entra se autorizar por escrito; ver a conversa de 09/10/2026.

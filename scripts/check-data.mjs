@@ -458,6 +458,49 @@ for (const ver of VERSIONS) {
   if (nT + nP) console.warn(`Aviso: ${nT} pendência(s) [entre colchetes] nos Termos e ${nP} na Política de Privacidade (docs/legal/). Resolver antes de publicar.`);
 }
 
+// Originais (hebraico e grego), public/interlinear/: gerados por scripts/build-interlinear.mjs
+{
+  const dir = path.join(root, 'public/interlinear');
+  const w = 'interlinear';
+  // versículos que não têm palavras de propósito: o texto-base não os traz (omissões de crítica textual do Nestlé 1904,
+  // Ne 7:68 que o WLC não tem) ou os junta ao anterior (At 19:41, 2Co 13:14). A lista é conferida nos dois sentidos.
+  const EMPTY = { 16: ['7:68'], 40: ['17:21', '18:11', '23:14'], 41: ['7:16', '9:44', '9:46', '11:26', '15:28'], 42: ['17:36', '23:17'], 44: ['8:37', '15:34', '19:41', '24:7', '28:29'], 45: ['16:24'], 47: ['13:14'] };
+  const lexH = JSON.parse(fs.readFileSync(path.join(dir, 'lex-h.json'), 'utf8'));
+  const lexG = JSON.parse(fs.readFileSync(path.join(dir, 'lex-g.json'), 'utf8'));
+  for (const lx of [lexH, lexG]) if (!lx.src || Object.values(lx.src).some((v) => !v)) err(`${w}: léxico sem a revisão (commit) das fontes`);
+  for (let n = 1; n <= 66; n += 1) {
+    const f = path.join(dir, `${n}.json`);
+    if (!fs.existsSync(f)) { err(`${w}: falta ${n}.json`); continue; }
+    const d = JSON.parse(fs.readFileSync(f, 'utf8'));
+    const kjv = read(`public/bible/kjv/${n}.json`);
+    if (d.v !== 1 || d.lang !== (n <= 39 ? 'he' : 'grc')) err(`${w}/${n}: versão ou idioma inesperado`);
+    if (!d.src || Object.values(d.src).some((v) => !v)) err(`${w}/${n}: sem a revisão (commit) das fontes`);
+    if (d.w.length !== kjv.length) err(`${w}/${n}: ${d.w.length} capítulos, a KJV tem ${kjv.length}`);
+    const empty = [];
+    d.w.forEach((c, ci) => {
+      if (c.length !== kjv[ci]?.length) err(`${w}/${n} cap. ${ci + 1}: ${c.length} versículos, a KJV tem ${kjv[ci]?.length}`);
+      c.forEach((v, vi) => {
+        if (!v.length) empty.push(`${ci + 1}:${vi + 1}`);
+        v.forEach((x) => {
+          const [text, strong, mi, gloss] = x;
+          if (typeof text !== 'string' || !text) err(`${w}/${n} ${ci + 1}:${vi + 1}: palavra vazia`);
+          if (strong !== null) {
+            if (!/^[HG]\d+[a-z]?$/.test(strong) || strong[0] !== (n <= 39 ? 'H' : 'G')) err(`${w}/${n} ${ci + 1}:${vi + 1}: Strong inválido "${strong}"`);
+            else if (!(strong in (n <= 39 ? lexH : lexG).e)) err(`${w}/${n} ${ci + 1}:${vi + 1}: Strong ${strong} sem entrada no léxico`);
+          }
+          if (!Number.isInteger(mi) || !d.m[mi]) err(`${w}/${n} ${ci + 1}:${vi + 1}: morfologia fora da tabela`);
+          if (gloss !== undefined && (typeof gloss !== 'string' || !gloss)) err(`${w}/${n} ${ci + 1}:${vi + 1}: glosa inválida`);
+        });
+      });
+    });
+    if (JSON.stringify(empty) !== JSON.stringify(EMPTY[n] ?? [])) err(`${w}/${n}: versículos sem palavras ${JSON.stringify(empty)}, esperado ${JSON.stringify(EMPTY[n] ?? [])}`);
+    for (const [ch, ws] of Object.entries(d.t ?? {})) if (n !== 19 || !ws.length || !kjv[ch - 1]) err(`${w}/${n}: título inesperado no capítulo ${ch}`);
+  }
+  // atribuição obrigatória (CC BY 4.0) presente na documentação de licenças e no README
+  const lic = fs.readFileSync(path.join(root, 'docs/licencas-texto-biblico.md'), 'utf8');
+  for (const needle of ['Open Scriptures Hebrew Bible Project', 'github.com/openscriptures/morphhb', 'Nestle 1904', 'Berean']) if (!lic.includes(needle)) err(`docs/licencas-texto-biblico.md: falta a atribuição "${needle}" dos originais`);
+}
+
 if (errors.length) {
   console.error(`${errors.length} problema(s):`);
   errors.slice(0, 60).forEach((e) => console.error(` - ${e}`));
