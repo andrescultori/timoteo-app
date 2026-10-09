@@ -100,7 +100,7 @@ Every pull request runs `npm run check` and `npm run build`; deployment to Pages
 - Map places: [OpenBible.info Bible Geocoding Data](https://www.openbible.info/geo/), license [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Coordinates rounded and adapted.
 - Projection: [d3-geo](https://github.com/d3/d3-geo) (ISC).
 - Genealogy tree: [d3-hierarchy](https://github.com/d3/d3-hierarchy) (ISC).
-- Texts: KJV (public domain); WEB ([eBible.org](https://ebible.org/eng-web/), public domain); ASV (public domain, digital edition by [openbibleinfo](https://github.com/openbibleinfo/American-Standard-Version-Bible)); **Bíblia Livre (BLIVRE), © 2018 Diego Santos, Mario Sérgio and Marco Teles, [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)**, [source](https://github.com/blivre/BibliaLivre).
+- Texts: KJV (public domain); WEB ([eBible.org](https://ebible.org/eng-web/), public domain); ASV (public domain, digital edition by [openbibleinfo](https://github.com/openbibleinfo/American-Standard-Version-Bible)); **Bíblia Livre (BLIVRE), © 2018 Diego Santos, Mario Sérgio and Marco Teles, [CC BY 3.0 BR](https://creativecommons.org/licenses/by/3.0/br/)**, [source](https://github.com/blivre/BibliaLivre).
 
 Original idea of the table: "TaBíblia Periódica" (Grupo de Jovens Conquistando as Nações; source cited: Sociedade Bíblica do Brasil). This project has its own design and code.
 

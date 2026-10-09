@@ -37,8 +37,8 @@ export const VERSIONS = [
       pt: 'Bíblia Livre (BLIVRE), © 2018 Diego Santos, Mario Sérgio e Marco Teles.',
       en: 'Bíblia Livre (BLIVRE), © 2018 Diego Santos, Mario Sérgio and Marco Teles.',
     },
-    license: { pt: 'Licença Creative Commons Atribuição 4.0 Internacional', en: 'Creative Commons Attribution 4.0 International License' },
-    licenseUrl: 'https://creativecommons.org/licenses/by/4.0/',
+    license: { pt: 'Licença Creative Commons Atribuição 3.0 Brasil', en: 'Creative Commons Attribution 3.0 Brazil License' },
+    licenseUrl: 'https://creativecommons.org/licenses/by/3.0/br/',
     attributionRequired: true,
     sourceUrl: 'https://github.com/blivre/BibliaLivre',
     note: {

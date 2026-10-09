@@ -11,7 +11,7 @@ Os textos ficam em `public/bible/<versão>/<n>.json` (n = 1..66, ordem canônica
 | `kjv` | King James Version | Domínio público | [thiagobodruk/bible](https://github.com/thiagobodruk/bible) (`json/en_kjv.json`), com o espaço antes da pontuação removido e 40 notas de margem retiradas (`scripts/data/kjv-fixes.json`) |
 | `web` | World English Bible | Domínio público | [seven1m/open-bibles](https://github.com/seven1m/open-bibles) (`eng-web.usfx.xml`, do eBible.org) |
 | `asv` | American Standard Version (1901) | Domínio público | [openbibleinfo/American-Standard-Version-Bible](https://github.com/openbibleinfo/American-Standard-Version-Bible) (`usx-english-only/`) |
-| `blivre` | Bíblia Livre (2018) | CC BY 4.0 (atribuição obrigatória) | [damarals/biblias](https://github.com/damarals/biblias) (`data/canonical/BLIVRE/`) |
+| `blivre` | Bíblia Livre (2018) | CC BY 3.0 Brasil (atribuição obrigatória) | [damarals/biblias](https://github.com/damarals/biblias) (`data/canonical/BLIVRE/`) |
 
 Para regenerar uma versão, passe o id e o caminho da fonte baixada:
 
