@@ -5,7 +5,7 @@ import { VERSIONS, loadBook } from './data/bible.js';
 import { useSettings } from './settings.js';
 import BackButton from './BackButton.jsx';
 import FavButton from './FavButton.jsx';
-import { favKey, setPosition, peekResume, getVersionPref, setVersionPref, useUserData } from './userdata.js';
+import { favKey, setPosition, peekResume, getVersionPref, setVersionPref, setPrefs, useUserData } from './userdata.js';
 import { usePlan } from './plan.js';
 import ProInvite from './ProInvite.jsx';
 import { useLinkIndex, Rich } from './linkify.jsx';
@@ -13,6 +13,7 @@ import { hrefs, sync } from './route.js';
 import { sectionsAt } from './outline.js';
 import { resolvePrefs } from './readingPrefs.js';
 import { readStyle } from './readStyle.js';
+import { useOriginals, Strip } from './Originals.jsx';
 
 // Fichas carregadas sob demanda: cada src/data/info/<slug>.json vira um chunk separado.
 const INFO = import.meta.glob('./data/info/*.json');
@@ -239,6 +240,13 @@ function Reader({ book, lang, t, info, keyChapter, initialChapter }) {
   const [error, setError] = useState(false);
   const top = useRef(null);
   const prefs = resolvePrefs(useUserData().prefs);
+  // Originais em hebraico e grego (Pro): quem não tem o plano vê o botão, mas ele só abre o convite e nada é carregado
+  const plan = usePlan();
+  const canOriginals = !plan.loading && plan.can('originals');
+  const [invite, setInvite] = useState(false);
+  const showOrig = canOriginals && prefs.originals;
+  const orig = useOriginals(book.n, showOrig);
+  const toggleOriginals = () => { if (canOriginals) setPrefs({ originals: !prefs.originals }); else setInvite((x) => !x); };
   const first = useRef(true);
 
   useEffect(() => {
@@ -290,10 +298,15 @@ function Reader({ book, lang, t, info, keyChapter, initialChapter }) {
             </select>
           </span>
           <span className="bar-end">
+            <button type="button" role="switch" aria-checked={showOrig} className="ghost orig-switch" onClick={toggleOriginals} title={t.originalsHelp}>
+              <span className="orig-aleph" aria-hidden="true">א</span>{t.originals}{!canOriginals && !plan.loading && <span className="pro-tag">{t.proTag}</span>}
+            </button>
             {prevBtn}{nextBtn}
             <a className="ghost" href={hrefs.settings} aria-label={t.readSettingsLabel}><span className="aa" aria-hidden="true">Aa</span>{t.readSettings}</a>
           </span>
         </div>
+        {invite && !canOriginals && <div className="orig-invite"><ProInvite t={t} lang={lang} feature="originals" /></div>}
+        {showOrig && orig.error && <p className="soon">{t.loadError}</p>}
         {error && <p className="soon">{t.loadError}</p>}
         {!error && !verses && <p className="soon">{t.loading}</p>}
         <article className="reader-text" style={readStyle(prefs)}>
@@ -301,10 +314,28 @@ function Reader({ book, lang, t, info, keyChapter, initialChapter }) {
             <h2>{book.name[lang]} {chapter}</h2>
             <FavButton favKey={favKey.chapter(book.slug, chapter)} t={t} />
           </div>
-          {verses && (
+          {verses && !(showOrig && orig.data) && (
             // O número vem da posição: versículo que a versão não tem é null e fica sem texto, sem deslocar os seguintes.
             <div className={`text${prefs.verseLines ? ' lines' : ''}`} lang={current.lang}>
               <p>{verses.map((v, i) => (v === null ? null : <span key={i}><sup>{i + 1}</sup>{v} </span>))}</p>
+            </div>
+          )}
+          {verses && showOrig && orig.data && (
+            // Com os originais ligados, cada versículo vira um bloco: texto da versão e, abaixo, a faixa de palavras do original (numeração da KJV).
+            <div className="text orig" lang={current.lang}>
+              {orig.data.t?.[chapter] && (
+                <div className="overse"><p className="otitle">{t.psalmTitle}</p><Strip words={orig.data.t[chapter]} lang={orig.data.lang} lex={orig.lex} label={t.psalmTitle} /></div>
+              )}
+              {verses.map((v, i) => {
+                const words = orig.data.w[chapter - 1]?.[i] ?? [];
+                if (v === null && !words.length) return null;
+                return (
+                  <div className="overse" key={i}>
+                    {v !== null && <p className="vtext"><sup>{i + 1}</sup>{v}</p>}
+                    {words.length > 0 && <Strip words={words} lang={orig.data.lang} lex={orig.lex} label={`${t.originals} ${i + 1}`} />}
+                  </div>
+                );
+              })}
             </div>
           )}
         </article>
@@ -319,6 +350,7 @@ function Reader({ book, lang, t, info, keyChapter, initialChapter }) {
             {current.sourceUrl && <> <a href={current.sourceUrl} target="_blank" rel="noreferrer">{t.verSource}</a>.</>}
           </p>
           {current.note && <p>{pick(current.note, lang)}</p>}
+          {showOrig && orig.data && <p>{orig.data.lang === 'he' ? t.originalsCreditHe : t.originalsCreditGrc} {t.originalsNote}</p>}
         </div>
       </div>
       {info && <Aside book={book} lang={lang} t={t} info={info} keyChapter={keyChapter} chapter={chapter} />}

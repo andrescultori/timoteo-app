@@ -609,3 +609,21 @@ a.ghost[aria-disabled='true'] { opacity: 0.4; pointer-events: none; }
 .ghost.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 @media (prefers-reduced-motion: reduce) { .switch span::after { transition: none; } }
 .card > h2.bk-label { font: 600 14px/1.3 var(--f-body); letter-spacing: 0.04em; text-transform: uppercase; }
+
+/* ===== Originais em hebraico e grego (faixa abaixo de cada versículo) ===== */
+.orig-switch { gap: 8px; }
+.orig-switch[aria-checked='true'] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.orig-aleph { font: 400 20px/1 'Cardo', serif; }
+.orig-invite { padding: 16px 20px 0; }
+.orig-invite .pro-invite { max-width: none; }
+.text.orig .overse { margin: 0 0 1.1em; }
+.text.orig .vtext { margin: 0 0 0.35em; }
+.text.orig .otitle { margin: 0 0 0.35em; font: 600 14px/1.3 var(--f-body); letter-spacing: 0.04em; text-transform: uppercase; color: var(--r-accent, var(--accent-2)); }
+.ostrip { --ofs: var(--r-size, 21px); display: flex; flex-wrap: wrap; gap: 6px; padding: 2px 0 4px; font-family: var(--f-body); }
+.ow { flex: none; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 10px 7px; border-radius: 8px; text-align: center; background: color-mix(in srgb, var(--r-fg, var(--fg)) 7%, transparent); line-height: 1.2; }
+.ow-t { font-family: 'Cardo', 'Ezra SIL', 'SBL Hebrew', 'Times New Roman', serif; font-size: calc(var(--ofs) * 1.2); line-height: 1.35; color: var(--r-fg, var(--fg)); }
+.ow-x, .ow-s, .ow-g { font-size: max(14px, calc(var(--ofs) * 0.68)); }
+.ow-x { font-style: italic; color: color-mix(in srgb, var(--r-fg, var(--fg)) 82%, var(--r-bg, #fff)); }
+.ow-s { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--r-accent, var(--accent-2)); }
+.ow-g { color: var(--r-fg, var(--fg)); max-width: 11em; }
+@media (max-width: 720px) { .ostrip { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 8px; scrollbar-width: thin; } }

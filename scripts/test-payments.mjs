@@ -583,6 +583,9 @@ const driftSec = async (user, months) => Number((await q(
   eq(cleanPrefs({ size: 23, theme: 'sepia' }), { size: 23, theme: 'sepia' }, 'ajustes: valores permitidos passam');
   eq(cleanPrefs({ size: 21, spacing: 1.7, width: 660, font: 'serif', verseLines: false, theme: 'light' }), {}, 'ajustes: o padrão não é guardado');
   eq(cleanPrefs({ size: 99, theme: 'neon', font: 'comic', extra: 1, verseLines: 'sim' }), {}, 'ajustes: valor ou chave inválida é descartada');
+  eq(cleanPrefs({ originals: true }), { originals: true }, 'ajustes: originals ligado é guardado');
+  eq(cleanPrefs({ originals: false }), {}, 'ajustes: originals desligado é o padrão');
+  eq(cleanPrefs({ originals: 'sim' }), {}, 'ajustes: originals só aceita booleano');
   eq(cleanPrefs('x'), {}, 'ajustes: texto solto vira vazio');
   eq(cleanPrefs([1]), {}, 'ajustes: lista vira vazio');
   eq(resolvePrefs({ width: 820 }), { ...DEFAULTS, width: 820 }, 'ajustes: resolve sobre o padrão');
@@ -599,7 +602,8 @@ const driftSec = async (user, months) => Number((await q(
   for (const v of FONTS) ok(await valid({ font: v }), `SQL aceita font ${v}`);
   for (const v of READ_THEMES) ok(await valid({ theme: v }), `SQL aceita theme ${v}`);
   ok(await valid({ verseLines: true }) && await valid({ verseLines: false }) && await valid({}), 'SQL aceita verseLines e objeto vazio');
-  for (const bad of [{ size: 20 }, { size: '21' }, { spacing: 1.5 }, { width: 700 }, { font: 'mono' }, { theme: 'x' }, { verseLines: 1 }, { other: 1 }, [], 'x', 5]) {
+  ok(await valid({ originals: true }) && await valid({ originals: false }), 'SQL aceita originals (booleano)');
+  for (const bad of [{ size: 20 }, { size: '21' }, { spacing: 1.5 }, { width: 700 }, { font: 'mono' }, { theme: 'x' }, { verseLines: 1 }, { originals: 'sim' }, { originals: 1 }, { other: 1 }, [], 'x', 5]) {
     ok(!(await valid(bad)), `SQL recusa ${JSON.stringify(bad)}`);
   }
   ok(!(await valid({ size: 21, junk: 'x'.repeat(400) })), 'SQL recusa JSON grande');

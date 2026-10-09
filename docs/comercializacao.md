@@ -22,7 +22,7 @@ O preço de entrada vale para todo novo assinante, sempre (um indicador por usu�
 | Mapas | só Evangelhos e Pentateuco | ✅ todos | ✅ |
 | Estrutura | só Salmos | ✅ Jó, Provérbios, Eclesiastes, Cantares e Salmos | ✅ |
 | Personagens | 30 a 50 principais (lista aprovada pelo André) | ✅ todos (210 hoje) | ✅ |
-| Originais em hebraico e grego (palavra a palavra, com Strong, na aba Ler) | ❌ | em breve (✅ quando a interface entrar) | em breve (✅) |
+| Originais em hebraico e grego (palavra a palavra, com Strong, na aba Ler) | ❌ | ✅ | ✅ |
 | Linha do tempo | ❌ | ✅ | ✅ |
 | Genealogia | ❌ | ✅ (em expansão: fases 1 e 2 prontas; reis de Judá, dinastias do norte e sacerdotes por vir) | ✅ |
 | Favoritos (livros, capítulos, personagens, lugares) e "continuar de onde parei" | ✅ sem limite; no aparelho sem cadastro, em todos os aparelhos com cadastro | ✅ | ✅ |
