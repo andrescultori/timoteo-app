@@ -4,7 +4,7 @@ Uso: colar no Claude Design para prototipar o visual; depois o Code implementa. 
 
 ## O que é a página
 
-Landing estática, em português (com versão em inglês depois), publicada em projeto próprio do Cloudflare Pages. Objetivo único: explicar o produto e levar a pessoa a **escolher um plano**. O app fica em outro endereço; o botão "Escolher plano" leva a ele com o plano na URL.
+Landing estática, em português (a versão em inglês e os textos legais em inglês ficam para depois), publicada em projeto próprio do Cloudflare Pages. Objetivo único: explicar o produto e levar a pessoa a **escolher um plano**. O app fica em outro endereço; o botão "Escolher plano" leva a ele com o plano na URL.
 
 ## Público e tom
 
@@ -18,9 +18,9 @@ Estudantes da Bíblia, líderes e professores de escola bíblica, brasileiros ev
 2. **O que é:** uma tabela dos 66 livros da Bíblia; cada livro abre uma ficha de estudo, um mapa dos lugares e o texto para leitura. Mostrar 3 a 4 capturas (já existem em `docs/images/`: grade, mapa, linha do tempo, personagens; refazer com a marca nova).
 3. **Como as peças se ligam:** linha do tempo ⇄ mapa ⇄ personagens (um clique leva de um ao outro). Diagrama simples.
 4. **O que tem hoje (números reais, atualizar na hora de publicar):** 66 livros com ficha em português e inglês; 210 personagens; linha do tempo com 13 períodos e 69 eventos; mapas nas seções da Bíblia; genealogia de Adão a Jesus (em expansão); texto bíblico em várias versões de licença clara.
-5. **Posição tradicional e acadêmica lado a lado:** onde autoria, datação ou localização são debatidas, o app mostra as posições e marca a incerteza (e há um botão para esconder a posição acadêmica).
+5. **Posição tradicional e acadêmica lado a lado:** onde autoria, datação ou localização são debatidas, o app mostra as posições e marca a incerteza (a posição acadêmica é recurso do **Premium**, ainda não à venda; por ora só o admin a vê).
 6. **Planos (caixas com ✅/❌):** Essencial, Pro e Premium (este com selo "em breve"). Quatro estados por item: incluído, não incluído, em parte e em breve (ícones, não só cor). Cada caixa tem preço, lista de itens com ✅ ou ❌ e o botão "Escolher plano". Pro em destaque. Itens "em breve" marcados assim, sem ✅. A tabela deve ser alimentada pela configuração única de planos para não divergir do app.
-7. **Perguntas frequentes:** como funciona o pagamento (checkout do Mercado Pago, sem cartão na nossa página), o que acontece ao vencer (volta ao Essencial, sem perder progresso), que versões da Bíblia existem, para quem é, como cancelar.
+7. **Perguntas frequentes:** como funciona o pagamento (checkout do Mercado Pago, sem cartão na nossa página), o que acontece ao vencer (volta ao Essencial, sem perder progresso), que versões da Bíblia existem, para quem é, como funciona a renovação (pagamento **único** por 12 meses, sem renovação automática e sem cancelamento a fazer), o reembolso em até 7 dias e que contas e compras são para maiores de 18 anos.
 8. **Rodapé:** "Desenvolvido por André Scultori · © 2026 · GitHub" (skill de assinatura; o GitHub aponta para o repositório do projeto), links para Termos de uso e Política de privacidade.
 
 ## Planos para a tabela
@@ -32,7 +32,8 @@ Itens (✅ inclui, ❌ não inclui):
 - Fichas dos 66 livros: Essencial em parte ("mapas e estrutura dos livros poéticos limitados"), Pro ✅ completas, Premium ✅
 - Mapas: Essencial só Evangelhos e Pentateuco, Pro ✅ todos, Premium ✅
 - Estrutura dos livros poéticos: Essencial em parte ("livro de Salmos completo"), Pro ✅, Premium ✅
-- Personagens: Essencial 30 a 50 principais, Pro ✅ 200+, Premium ✅
+- Personagens: Essencial 50 principais, Pro ✅ 200+, Premium ✅
+- Posição acadêmica ao lado da tradicional: Essencial ❌, Pro ❌, Premium ✅ (em breve)
 - Linha do tempo: Essencial ❌, Pro ✅, Premium ✅
 - Genealogia: Essencial ❌, Pro ✅ (em expansão), Premium ✅
 - "Leitura gamificada e mais": "em breve" no Pro e no Premium (o "mais" são os links BibleProject e concordância)
@@ -42,7 +43,7 @@ Itens (✅ inclui, ❌ não inclui):
 
 - Sem depoimentos, avaliações ou números de usuários inventados. Só o que for verdadeiro na publicação.
 - Não colocar nenhum campo de cartão na página.
-- A landing só coleta e-mail na lista de espera ("Avise-me" do Premium e dos recursos em breve), com a caixa de consentimento própria.
+- A landing **não coleta dados** nem e-mail: o "Avise-me" do Premium e dos recursos em breve fica no app, com conta e a caixa de consentimento própria. Se um dia a landing coletar e-mail, a Política de Privacidade precisa ser atualizada antes.
 - Contagens e preços vêm de dados do projeto, não escritos à mão em vários lugares.
 - Acessível (contraste, teclado) e legível no celular; carregamento rápido.
 

@@ -21,8 +21,9 @@ O preço de entrada vale para todo novo assinante, sempre (um indicador por usu�
 | Fichas dos 66 livros | ✅ sem mapa e sem estrutura (exceções abaixo) | ✅ completas, com mapas e estruturas | ✅ |
 | Mapas | só Evangelhos e Pentateuco | ✅ todos | ✅ |
 | Estrutura | só Salmos | ✅ Jó, Provérbios, Eclesiastes, Cantares e Salmos | ✅ |
-| Personagens | 30 a 50 principais (lista aprovada pelo André) | ✅ todos (210 hoje) | ✅ |
+| Personagens | 50 principais (lista em `docs/personagens-essencial.md`) | ✅ todos (210 hoje) | ✅ |
 | Originais em hebraico e grego (palavra a palavra, com Strong, na aba Ler) | ❌ | ✅ | ✅ |
+| Posição acadêmica (leituras acadêmicas ao lado da tradicional) | ❌ | ❌ | ✅ **[decidido 08/10/2026: só Premium]**; hoje só o admin vê, porque o Premium ainda não está à venda |
 | Linha do tempo | ❌ | ✅ | ✅ |
 | Genealogia | ❌ | ✅ (em expansão: fases 1 e 2 prontas; reis de Judá, dinastias do norte e sacerdotes por vir) | ✅ |
 | Favoritos (livros, capítulos, personagens, lugares) e "continuar de onde parei" | ✅ sem limite; no aparelho sem cadastro, em todos os aparelhos com cadastro | ✅ | ✅ |
@@ -53,6 +54,7 @@ Links externos (quando entrar): vídeos do BibleProject por livro e busca em con
 - **[decidido]** Vercel descartado: o plano Hobby é restrito a uso não comercial (vercel.com/docs/limits/fair-use-guidelines).
 - **[decidido]** PWA no roadmap; apps nas lojas só depois de validar a venda.
 - **[decidido]** Landing em página própria, mostrando o que é o app, os planos em caixas com ✅/❌ e o botão "Escolher plano". Visual prototipado no Claude Design e depois implementado no Code (ver `docs/landing-brief.md`).
+- **[decidido, 08/10/2026]** Visual do app e da landing: **opção B** (fundo off-white, cartões brancos, verde-escuro `#0F2D24` como primária, cores do brand book; Bricolage Grotesque, Source Sans 3 e Literata no texto bíblico; sem serifada na interface). Tema padrão **Claro**, com opção **Escuro** (grafite) e **Automático**; o tema da leitura (Seguir o site, Claro, Sépia, Escuro) é independente do tema do site. O Pergaminho foi arquivado. Referências em `docs/design/`.
 - **[informado]** O André já usa o Mercado Pago no LGND Checklist e a conta não exigiu domínio próprio.
 - **[proposto, confirmar]** Next.js: o André escolheu Next.js (rotas reais ajudam o SEO do Essencial). Para lançar mais cedo e com menos risco, **lançar no app atual (Vite, rotas por hash) e migrar para Next.js depois**. A escolha entre migrar antes ou depois é dele.
 - **[proposto, confirmar]** Lançamento só com texto em domínio público ou CC BY (KJV, WEB, ASV, Almeida 1911 atualizada, Bíblia Livre) mais links para o YouVersion. ARA e NAA entram só com autorização por escrito.
@@ -128,7 +130,7 @@ Cada fase vira uma branch e um PR; o merge é do André. O Code diagnostica e es
 - **Ainda não feito (de propósito):** Premium, recorrência, e-mail de aviso de vencimento, painel admin, mudança de licença.
 - A documentação do Mercado Pago (`developers`) estava bloqueada na rede onde o código foi escrito; nomes de campos e o modelo do `x-signature` foram conferidos em resultados de busca da documentação oficial. **Conferir no primeiro teste com credenciais de teste** (ver "O que conferir" no `supabase/README.md`).
 
-**Fase 5: landing (projeto separado no Cloudflare Pages)**
+**Fase 5: landing (projeto separado no Cloudflare Pages) — implementada em `landing/`; falta publicar no Cloudflare Pages e trocar as capturas de tela pelas do app novo**
 - Protótipo no Claude Design a partir de `docs/landing-brief.md`; depois o Code implementa em página estática, rápida e boa para SEO.
 - Caixas dos planos com ✅/❌ lidas da configuração única da Fase 3; botão "Escolher plano" leva ao app com o plano na URL (cadastro ou login e checkout).
 - A landing não coleta dados pessoais além da lista de espera, que escreve no Supabase.
