@@ -666,3 +666,10 @@ a.ghost[aria-disabled='true'] { opacity: 0.4; pointer-events: none; }
 :root[data-theme='dark'] .continue-card :focus-visible, :root[data-theme='dark'] .bk-key :focus-visible { outline-color: var(--accent-fill); }
 :root[data-theme='dark'] .tab { color: #c9ccc8; }
 :root[data-theme='dark'] .tab:hover { border-color: var(--line-strong); }
+
+/* Tinta da seção (--ci): a cor da seção misturada com branco, para LINHAS, bordas e sublinhados sobre fundo escuro (a cor pura some:
+   1,0 a 3,4:1). Os preenchimentos com texto claro (tiles, siglas) continuam com a cor pura. No claro --ci não existe: as regras do claro seguem usando --c. */
+:root[data-theme='dark'] [style*='--c:'] { --ci: color-mix(in srgb, var(--c) 52%, #fff); }
+:root[data-theme='dark'] .sheetinfo a.plink { text-decoration-color: var(--ci, currentColor); }
+:root[data-theme='dark'] input[type='checkbox'], :root[data-theme='dark'] input[type='radio'] { accent-color: var(--accent-fill); }
+:root[data-theme='dark'] .modal::backdrop { background: rgb(0 0 0 / 0.72); }
