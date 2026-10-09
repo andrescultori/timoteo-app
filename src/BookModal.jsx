@@ -165,7 +165,7 @@ function Aside({ book, lang, t, info, keyChapter, chapter }) {
       <section className="card small">
         <h2>{chapter ? t.bookCharacters : t.characters}</h2>
         <div className="chips">
-          {info.characters.map((c, i) => (<span key={i} className="chip"><CharName c={c} lang={lang} /></span>))}
+          {info.characters.map((c, i) => (<span key={i} className="chip"><span><CharName c={c} lang={lang} /></span></span>))}
         </div>
         {chapter && <a className="side-link" href={hrefs.book(book.slug, 'sheet')}>{t.seeSheet}</a>}
       </section>
