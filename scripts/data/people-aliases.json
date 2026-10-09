@@ -1,0 +1,20 @@
+{
+  "abraao": { "pt": ["Abrão"], "en": ["Abram"] },
+  "cora": { "pt": ["Coré"], "en": ["Korah", "Core"] },
+  "evodia-sintique": { "pt": ["Evódia", "Síntique"], "en": ["Euodias", "Syntyche"] },
+  "filhas-zelofeade": { "pt": ["filhas de Zelofeade"], "en": ["daughters of Zelophehad"] },
+  "herodes-antipas": { "ptReview": ["Herodes"], "enReview": ["Herod"] },
+  "herodes-grande": { "ptReview": ["Herodes"], "enReview": ["Herod"] },
+  "jeroboao": { "pt": ["Jeroboão"], "en": ["Jeroboam"] },
+  "jeroboao-ii": { "pt": ["Jeroboão"], "en": ["Jeroboam"] },
+  "joaquim": { "pt": ["Jeconias"] },
+  "joao-marcos": { "pt": ["Marcos"], "en": ["Mark", "Marcus"] },
+  "judas-iscariotes": { "ptReview": ["Judas"], "enReview": ["Judas"] },
+  "loide-eunice": { "pt": ["Loide", "Eunice"], "en": ["Lois", "Eunice"] },
+  "paulo": { "pt": ["Saulo"] },
+  "pedro": { "pt": ["Simão Pedro", "Cefas"], "en": ["Simon Peter", "Cephas"], "ptReview": ["Simão"], "enReview": ["Simon"] },
+  "sara": { "pt": ["Sarai"], "en": ["Sarai"] },
+  "silas": { "pt": ["Silvano"], "en": ["Silvanus"] },
+  "simao-zelote": { "ptReview": ["Simão"], "enReview": ["Simon"] },
+  "tadeu": { "ptReview": ["Judas"], "enReview": ["Judas"] }
+}
