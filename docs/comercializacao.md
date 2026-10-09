@@ -135,7 +135,7 @@ Cada fase vira uma branch e um PR; o merge é do André. O Code diagnostica e es
 - Caixas dos planos com ✅/❌ lidas da configuração única da Fase 3; botão "Escolher plano" leva ao app com o plano na URL (cadastro ou login e checkout).
 - A landing não coleta dados pessoais além da lista de espera, que escreve no Supabase.
 
-**Fase 6: admin mínimo (para o André)**
+**Fase 6: admin mínimo (para o André)** — migrations prontas (`20261015` e `20261016`, **não aplicadas pelo repositório**; ver `supabase/README.md`); a tela `#admin` vem em PR separado
 - Listar usuários, mudar o plano de um usuário (com registro de quem mudou e quando) e convidar usuário como editor de conteúdo.
 - Campo para o André editar o **contato de reembolso e privacidade** (hoje `refundContact` em `src/data/billing.json`, usado nos Termos, na Política, no perfil e na exclusão de conta). Quando houver o campo, o contato passa a vir do banco.
 

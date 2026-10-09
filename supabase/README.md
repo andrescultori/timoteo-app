@@ -199,3 +199,10 @@ Depois da `20261011000000`, aplique **em ordem** `20261012000000_reading_prefs_o
 
 ## Tema do site e da leitura (modo escuro)
 Aplique `20261014000000_reading_prefs_tema.sql` depois da `20261013000000`: a função `reading_prefs_valid` passa a aceitar `siteTheme` (`light`, `dark`, `auto`) e o valor `follow` em `theme`. Sem ela, essas escolhas ficam só no aparelho.
+
+## Administração (Fase 6): painel, planos manuais e papéis
+Aplique, **nesta ordem**, depois da `20261014000000`:
+1. `20261015000000_fase6_admin.sql`: `entitlements.note`, tabelas `user_roles` (editor, revisor) e `admin_audit`, e as funções `admin_kpis`, `admin_search_users`, `admin_set_plan`, `admin_set_role` e `admin_recent_changes`. Todas recusam quem não é admin (`is_admin()`); o cliente não grava nenhuma dessas tabelas. `delete_account_data` passa a limpar `user_roles` e o detalhe do registro de auditoria. **Não é aplicada pelo repositório.**
+2. `20261016000000_fase6_reembolso_cortesia.sql`: troca `apply_payment`. (a) Reembolso ou estorno **não desfaz** meses de um plano editado à mão pelo admin depois do pagamento (cortesia): o pagamento fica reembolsado e o resultado é `reversed_manual_kept` (a conciliação e o webhook registram "decidir à mão"). (b) Pagamento aprovado de quem já tem plano sem prazo ou Premium continua com 0 meses, e o resultado agora é `already_active` (log "reembolsar à mão").
+
+**Admin continua manual:** não há função nem tela para conceder admin. Para tornar alguém admin, no SQL Editor: `insert into public.app_admins (user_id) select id from auth.users where email = '<email>';` (e `delete from public.app_admins where user_id = ...` para retirar). A tela `#admin` só aparece para quem é admin.

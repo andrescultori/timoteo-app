@@ -22,6 +22,8 @@ export async function reconcileRow(row, { search, db, log = console.error }) {
     if (o.result === 'rejected') log(`conciliação: pagamento recusado pela conferência (${o.reason}): payment ${row.id}`);
     if (d === 'reversed') log(`conciliação: ${o.status === 'charged_back' ? 'estorno' : 'reembolso'} aplicado: payment ${row.id}`);
     if (d === 'orphan') log(`conciliação: pagamento de conta excluída (órfão) ${o.status}; se foi aprovado, reembolsar à mão no Mercado Pago: payment ${row.id}`);
+    if (d === 'reversed_manual_kept') log(`conciliação: ${o.status === 'charged_back' ? 'estorno' : 'reembolso'} de plano editado à mão (cortesia): plano NÃO alterado, decidir à mão: payment ${row.id}`);
+    if (d === 'already_active') log(`conciliação: pagamento aprovado de quem já tinha plano sem prazo ou Premium (0 meses), reembolsar à mão: payment ${row.id}`);
     if (d === 'duplicate_payment' || d === 'duplicate_entry') log(`conciliação: ${d}, reembolsar à mão: payment ${row.id}`);
     if (d && d !== 'noop') changed = true;
   }
