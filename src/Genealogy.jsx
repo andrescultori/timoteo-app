@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { hierarchy, tree as d3tree } from 'd3-hierarchy';
 import { bySlug } from './data/books.js';
 import { pick } from './timelineUtil.js';
-import BackButton from './BackButton.jsx';
+import PageHead from './PageHead.jsx';
 import { usePageTitle } from './pageTitle.js';
 import { trees, nodes, parentOf, childrenOf, personById, refsText, nodeName } from './genealogy.js';
 
@@ -66,18 +66,9 @@ export default function Genealogy({ lang, t, treeId, focusNode, onOpenBook, onOp
   const branchName = (id) => { const b = nodes[id].branch; return b ? pick(tr.branches[b], lang) : null; };
 
   return (
-    <div className="page wide" role="region" aria-labelledby="gn-title">
-      <div className="sheet" style={{ '--c': 'var(--s-atos)' }}>
-        <div className="head">
-          <div className="ttl">
-            <h1 id="gn-title">{pick(tr.title, lang)}</h1>
-            <p>{t.genealogy}</p>
-          </div>
-          <div className="head-actions">
-            <a className="ghost" href="#person">{t.people}</a>
-            <BackButton t={t} />
-          </div>
-        </div>
+    <div className="page bookpage" role="region" aria-labelledby="gn-title">
+      <PageHead t={t} id="gn-title" title={pick(tr.title, lang)} sub={t.genealogy} actions={<a className="ghost" href="#person">{t.people}</a>} />
+      <div className="pg-card" style={{ '--c': 'var(--s-atos)' }}>
         <div className="body">
           {trees.length > 1 && (
             <div className="tl-chips" role="group" aria-label={t.genealogy}>

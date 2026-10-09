@@ -4,7 +4,7 @@ import { people } from './data/people.json';
 import timeline from './data/timeline.json';
 import { psalms } from './data/psalms.json';
 import { pick, range, main } from './timelineUtil.js';
-import BackButton from './BackButton.jsx';
+import PageHead from './PageHead.jsx';
 import FavButton from './FavButton.jsx';
 import { favKey } from './userdata.js';
 import { usePlan } from './plan.js';
@@ -60,19 +60,14 @@ export default function People({ lang, t, focusId, onOpenBook, onOpenTimeline, o
   const choose = (id) => onSelect(id);
 
   return (
-    <div className="page wide" role="region" aria-labelledby="pp-title">
-      <div className="sheet" style={{ '--c': 'var(--s-paulo)' }}>
-        <div className="head">
-          <div className="ttl">
-            <h1 id="pp-title">{person ? pick(person.name, lang) : t.people}</h1>
-            <p>{person ? t.people : t.peopleSub}</p>
-          </div>
-          <div className="head-actions">
-            {person && <FavButton favKey={favKey.person(person.id)} t={t} />}
-            <a className="ghost" href={hrefs.timeline()}>{t.timeline}</a>
-            <BackButton t={t} />
-          </div>
-        </div>
+    <div className="page bookpage" role="region" aria-labelledby="pp-title">
+      <PageHead t={t} id="pp-title" title={person ? pick(person.name, lang) : t.people} sub={person ? t.people : t.peopleSub} actions={(
+        <>
+          {person && <FavButton favKey={favKey.person(person.id)} t={t} />}
+          <a className="ghost" href={hrefs.timeline()}>{t.timeline}</a>
+        </>
+      )} />
+      <div className="pg-card" style={{ '--c': 'var(--s-paulo)' }}>
 
         {!person && (
           <>

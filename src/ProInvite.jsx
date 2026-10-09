@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import BackButton from './BackButton.jsx';
+import PageHead from './PageHead.jsx';
 import WaitlistButton from './WaitlistButton.jsx';
 import { useSession, signInWithGoogle, openConsent } from './auth.js';
 import billingCfg from './data/billing.json';
@@ -70,12 +70,9 @@ export default function ProInvite({ t, lang = 'pt', title, page = false, feature
   );
   if (!page) return box;
   return (
-    <div className="page wide" role="region" aria-labelledby="pro-title">
-      <div className="sheet" style={{ '--c': 'var(--line-strong)' }}>
-        <div className="head">
-          <div className="ttl"><h1 id="pro-title">{title}</h1></div>
-          <div className="head-actions"><BackButton t={t} /></div>
-        </div>
+    <div className="page bookpage" role="region" aria-labelledby="pro-title">
+      <PageHead t={t} id="pro-title" title={title} />
+      <div className="pg-card" style={{ '--c': 'var(--line-strong)' }}>
         <div className="body">{box}</div>
       </div>
     </div>

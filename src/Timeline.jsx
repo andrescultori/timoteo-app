@@ -4,7 +4,7 @@ import data from './data/timeline.json';
 import { people } from './data/people.json';
 import { pick, range, views, main } from './timelineUtil.js';
 import { useSettings } from './settings.js';
-import BackButton from './BackButton.jsx';
+import PageHead from './PageHead.jsx';
 import { hrefs } from './route.js';
 import { usePageTitle } from './pageTitle.js';
 
@@ -63,18 +63,9 @@ export default function Timeline({ lang, t, focusId, onClose, onOpenBook, onOpen
   const choose = (id) => setSel(id);
 
   return (
-    <div className="page wide" role="region" aria-labelledby="tl-title">
-      <div className="sheet" style={{ '--c': 'var(--s-historicos)' }}>
-        <div className="head">
-          <div className="ttl">
-            <h1 id="tl-title">{t.timeline}</h1>
-            <p>{t.timelineSub}</p>
-          </div>
-          <div className="head-actions">
-            <a className="ghost" href={hrefs.person()}>{t.people}</a>
-            <BackButton t={t} />
-          </div>
-        </div>
+    <div className="page bookpage" role="region" aria-labelledby="tl-title">
+      <PageHead t={t} id="tl-title" title={t.timeline} sub={t.timelineSub} actions={<a className="ghost" href={hrefs.person()}>{t.people}</a>} />
+      <div className="pg-card" style={{ '--c': 'var(--s-historicos)' }}>
 
         <div className="tl-strip" role="group" aria-label={t.timelineStrip}>
           {layout.map(({ b, ps }) => (
