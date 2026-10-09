@@ -560,3 +560,52 @@ a.ghost[aria-disabled='true'] { opacity: 0.4; pointer-events: none; }
   .bookpage.compact .bk-ttl h1 { font-size: 28px; }
   .bookpage.compact .bk-badge { width: 48px; height: 48px; font-size: 20px; }
 }
+
+/* ===== Ajustes de leitura e Configurações (visual B, PR 4b) ===== */
+/* superfície de leitura: as variáveis --r-* vêm de src/readStyle.js (tema, tamanho, entrelinha, largura, fonte) */
+.reader-text, .cfg-preview { background: var(--r-bg, var(--panel)); color: var(--r-fg, var(--fg)); }
+.reader-text { max-width: none; width: 100%; padding: 28px 0 36px; }
+.reader-text > .chap-title, .reader-text > .text { max-width: var(--r-width, 660px); margin-inline: auto; padding-inline: 28px; }
+.reader-text .chap-title h2 { color: var(--r-fg, var(--accent)); }
+.text { font-family: var(--r-font, var(--f-read)); font-size: var(--r-size, 21px); line-height: var(--r-lead, 1.7); }
+.text sup { color: var(--r-accent, var(--accent-2)); font-size: 0.55em; vertical-align: 0.5em; margin-right: 0.35em; }
+.cfg-preview .text { max-width: var(--r-width, 660px); }
+.text.lines span { display: block; margin-bottom: 0.5em; }
+@media (max-width: 520px) { .reader-text > .chap-title, .reader-text > .text { padding-inline: 16px; } .text { font-size: min(var(--r-size, 21px), 22px); } }
+.cfg-cols .cfg-card { flex: 1 1 340px; max-width: 460px; gap: 24px; }
+.cfg-cols .cfg-side { flex: 999 1 480px; }
+.cfg-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.cfg-head h2 { margin: 0; }
+.cfg-reset { color: var(--accent-2); font-weight: 600; min-height: 44px; padding: 0 4px; text-decoration: none; }
+.cfg-reset:hover { text-decoration: underline; }
+.cfg-group { display: flex; flex-direction: column; gap: 10px; }
+.cfg-opts { display: flex; gap: 8px; }
+.opt { flex: 1; min-height: 44px; padding: 0 8px; border: 1.5px solid var(--line-strong); border-radius: var(--radius-ctl); background: var(--panel); color: var(--fg); font: 600 15px var(--f-body); cursor: pointer; }
+.opt[aria-pressed='true'] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.cfg-opts .opt[style*='background'][aria-pressed='true'] { outline: 3px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+.cfg-size { display: flex; align-items: center; gap: 10px; }
+.cfg-dots { flex: 1; display: flex; align-items: center; justify-content: space-between; padding: 0 4px; }
+.cfg-dots span { width: 9px; height: 9px; border-radius: 999px; background: var(--line-strong); opacity: 0.45; }
+.cfg-dots span.on { background: var(--accent); opacity: 1; }
+.aa-s, .aa-l { font-family: var(--f-read); }
+.aa-s { font-size: 15px; } .aa-l { font-size: 24px; }
+.cfg-now { font-size: 14px; color: var(--muted); }
+.cfg-switch { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.cfg-switch-text { display: flex; flex-direction: column; gap: 2px; font-weight: 600; }
+.cfg-switch-text small { font-weight: 400; font-size: 14px; color: var(--muted); }
+.switch { flex: none; width: 52px; height: 44px; padding: 7px 0; border: 0; background: transparent; cursor: pointer; display: block; }
+.switch span { display: flex; align-items: center; width: 52px; height: 30px; padding: 3px; border-radius: 999px; background: var(--line-strong); }
+.switch span::after { content: ''; width: 24px; height: 24px; border-radius: 999px; background: #fff; transition: transform 0.15s; }
+.switch[aria-checked='true'] span { background: var(--accent); }
+.switch[aria-checked='true'] span::after { transform: translateX(22px); }
+.switch:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 999px; }
+.cfg-preview { padding: 28px; border-color: var(--line); gap: 14px; }
+.cfg-preview .text p { margin: 0; }
+.cfg-preview .bk-label { margin: 0; color: inherit; }
+.cfg-where { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; }
+.cfg-where.ok { justify-content: flex-start; align-items: flex-start; flex-wrap: nowrap; gap: 12px; margin: 0; }
+.cfg-where.ok svg { flex: none; margin-top: 2px; color: var(--accent-2); }
+.cfg-where p { flex: 1 1 260px; margin: 0; }
+.ghost.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+@media (prefers-reduced-motion: reduce) { .switch span::after { transition: none; } }
+.card > h2.bk-label { font: 600 14px/1.3 var(--f-body); letter-spacing: 0.04em; text-transform: uppercase; }
