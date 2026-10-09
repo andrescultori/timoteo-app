@@ -473,3 +473,57 @@ a.ghost { color: var(--accent); }
 .delete-box { display: grid; gap: 10px; }
 .delete-box input[type='email'] { width: 100%; }
 .acct-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--danger); flex: none; }
+
+/* ===== Página do livro (visual B, PR 2) ===== */
+.bookpage { display: flex; flex-direction: column; gap: 24px; padding-bottom: 72px; }
+.bookpage > .back { align-self: flex-start; }
+.bk-head { display: flex; flex-wrap: wrap; align-items: center; gap: 20px 28px; }
+.bk-badge { width: 96px; height: 96px; flex: none; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-panel); background: var(--c); color: var(--on-section); font: 700 36px/1 var(--f-display); letter-spacing: -0.02em; }
+.bk-ttl { flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.bk-chips { display: flex; flex-wrap: wrap; gap: 8px; font-size: 14px; font-weight: 600; }
+.bk-chips span { background: var(--chip-bg); color: var(--accent); padding: 3px 12px; border-radius: var(--radius-pill); }
+.bk-ttl h1 { font-size: 44px; line-height: 1.05; overflow-wrap: anywhere; }
+.bk-tabs { display: flex; flex-wrap: wrap; gap: 8px; border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+.tab { min-height: 44px; padding: 0 20px; border: 1.5px solid transparent; border-radius: var(--radius-pill); background: transparent; color: #2e3531; font: 600 16px var(--f-body); cursor: pointer; }
+.tab:hover { border-color: var(--line-strong); }
+.tab[aria-selected='true'] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius-panel); padding: 28px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.card > h2 { margin: 0; font: 700 26px/1.2 var(--f-display); letter-spacing: -0.01em; color: var(--accent); }
+.card.small { padding: 24px; }
+.card.small > h2 { font-size: 22px; }
+.card p, .card ul, .card ol { margin: 0; }
+.card .facts { margin: 0; }
+.card .facts div { border: 0; padding: 0; }
+.card .soon { margin: 0; }
+.bk-body > .card .reader, .bk-body > .card .mapbox { max-width: 100%; }
+.bk-cols { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+.bk-main { flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 20px; }
+.bk-side { flex: 1 1 300px; min-width: 0; display: flex; flex-direction: column; gap: 20px; }
+.bk-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 22px 28px; }
+.bk-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.bk-label { font-size: 14px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent-2); }
+.bk-field p { margin: 0 0 6px; }
+.bk-key { background: var(--accent); color: var(--on-accent); border-radius: var(--radius-panel); padding: 24px; display: flex; flex-direction: column; gap: 10px; }
+.bk-key h2 { margin: 0; font: 600 14px var(--f-body); letter-spacing: 0.04em; text-transform: uppercase; color: var(--green-soft); }
+.bk-keyref { font: 700 34px/1 var(--f-display); }
+.bk-key a { color: var(--on-accent); font-weight: 600; display: inline-flex; align-items: center; min-height: 44px; }
+.bk-key :focus-visible { outline-color: var(--on-accent); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { position: relative; display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; border-radius: var(--radius-pill); background: var(--chip-bg); color: var(--accent); font-weight: 600; }
+.chip a.plink { text-decoration: none; }
+.chip a.plink::after { content: ''; position: absolute; inset: 0; border-radius: inherit; }
+.chip a.plink:focus-visible { outline: none; }
+.chip:has(a:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
+.card .outline { padding-left: 22px !important; list-style: decimal; display: flex; flex-direction: column; gap: 8px; }
+.card .outline span { color: var(--muted); }
+.card.small + .note, .bk-main > .note { margin: 0; }
+.bookpage .foot { margin-top: 8px; }
+.foot .ghost { max-width: 48%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; line-height: 41px; }
+a.ghost[aria-disabled='true'] { opacity: 0.4; pointer-events: none; }
+@media (max-width: 520px) {
+  .bk-head { flex-wrap: nowrap; gap: 14px; align-items: flex-start; }
+  .bk-badge { width: 64px; height: 64px; font-size: 24px; }
+  .bk-ttl h1 { font-size: 32px; }
+  .card { padding: 20px; }
+  .card > h2 { font-size: 24px; }
+}
