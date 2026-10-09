@@ -10,7 +10,7 @@ Landing estática, em português (com versão em inglês depois), publicada em p
 
 Estudantes da Bíblia, líderes e professores de escola bíblica, brasileiros evangélicos. Tom acessível, moderno e minimalista; linha evangélica. Nada de promessa exagerada. Não usar a arte do TaBíblia Periódica original; o design é próprio.
 
-Visual aprovado pelo André em 03/10/2026 no mockup feito no Claude Design (azul-tinta com detalhe dourado; títulos Bricolage Grotesque, texto Source Sans 3; tabela colorida das siglas dos 66 livros no topo). As mudanças de texto pedidas por ele já estão neste brief.
+**Atualização (09/10/2026):** o visual vigente é o de `docs/design/landing/` (verde-escuro e off-white, igual ao app; Bricolage Grotesque e Source Sans 3 hospedadas). A implementação está em `landing/` (ver `landing/README.md`); onde este brief divergir dela, vale a implementação. Mudanças decididas: botões levam ao app (sem plano na URL); sem formulário nem e-mail na landing (Premium: criar conta e usar "Avise-me" no app); página de contato em vez de e-mail público; posição acadêmica só no Premium, com opção de esconder; pagamento único anual (sem cancelamento), reembolso de 7 dias, 18+; personagens: 50 no Essencial e 200+ no Pro; Almeida 1911 atualizada fora da FAQ enquanto em revisão. Visual antigo aprovado em 03/10/2026 (azul-tinta com detalhe dourado), substituído.
 
 ## Seções (em ordem)
 
