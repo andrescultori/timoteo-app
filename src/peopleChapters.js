@@ -32,6 +32,8 @@ export function peopleInChapterFrom(data, book, chapter, limit) {
   const ids = (byChapter(data)[book]?.[chapter] ?? []).map((x) => x[0]);
   return limit ? ids.slice(0, limit) : ids;
 }
+// O livro tem algum dado de capítulo? (Eclesiastes, Cantares, Lamentações e 2 João não têm)
+export const bookHasChapters = (data, book) => Boolean(byChapter(data)[book]);
 export function chaptersOfPersonFrom(data, id, book) {
   return (data[id]?.[book] ?? []).map((r) => r[0]);
 }
