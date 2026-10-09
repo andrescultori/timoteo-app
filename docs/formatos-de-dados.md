@@ -81,6 +81,21 @@ Na ficha do livro (`src/data/info/<slug>.json`), cada item de `characters` pode 
 
 Nos textos da ficha, os nomes de personagens e os lugares do mapa do livro viram links automaticamente (`src/linkify.jsx`), a partir de `src/data/people-index.json`, gerado por `node scripts/build-people-index.mjs` sempre que `people.json` mudar.
 
+## Personagens por capítulo (`src/data/people-chapters.json`)
+
+Em quais capítulos cada personagem é **citado pelo nome** (nada de pronome nem contexto), para a lateral da aba Ler. Gerado por `node scripts/build-people-chapters.mjs` (determinístico, sem rede) a partir de `people.json`, do texto da Bíblia Livre, de `scripts/data/people-aliases.json` e de `scripts/data/people-chapters-overrides.json`; o relatório sai em `docs/personagens-por-capitulo.md` (gerado, não editar). Rode de novo ao mudar qualquer um desses; o `npm run check` refaz a busca em memória e falha se o arquivo estiver velho.
+
+```json
+{ "davi": { "1sa": [[16, 6, 13], [17, 36, 12]], "psa": [[3, 1, 0]] } }
+```
+Cada linha é `[capítulo, ocorrências, primeiro versículo]`. Personagens em ordem alfabética de id, livros na ordem canônica, capítulos crescentes. Versículo `0` = título do salmo (pessoas de `hist.people` em `psalms.json`; autoria não conta como citação). Ocorrências `0` = incluído à mão (`include`). Quem não tem nenhum capítulo fica de fora.
+
+- **Onde procura:** só nos livros de `books[]` do personagem (e em `linkBooks`, se houver). `autoLink: false` desliga a busca automática (só `include`). Casamento por palavra inteira, sensível a maiúsculas e acentos; o nome mais longo vence ("José de Arimateia" não conta como "José"); hífen colado não conta ("Abel-Maim").
+- **`people-aliases.json`:** `{ "<id>": { "pt": [...], "en": [...], "ptReview": [...], "enReview": [...] } }`. Além do nome de `people.json` (texto antes da vírgula ou do parêntese), acrescenta grafias do texto bíblico (Abrão, Cefas). Os `*Review` são nomes que podem ser mais de uma pessoa (Herodes, Simão, Judas): nunca se resolvem sozinhos.
+- **Ambiguidade:** nome que serve a mais de um personagem do livro, ou que é o começo do nome de outro ("João" × "João Batista"), **não é decidido**: vai para "a revisar" no relatório e fora do JSON.
+- **`people-chapters-overrides.json`** (decisões do André, nesta ordem): `assign` `{ "alias", "book", "chapters", "person" }` resolve ambíguos por faixa (`"3–11"`, `[1, 5]`); `include` `{ "person", "book", "chapters" }` inclui; `exclude` o último a valer. Id, livro ou capítulo inexistente, `assign` sem ocorrência ou com quem não é candidato fazem o gerador falhar.
+- **Helper** `src/peopleChapters.js`: `peopleInChapter(livro, capítulo, limite?)` e `chaptersOfPerson(id, livro)` (assíncronos, carregam o JSON sob demanda), mais as versões síncronas `peopleInChapterFrom(dados, ...)`. Ordem: mais citados primeiro, depois o que aparece antes no capítulo, depois o id.
+
 ## Genealogia
 
 `src/data/genealogia.json` guarda as árvores (hoje duas: `adao-jesus`, desenhada em SVG, e `abraao-tribos`, em lista recuada com `"layout": "list"`; a lista funciona melhor quando há muitos irmãos). Três partes:

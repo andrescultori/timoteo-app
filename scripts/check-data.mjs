@@ -37,6 +37,32 @@ const LAT = [-2, 52];
   const saved = fs.readFileSync(path.join(root, 'src/data/people-index.json'), 'utf8').trim();
   if (saved !== JSON.stringify(buildIndex())) err('src/data/people-index.json está desatualizado: rode node scripts/build-people-index.mjs');
 }
+
+// people-chapters.json (personagens por capítulo): ids e livros existem, capítulos existem, tudo ordenado e em dia com people.json,
+// aliases, overrides e o texto da Bíblia Livre (a busca é refeita em memória e comparada)
+{
+  const { buildPeopleChapters, jsonText } = await import('./people-chapters-lib.mjs');
+  const saved = fs.readFileSync(path.join(root, 'src/data/people-chapters.json'), 'utf8');
+  const data = JSON.parse(saved);
+  const ids = new Set(read('src/data/people.json').people.map((p) => p.id));
+  const ordered = (a) => a.every((x, i) => i === 0 || a[i - 1] < x);
+  if (!ordered(Object.keys(data))) err('people-chapters.json: personagens fora de ordem');
+  for (const [id, per] of Object.entries(data)) {
+    if (!ids.has(id)) err(`people-chapters.json: personagem "${id}" não existe em people.json`);
+    const bs = Object.keys(per);
+    if (bs.some((b) => !books.includes(b))) { err(`people-chapters.json: ${id} tem livro desconhecido`); continue; }
+    if (!bs.every((b, i) => i === 0 || books.indexOf(bs[i - 1]) < books.indexOf(b))) err(`people-chapters.json: ${id}: livros fora da ordem canônica`);
+    for (const [b, rows] of Object.entries(per)) {
+      if (!rows.length) err(`people-chapters.json: ${id}.${b} vazio`);
+      if (!ordered(rows.map((r) => r[0]))) err(`people-chapters.json: ${id}.${b}: capítulos fora de ordem`);
+      for (const r of rows) if (!Array.isArray(r) || r.length !== 3 || r.some((x) => !Number.isInteger(x) || x < 0) || r[0] < 1 || r[0] > chaptersOf(b)) err(`people-chapters.json: ${id}.${b}: linha inválida ${JSON.stringify(r)} (livro tem ${chaptersOf(b)} capítulos)`);
+    }
+  }
+  for (const id of Object.keys(read('scripts/data/people-aliases.json'))) if (!ids.has(id)) err(`people-aliases.json: personagem "${id}" não existe em people.json`);
+  try {
+    if (saved !== jsonText(buildPeopleChapters({ root }).data)) err('src/data/people-chapters.json está desatualizado: rode node scripts/build-people-chapters.mjs');
+  } catch (e) { err(`people-chapters: ${e.message}`); }
+}
 const personIds = new Set(read('src/data/people.json').people.map((p) => p.id));
 function checkCharIds(c, where) {
   if (c.ids === undefined) return;
