@@ -13,6 +13,7 @@ import { useUserData, dismissContinue, dismissNotice, acknowledgeNotice, setResu
 import { SettingsContext } from './settings.js';
 import { parseHash, hrefs, go } from './route.js';
 import { usePageTitle } from './pageTitle.js';
+import { useApplySiteTheme } from './siteTheme.js';
 
 // Linha do tempo só carrega quando aberta.
 const Timeline = lazy(() => import('./Timeline.jsx'));
@@ -92,6 +93,7 @@ export default function App() {
   // A posição acadêmica é oculta para todos e visível só para o administrador (can('academic')); o interruptor das Configurações vale só para ele
   const effectiveSettings = { ...settings, showScholarly: plan.can('academic') && settings.showScholarly };
   const t = T[lang];
+  useApplySiteTheme();
 
   // Livro, linha do tempo e personagens ajustam o título com o detalhe (aba, evento, pessoa); aqui fica o da grade.
   usePageTitle([], t.title, route.kind === 'home');

@@ -196,3 +196,6 @@ A Política de Privacidade (item 3, "Preferências no aparelho") diz que prefer�
 
 ## Chaves novas dos ajustes de leitura
 Depois da `20261011000000`, aplique **em ordem** `20261012000000_reading_prefs_originals.sql` (chave `originals`: faixa dos originais em hebraico e grego) e `20261013000000_reading_prefs_cantillation.sql` (chave `cantillation`: mostrar os acentos de cantilação). Cada uma só recria `reading_prefs_valid` (idempotente). Sem elas, essas chaves ficam só no aparelho.
+
+## Tema do site e da leitura (modo escuro)
+Aplique `20261014000000_reading_prefs_tema.sql` depois da `20261013000000`: a função `reading_prefs_valid` passa a aceitar `siteTheme` (`light`, `dark`, `auto`) e o valor `follow` em `theme`. Sem ela, essas escolhas ficam só no aparelho.

@@ -13,6 +13,7 @@ import { hrefs, sync } from './route.js';
 import { sectionsAt } from './outline.js';
 import { resolvePrefs } from './readingPrefs.js';
 import { readStyle } from './readStyle.js';
+import { useResolvedSite } from './siteTheme.js';
 import { useOriginals, Strip } from './Originals.jsx';
 
 // Fichas carregadas sob demanda: cada src/data/info/<slug>.json vira um chunk separado.
@@ -240,6 +241,7 @@ function Reader({ book, lang, t, info, keyChapter, initialChapter }) {
   const [error, setError] = useState(false);
   const top = useRef(null);
   const prefs = resolvePrefs(useUserData().prefs);
+  const site = useResolvedSite();
   // Originais em hebraico e grego (Pro): quem não tem o plano vê o botão, mas ele só abre o convite e nada é carregado
   const plan = usePlan();
   const canOriginals = !plan.loading && plan.can('originals');
@@ -309,7 +311,7 @@ function Reader({ book, lang, t, info, keyChapter, initialChapter }) {
         {showOrig && orig.error && <p className="soon">{t.loadError}</p>}
         {error && <p className="soon">{t.loadError}</p>}
         {!error && !verses && <p className="soon">{t.loading}</p>}
-        <article className="reader-text" style={readStyle(prefs)}>
+        <article className="reader-text" style={readStyle(prefs, site)}>
           <div className="chap-title">
             <h2>{book.name[lang]} {chapter}</h2>
             <FavButton favKey={favKey.chapter(book.slug, chapter)} t={t} />

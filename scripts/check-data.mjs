@@ -501,6 +501,30 @@ for (const ver of VERSIONS) {
   for (const needle of ['Open Scriptures Hebrew Bible Project', 'github.com/openscriptures/morphhb', 'Nestle 1904', 'Berean']) if (!lic.includes(needle)) err(`docs/licencas-texto-biblico.md: falta a atribuição "${needle}" dos originais`);
 }
 
+// Temas (src/styles.css): o escuro é um segundo conjunto de tokens ao lado do claro. Todo token de cor do claro precisa ter o par escuro
+// (ou estar na lista dos que são iguais de propósito), e os pares de texto e controle precisam passar no contraste nos dois temas.
+{
+  const css = fs.readFileSync(path.join(root, 'src/styles.css'), 'utf8');
+  const blockOf = (head) => { const i = css.indexOf(head); return i < 0 ? '' : css.slice(i + head.length, css.indexOf('\n}', i)); };
+  const vars = (b) => Object.fromEntries([...b.matchAll(/(--[\w-]+):\s*([^;]+);/g)].map((m) => [m[1], m[2].trim()]));
+  const light = vars(blockOf(':root {'));
+  const dark = vars(blockOf(":root[data-theme='dark'] {"));
+  const SAME = new Set(['--on-section', '--s-historicos', '--s-poesia', '--s-profMaiores', '--s-profMenores', '--s-evangelhos', '--s-atos', '--s-paulo', '--s-outras']);
+  for (const [k, v] of Object.entries(light)) if (/^#[0-9a-f]{6}$/i.test(v) && !SAME.has(k) && !(k in dark)) err(`styles.css: o token ${k} do tema claro não tem par no escuro`);
+  for (const [k, v] of Object.entries(dark)) if (SAME.has(k) && v === light[k]) err(`styles.css: ${k} está no escuro com o mesmo valor do claro (apague)`);
+  const lum = (h) => { const c = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((x) => (x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4)); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
+  const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); };
+  const SECTIONS = ['lei', 'historicos', 'poesia', 'profMaiores', 'profMenores', 'evangelhos', 'atos', 'paulo', 'outras', 'profecia'];
+  for (const [name, t] of [['claro', light], ['escuro', { ...light, ...dark }]]) {
+    const v = (k) => t[k];
+    const text = [['--fg', '--bg'], ['--fg', '--panel'], ['--muted', '--bg'], ['--muted', '--panel'], ['--accent', '--panel'], ['--accent', '--bg'], ['--accent-2', '--panel'], ['--accent-2', '--bg'],
+      ['--danger', '--panel'], ['--on-accent', '--accent-fill'], ['--on-hi', '--card-hi'], ['--green-soft', '--card-hi'], ['--accent', '--chip-bg'], ['--fg', '--panel-2'], ['--muted', '--panel-2']];
+    for (const [a, b] of text) if (v(a) && v(b) && ratio(v(a), v(b)) < 4.5) err(`styles.css (${name}): contraste ${ratio(v(a), v(b)).toFixed(2)}:1 entre ${a} e ${b} (mínimo 4,5)`);
+    for (const [a, b] of [['--line-strong', '--panel'], ['--line-strong', '--bg'], ['--focus', '--panel'], ['--focus', '--bg']]) if (ratio(v(a), v(b)) < 3) err(`styles.css (${name}): contraste ${ratio(v(a), v(b)).toFixed(2)}:1 entre ${a} e ${b} (controle, mínimo 3)`);
+    for (const s of SECTIONS) if (ratio(v('--on-section'), v(`--s-${s}`)) < 4.5) err(`styles.css (${name}): texto sobre a seção ${s} com contraste ${ratio(v('--on-section'), v(`--s-${s}`)).toFixed(2)}:1`);
+  }
+}
+
 if (errors.length) {
   console.error(`${errors.length} problema(s):`);
   errors.slice(0, 60).forEach((e) => console.error(` - ${e}`));

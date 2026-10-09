@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Timóteo App: grade dos 66 livros</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&amp;family=Source+Sans+3:wght@400;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#141615;color:#E9E8DF;font-family:'Source Sans 3',system-ui,sans-serif}
+a{color:#E4EBE6}a:hover{color:#FFFFFF}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px}
+@media (max-width:720px){.tiles{grid-template-columns:repeat(auto-fill,minmax(92px,1fr))}}
+</style>
+</helmet>
+
+<div style="width: 100%; box-sizing: border-box; background: #141615; color: #E9E8DF; font-family: 'Source Sans 3', system-ui, sans-serif; font-size: 17px; line-height: 1.5">
+
+<!-- TOPO -->
+<div style="background: #1D201E; border-bottom: 1px solid #2D322F">
+<div style="max-width: 1180px; margin: 0 auto; box-sizing: border-box; padding: 14px 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 28px">
+<a href="Main.dc.html" style="display: flex; align-items: center; gap: 12px; text-decoration: none; flex-grow: 1">
+<img src="/_blob/3fa7caea980975e42e269f1c25f784ed" alt="Timóteo App, início" style="height: 40px; width: auto; display: block">
+<span style="font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 700; font-size: 21px; letter-spacing: -0.01em; color: #E4EBE6">Timóteo App</span>
+</a>
+<nav aria-label="Principal" style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 22px; font-size: 16px">
+<a href="Main.dc.html" style="color: #E4EBE6; font-weight: 600; text-decoration: none; padding: 10px 0; border-bottom: 2px solid #A9C1B3">Livros</a>
+<a href="Main.dc.html" style="color: #C9CCC8; text-decoration: none; padding: 10px 0">Linha do tempo</a>
+<a href="Main.dc.html" style="color: #C9CCC8; text-decoration: none; padding: 10px 0">Personagens</a>
+<a href="Main.dc.html" style="color: #C9CCC8; text-decoration: none; padding: 10px 0">Genealogia</a>
+<a href="Main.dc.html" style="color: #C9CCC8; text-decoration: none; padding: 10px 0">Favoritos</a>
+</nav>
+<div style="display: flex; align-items: center; gap: 10px">
+<span style="font-size: 14px; font-weight: 600; border: 1.5px solid #565C58; border-radius: 999px; padding: 6px 12px; color: #E4EBE6">PT</span>
+<span style="font-size: 14px; font-weight: 600; background: #A9C1B3; color: #E4EBE6; border-radius: 999px; padding: 7px 13px">PRO</span>
+<a href="Main.dc.html" style="background: #A9C1B3; color: #E4EBE6; text-decoration: none; font-weight: 600; padding: 10px 18px; border-radius: 10px; font-size: 16px">Entrar</a>
+</div>
+</div>
+</div>
+
+<!-- ABERTURA -->
+<div style="max-width: 1180px; margin: 0 auto; box-sizing: border-box; padding: 40px 24px 12px; display: flex; flex-wrap: wrap; align-items: flex-end; gap: 20px 40px">
+<div style="flex: 1 1 460px; min-width: 0; display: flex; flex-direction: column; gap: 10px">
+<h1 style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 700; font-size: 40px; line-height: 1.08; letter-spacing: -0.02em; color: #E4EBE6">Os 66 livros da Bíblia</h1>
+<p style="margin: 0; color: #A9ADAA; max-width: 560px">Escolha um livro para abrir a ficha de estudo, o mapa dos lugares e o texto para leitura.</p>
+</div>
+<div style="flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: center; gap: 10px; background: #1D201E; border: 1.5px solid #B9BFB6; border-radius: 12px; padding: 12px 16px; color: #A9ADAA">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4F5853" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></svg>
+<span>Buscar livro, por exemplo Romanos</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<span style="background: #A9C1B3; color: #E4EBE6; font-weight: 600; font-size: 15px; padding: 7px 16px; border-radius: 999px">Todos</span>
+<span style="background: #1D201E; border: 1.5px solid #B9BFB6; color: #E4EBE6; font-weight: 600; font-size: 15px; padding: 6px 16px; border-radius: 999px">Antigo Testamento</span>
+<span style="background: #1D201E; border: 1.5px solid #B9BFB6; color: #E4EBE6; font-weight: 600; font-size: 15px; padding: 6px 16px; border-radius: 999px">Novo Testamento</span>
+</div>
+</div>
+</div>
+
+<!-- CONTINUAR -->
+<div style="max-width: 1180px; margin: 0 auto; box-sizing: border-box; padding: 20px 24px 8px">
+<div style="background: #262B28; color: #F8F7F2; border-radius: 16px; padding: 18px 24px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px">
+<div style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+<span style="font-size: 14px; color: #A9C1B3; font-weight: 600">Continuar de onde parei</span>
+<span style="font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 700; font-size: 22px">João 3 · Bíblia Livre</span>
+</div>
+<a href="Ficha.dc.html" style="background: #F8F7F2; color: #0F2D24; text-decoration: none; font-weight: 600; padding: 12px 22px; border-radius: 10px">Continuar</a>
+</div>
+</div>
+
+<!-- GRUPOS -->
+<div style="max-width: 1180px; margin: 0 auto; box-sizing: border-box; padding: 24px 24px 72px; display: flex; flex-direction: column; gap: 36px">
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="10">
+<section style="display: flex; flex-direction: column; gap: 14px; min-width: 0">
+<div style="display: flex; align-items: baseline; gap: 12px; border-bottom: 1px solid #2D322F; padding-bottom: 8px">
+<h2 style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 700; font-size: 24px; color: #E4EBE6">{{g.name}}</h2>
+<span style="font-size: 15px; color: #A9ADAA">{{g.count}}</span>
+</div>
+<div class="tiles">
+<sc-for list="{{g.books}}" as="b" hint-placeholder-count="8">
+<a href="Ficha.dc.html" style="{{b.style}}">
+<span style="font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 700; font-size: 22px; line-height: 1">{{b.abbr}}</span>
+<span style="font-size: 14px; line-height: 1.2">{{b.name}}</span>
+</a>
+</sc-for>
+</div>
+</section>
+</sc-for>
+</div>
+
+<!-- RODAPÉ -->
+<div style="border-top: 1px solid #2D322F; background: #1D201E">
+<div style="max-width: 1180px; margin: 0 auto; box-sizing: border-box; padding: 24px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 32px; font-size: 15px; color: #A9ADAA">
+<span>Desenvolvido por <a href="https://github.com/andrescultori">André Scultori</a> · © 2026 · <a href="https://github.com/andrescultori/timoteo-app">GitHub</a></span>
+<span style="display: flex; flex-wrap: wrap; gap: 8px 20px"><a href="Main.dc.html">Termos de uso</a><a href="Main.dc.html">Política de privacidade</a></span>
+</div>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1500}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const abbr = ['Gn','Êx','Lv','Nm','Dt','Js','Jz','Rt','1Sm','2Sm','1Rs','2Rs','1Cr','2Cr','Ed','Ne','Et','Jó','Sl','Pv','Ec','Ct','Is','Jr','Lm','Ez','Dn','Os','Jl','Am','Ob','Jn','Mq','Na','Hc','Sf','Ag','Zc','Ml','Mt','Mc','Lc','Jo','At','Rm','1Co','2Co','Gl','Ef','Fp','Cl','1Ts','2Ts','1Tm','2Tm','Tt','Fm','Hb','Tg','1Pe','2Pe','1Jo','2Jo','3Jo','Jd','Ap'];
+    const nome = ['Gênesis','Êxodo','Levítico','Números','Deuteronômio','Josué','Juízes','Rute','1 Samuel','2 Samuel','1 Reis','2 Reis','1 Crônicas','2 Crônicas','Esdras','Neemias','Ester','Jó','Salmos','Provérbios','Eclesiastes','Cantares','Isaías','Jeremias','Lamentações','Ezequiel','Daniel','Oseias','Joel','Amós','Obadias','Jonas','Miqueias','Naum','Habacuque','Sofonias','Ageu','Zacarias','Malaquias','Mateus','Marcos','Lucas','João','Atos','Romanos','1 Coríntios','2 Coríntios','Gálatas','Efésios','Filipenses','Colossenses','1 Tessalonicenses','2 Tessalonicenses','1 Timóteo','2 Timóteo','Tito','Filemom','Hebreus','Tiago','1 Pedro','2 Pedro','1 João','2 João','3 João','Judas','Apocalipse'];
+    // Seções na ordem do app, com a faixa de índices. Cores de dado, fora do brand book: tons fechados e dessaturados,
+    // todos com texto off-white (contraste de 4,5:1 ou mais) e o verde-escuro da marca ancorando a Lei.
+    const secs = [
+      { name: 'Lei', from: 0, to: 4, bg: '#3E5F52', fg: '#F8F7F2', bd: '#3E5F52' },
+      { name: 'Históricos', from: 5, to: 16, bg: '#7A4A2B', fg: '#F8F7F2', bd: '#7A4A2B' },
+      { name: 'Poesia e Sabedoria', from: 17, to: 21, bg: '#6B3F63', fg: '#F8F7F2', bd: '#6B3F63' },
+      { name: 'Profetas Maiores', from: 22, to: 26, bg: '#2F4F8A', fg: '#F8F7F2', bd: '#2F4F8A' },
+      { name: 'Profetas Menores', from: 27, to: 38, bg: '#2D6F7C', fg: '#F8F7F2', bd: '#2D6F7C' },
+      { name: 'Evangelhos', from: 39, to: 42, bg: '#8E3B3B', fg: '#F8F7F2', bd: '#8E3B3B' },
+      { name: 'Atos', from: 43, to: 43, bg: '#A5601A', fg: '#F8F7F2', bd: '#A5601A' },
+      { name: 'Cartas de Paulo', from: 44, to: 56, bg: '#55733A', fg: '#F8F7F2', bd: '#55733A' },
+      { name: 'Outras Cartas', from: 57, to: 64, bg: '#5B6B7A', fg: '#F8F7F2', bd: '#5B6B7A' },
+      { name: 'Profecia', from: 65, to: 65, bg: '#4A524D', fg: '#F8F7F2', bd: '#4A524D' }
+    ];
+    const groups = secs.map((s) => {
+      const books = [];
+      for (let i = s.from; i <= s.to; i++) {
+        books.push({
+          abbr: abbr[i],
+          name: nome[i],
+          style: 'display: flex; flex-direction: column; justify-content: space-between; gap: 18px; min-height: 84px; box-sizing: border-box; padding: 12px 14px; border-radius: 12px; text-decoration: none; border: 1.5px solid ' + s.bd + '; background: ' + s.bg + '; color: ' + s.fg
+        });
+      }
+      const n = s.to - s.from + 1;
+      return { name: s.name, count: n + (n === 1 ? ' livro' : ' livros'), books };
+    });
+    return { groups };
+  }
+}
+</script>
+</body>
+</html>

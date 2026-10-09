@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Timóteo App</title>
     <meta name="description" content="Tabela interativa dos 66 livros da Bíblia, com ficha de estudo e texto." />
-    <meta name="color-scheme" content="light" />
+    <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#ffffff" />
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="./favicon-32.png" sizes="32x32" type="image/png" />
@@ -19,7 +19,9 @@
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
-    <style>html{background:#f8f7f2}</style>
+    <style>html{background:#f8f7f2}html[data-theme='dark']{background:#141615}</style>
+    <!-- Aplica o tema do site antes do primeiro desenho (sem piscar). Padrão: claro; só vai ao escuro com a escolha guardada (ou o sistema, no automático). -->
+    <script>try{var p=JSON.parse(localStorage.getItem('readingPrefs')||'null'),t=p&&p.v&&p.v.siteTheme,d=t==='dark'||(t==='auto'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.setAttribute('data-theme',d?'dark':'light');if(d)document.querySelector('meta[name="theme-color"]').setAttribute('content','#141615')}catch(e){}</script>
   </head>
   <body>
     <div id="root"></div>
