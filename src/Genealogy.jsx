@@ -93,7 +93,7 @@ export default function Genealogy({ lang, t, treeId, focusNode, onOpenBook, onOp
               {isList && <ul className="gn-list gn-root" ref={svgRef}>{renderItem(tr.root)}</ul>}
               {!isList && <svg ref={svgRef} className="gn-svg" viewBox={`${layout.minX} -34 ${layout.maxX - layout.minX} ${layout.maxY + 34}`} role="group" aria-label={pick(tr.title, lang)}>
                 {layout.links.map((l) => (
-                  <path key={l.target.data.id} className="gn-link" stroke={color(l.target.data.id)}
+                  <path key={l.target.data.id} className="gn-link" stroke={color(l.target.data.id)} style={{ '--c': color(l.target.data.id) }}
                     d={`M${l.source.x},${l.source.y + H} V${(l.source.y + H + l.target.y) / 2} H${l.target.x} V${l.target.y}`} />
                 ))}
                 {Object.entries(branchStart).map(([b, n]) => (
@@ -106,7 +106,7 @@ export default function Genealogy({ lang, t, treeId, focusNode, onOpenBook, onOp
                     <g key={id} data-node={id} className={`gn-node${on ? ' on' : ''}`} transform={`translate(${n.x - W / 2},${n.y})`}
                       role="button" tabIndex={0} aria-pressed={on} aria-label={nodeName(id, lang)}
                       onClick={() => select(id)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(id); } }}>
-                      <rect width={W} height={H} rx="6" stroke={color(id)} />
+                      <rect width={W} height={H} rx="6" stroke={color(id)} style={{ '--c': color(id) }} />
                       <text x={W / 2} y={H / 2 + 5} textAnchor="middle">{nodeName(id, lang)}</text>
                       {nodes[id].note && <circle className="gn-dot" cx={W - 8} cy={8} r="3.5" />}
                     </g>

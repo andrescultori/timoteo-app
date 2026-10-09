@@ -673,3 +673,15 @@ a.ghost[aria-disabled='true'] { opacity: 0.4; pointer-events: none; }
 :root[data-theme='dark'] .sheetinfo a.plink { text-decoration-color: var(--ci, currentColor); }
 :root[data-theme='dark'] input[type='checkbox'], :root[data-theme='dark'] input[type='radio'] { accent-color: var(--accent-fill); }
 :root[data-theme='dark'] .modal::backdrop { background: rgb(0 0 0 / 0.72); }
+
+/* Mapa, linha do tempo, personagens, estrutura e genealogia no escuro: as LINHAS usam a tinta da seção (--ci); preenchimentos não mudam */
+:root[data-theme='dark'] .sheet { border-top-color: var(--ci, var(--line-strong)); }
+:root[data-theme='dark'] .mapbox .route { stroke: var(--ci); opacity: 0.95; }
+:root[data-theme='dark'] .mapbox .land { stroke-width: 1.4; }
+:root[data-theme='dark'] .tl-period { border-top-color: var(--ci, var(--line-strong)); }
+:root[data-theme='dark'] .tl-chip { border-left-color: var(--ci, var(--line-strong)); }
+:root[data-theme='dark'] .tl-dot { background: var(--ci, var(--muted)); }
+:root[data-theme='dark'] .pp-card { border-top-color: var(--ci, var(--line-strong)); }
+:root[data-theme='dark'] .st-part { border-top-color: var(--ci, var(--line-strong)); border-left-color: var(--ci, var(--line-strong)); }
+:root[data-theme='dark'] .gn-link, :root[data-theme='dark'] .gn-node rect { stroke: var(--ci, var(--line-strong)); }
+:root[data-theme='dark'] .gn-node.on rect { fill: color-mix(in srgb, var(--fg) 12%, var(--panel)); }
