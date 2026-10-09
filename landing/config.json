@@ -1,6 +1,11 @@
 {
-  "appUrl": "https://timoteo-app.pages.dev",
-  "siteUrl": "",
-  "contactChannel": null,
-  "hideVersions": ["alm1911a"]
+  "appUrl": "https://estudo.timoteo.app.br",
+  "siteUrl": "https://timoteo.app.br",
+  "contactChannel": {
+    "url": "mailto:contato@timoteo.app.br",
+    "label": "contato@timoteo.app.br"
+  },
+  "hideVersions": [
+    "alm1911a"
+  ]
 }
