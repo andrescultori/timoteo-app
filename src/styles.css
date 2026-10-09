@@ -527,3 +527,36 @@ a.ghost[aria-disabled='true'] { opacity: 0.4; pointer-events: none; }
   .card { padding: 20px; }
   .card > h2 { font-size: 24px; }
 }
+
+/* ===== Leitor (visual B, PR 3) ===== */
+.bookpage.compact .bk-chips { display: none; }
+.bookpage.compact .bk-badge { width: 64px; height: 64px; font-size: 26px; border-radius: 14px; }
+.bookpage.compact .bk-ttl h1 { font-size: 38px; }
+.reader-card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius-panel); overflow: hidden; gap: 0; }
+.reader-bar, .reader-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 12px 20px; }
+.reader-bar { border-bottom: 1px solid var(--line); }
+.reader-foot { border-top: 1px solid var(--line); justify-content: space-between; color: var(--muted); font-size: 15px; }
+.reader-bar .pair { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+.reader-bar label { color: var(--muted); font-size: 15px; }
+.bar-end { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; }
+.icon-btn { width: 44px; padding: 0; }
+.reader-bar .ghost .aa { font: 400 19px/1 var(--f-read); }
+.reader-card .soon { margin: 16px 20px; }
+.reader-text { max-width: 700px; margin: 0 auto; padding: 28px 28px 36px; width: 100%; }
+.reader-text .chap-title { margin: 0 0 12px; }
+.reader-text .chap-title h2 { margin: 0; font: 700 24px/1.2 var(--f-display); color: var(--accent); }
+.reader-text .text { max-width: none; }
+.reader-text .text p { margin: 0; }
+.reader-text .text sup { font-size: 0.55em; vertical-align: 0.5em; margin-right: 0.35em; }
+.reader-card .credit { margin: 0; padding: 0 20px 16px; }
+.card.small a.side-link { font-weight: 600; font-size: 15px; display: inline-flex; align-items: center; min-height: 44px; }
+.side-note { font-size: 14px; color: var(--muted); }
+.card .outline li { color: var(--muted); }
+.card .outline li.here { font-weight: 700; color: var(--accent); background: var(--chip-bg); margin-left: -12px; padding: 4px 12px; border-radius: var(--radius-chip); }
+.card .outline li.here span { color: var(--accent); }
+@media (max-width: 520px) {
+  .reader-bar, .reader-foot { padding: 12px 14px; }
+  .reader-text { padding: 20px 16px 28px; }
+  .bookpage.compact .bk-ttl h1 { font-size: 28px; }
+  .bookpage.compact .bk-badge { width: 48px; height: 48px; font-size: 20px; }
+}

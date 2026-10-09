@@ -2,6 +2,7 @@
 // Uso: npm run check   (o CI roda isso em todo PR)
 import fs from 'node:fs';
 import path from 'node:path';
+import { chapterSpan } from '../src/outline.js';
 
 const root = path.resolve(import.meta.dirname, '..');
 const read = (p) => JSON.parse(fs.readFileSync(path.join(root, p), 'utf8'));
@@ -59,7 +60,7 @@ for (const slug of books) {
   if (!Array.isArray(d.characters) || !d.characters.length) err(`${slug}: sem personagens`);
   (d.characters ?? []).forEach((c, i) => { bilingual(c.name, `${slug}.characters[${i}].name`); bilingual(c.role, `${slug}.characters[${i}].role`); checkCharIds(c, `${slug}.characters[${i}]`); });
   if (!Array.isArray(d.outline) || !d.outline.length) err(`${slug}: sem esboço`);
-  (d.outline ?? []).forEach((o, i) => { refOk(o.ref, slug, `${slug}.outline[${i}]`); bilingual(o.title, `${slug}.outline[${i}].title`); });
+  (d.outline ?? []).forEach((o, i) => { refOk(o.ref, slug, `${slug}.outline[${i}]`); if (!chapterSpan(o.ref)) err(`${slug}.outline[${i}].ref: "${o.ref}" não tem capítulo reconhecível (a leitura não destacaria a seção)`); bilingual(o.title, `${slug}.outline[${i}].title`); });
 
   if (d.structure) {
     const st = d.structure;
