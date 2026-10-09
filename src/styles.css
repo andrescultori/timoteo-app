@@ -551,6 +551,7 @@ a.ghost[aria-disabled='true'] { opacity: 0.4; pointer-events: none; }
 .reader-text .text sup { font-size: 0.55em; vertical-align: 0.5em; margin-right: 0.35em; }
 .reader-card .credit { margin: 0; padding: 0 20px 16px; }
 .card.small a.side-link { font-weight: 600; font-size: 15px; display: inline-flex; align-items: center; min-height: 44px; }
+.card.small button.side-link { font-weight: 600; font-size: 15px; display: inline-flex; align-items: center; min-height: 44px; }
 .side-note { font-size: 14px; color: var(--muted); }
 .card .outline li { color: var(--muted); }
 .card .outline li.here { font-weight: 700; color: var(--accent); background: var(--chip-bg); margin-left: -12px; padding: 4px 12px; border-radius: var(--radius-chip); }

@@ -11,6 +11,7 @@ import ProInvite from './ProInvite.jsx';
 import { useLinkIndex, Rich } from './linkify.jsx';
 import { hrefs, sync } from './route.js';
 import { sectionsAt } from './outline.js';
+import { loadPeopleChapters, peopleInChapterFrom, bookHasChapters } from './peopleChapters.js';
 import { resolvePrefs } from './readingPrefs.js';
 import { readStyle } from './readStyle.js';
 import { useResolvedSite } from './siteTheme.js';
@@ -150,11 +151,34 @@ function CharName({ c, lang }) {
   });
 }
 
-// Lateral da Ficha e do Ler: versículo-chave, personagens e esboço. Com `chapter` (no leitor), a(s) seção(ões) do esboço
+// Personagens citados pelo nome no capítulo (people-chapters.json) com nomes de people-index.json; ambos carregam sob demanda.
+// `ready` só vira true com os dois carregados; `hasBook` é falso nos livros sem dado de capítulo (ex.: Eclesiastes) e a lateral fica como era.
+function useChapterPeople(book, chapter, lang) {
+  const [src, setSrc] = useState(null);
+  useEffect(() => {
+    if (!chapter || src) return undefined;
+    let alive = true;
+    Promise.all([loadPeopleChapters(), import('./data/people-index.json')])
+      .then(([data, idx]) => { if (alive) setSrc({ data, names: new Map((idx.default ?? idx).map((p) => [p.id, p.name])) }); })
+      .catch(() => { /* sem os dados, a lateral continua com os personagens do livro */ });
+    return () => { alive = false; };
+  }, [!!chapter]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (!chapter || !src || !bookHasChapters(src.data, book.slug)) return { ready: false, hasBook: false, people: [] };
+  const people = peopleInChapterFrom(src.data, book.slug, chapter).map((id) => ({ id, name: src.names.get(id)?.[lang] })).filter((p) => p.name);
+  return { ready: true, hasBook: true, people };
+}
+
+// Lateral da Ficha e do Ler: versículo-chave, personagens e esboço. Com `chapter` (no leitor), os personagens são os citados
+// no capítulo (com "Ver todos do livro" para a lista da ficha; volta ao padrão ao trocar de capítulo) e a(s) seção(ões) do esboço
 // que contêm o capítulo ficam em negrito e destacadas.
 function Aside({ book, lang, t, info, keyChapter, chapter }) {
   const here = chapter ? sectionsAt(info.outline, chapter) : [];
   const ref = (r) => `${book.ab[lang]} ${r}`;
+  const { can } = usePlan();
+  const inChapter = useChapterPeople(book, chapter, lang);
+  const [showAll, setShowAll] = useState(false);
+  useEffect(() => { setShowAll(false); }, [chapter, book.slug]);
+  const byChapter = inChapter.ready && !showAll;
   return (
     <aside className="bk-side" aria-label={chapter ? t.bookCharacters : t.sheet}>
       <section className="bk-key">
@@ -163,11 +187,24 @@ function Aside({ book, lang, t, info, keyChapter, chapter }) {
         {keyChapter && <a href={hrefs.book(book.slug, 'read', String(keyChapter))}>{t.readChapter.replace('{n}', keyChapter)}</a>}
       </section>
       <section className="card small">
-        <h2>{chapter ? t.bookCharacters : t.characters}</h2>
-        <div className="chips">
-          {info.characters.map((c, i) => (<span key={i} className="chip"><span><CharName c={c} lang={lang} /></span></span>))}
-        </div>
-        {chapter && <a className="side-link" href={hrefs.book(book.slug, 'sheet')}>{t.seeSheet}</a>}
+        <h2>{!chapter ? t.characters : byChapter ? t.charsInChapter : t.bookCharacters}</h2>
+        {byChapter ? (
+          <div aria-live="polite">
+            {inChapter.people.length ? (
+              <div className="chips">
+                {inChapter.people.map((p) => (
+                  <span key={p.id} className="chip"><span>{can('person', { id: p.id }) ? <a className="plink" href={hrefs.person(p.id)}>{p.name}</a> : p.name}</span></span>
+                ))}
+              </div>
+            ) : <p className="side-note">{t.noCharsInChapter}</p>}
+          </div>
+        ) : (
+          <div className="chips">
+            {info.characters.map((c, i) => (<span key={i} className="chip"><span><CharName c={c} lang={lang} /></span></span>))}
+          </div>
+        )}
+        {inChapter.hasBook && <button type="button" className="linklike side-link" onClick={() => setShowAll(!showAll)}>{showAll ? t.seeOnlyChapter : t.seeAllBook}</button>}
+        {chapter && !byChapter && <a className="side-link" href={hrefs.book(book.slug, 'sheet')}>{t.seeSheet}</a>}
       </section>
       <section className="card small">
         <h2>{t.outline}</h2>

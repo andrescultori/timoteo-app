@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import { aliasTable, compile, scanBook, applyOverrides, expandChapters, toJson, buildPeopleChapters, jsonText } from './people-chapters-lib.mjs';
-import { peopleInChapterFrom, chaptersOfPersonFrom } from '../src/peopleChapters.js';
+import { peopleInChapterFrom, chaptersOfPersonFrom, bookHasChapters } from '../src/peopleChapters.js';
 
 const P = (id, pt, books, more = {}) => ({ id, name: { pt, en: pt }, books: books.map((book) => ({ book })), ...more });
 const people = [
@@ -131,6 +131,8 @@ ok('helper: mais citados primeiro, empate pelo versículo, depois id; limite', (
   assert.deepEqual(peopleInChapterFrom(data, 'exo', 1), []);
   assert.deepEqual(chaptersOfPersonFrom(data, 'a', 'gen'), [1, 2]);
   assert.deepEqual(chaptersOfPersonFrom(data, 'x', 'gen'), []);
+  assert.equal(bookHasChapters(data, 'gen'), true);
+  assert.equal(bookHasChapters(data, 'ecc'), false);
 });
 
 // dados reais: determinístico e com resultados conhecidos
