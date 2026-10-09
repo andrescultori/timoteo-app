@@ -4,7 +4,7 @@
 import { corsHeaders, json, bearer } from '../_shared/http.js';
 import { createDb } from '../_shared/db.js';
 import { createPreference, preferenceBody } from '../_shared/mp.js';
-import { priceKind, PRICE_CENTS } from '../_shared/pricing.js';
+import { priceKind, PRICE_CENTS, alreadyCovered } from '../_shared/pricing.js';
 
 const MAX_PENDING_PER_HOUR = 10;
 
@@ -28,6 +28,8 @@ Deno.serve(async (req: Request) => {
     if (!terms?.terms_accepted_at) return json({ error: 'terms_required' }, 403, cors);
 
     const ent = await db.getEntitlement(user.id);
+    // plano sem prazo (cortesia) ou Premium vigente: o pagamento não concederia nada, então nem abre o checkout
+    if (alreadyCovered(ent)) return json({ error: 'already_active' }, 409, cors);
     const kind = priceKind(ent?.usou_preco_de_entrada === true);
     const cents = PRICE_CENTS[kind];
 
