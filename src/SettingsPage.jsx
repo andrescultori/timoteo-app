@@ -83,6 +83,14 @@ export default function SettingsPage({ t, lang, settings, canAcademic, onChange 
             <button type="button" role="switch" className="switch" aria-checked={p.verseLines} aria-labelledby="cfg-lines-l" aria-describedby="cfg-lines-d" onClick={() => setPrefs({ verseLines: !p.verseLines })}><span /></button>
           </div>
 
+          <div className="cfg-switch">
+            <span className="cfg-switch-text">
+              <span id="cfg-cant-l">{t.cfgCantillation}</span>
+              <small id="cfg-cant-d">{t.cfgCantillationHelp}</small>
+            </span>
+            <button type="button" role="switch" className="switch" aria-checked={p.cantillation} aria-labelledby="cfg-cant-l" aria-describedby="cfg-cant-d" onClick={() => setPrefs({ cantillation: !p.cantillation })}><span /></button>
+          </div>
+
           <Options label={t.cfgTheme} value={p.theme} onPick={(v) => setPrefs({ theme: v })}
             items={READ_THEMES.map((k) => [k, { light: t.cfgLight, sepia: t.cfgSepia, dark: t.cfgDark }[k], { background: READ_COLORS[k].bg, color: READ_COLORS[k].fg }])} />
         </section>

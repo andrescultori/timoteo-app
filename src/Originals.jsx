@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { loadInterlinear, loadLexicon } from './data/interlinear.js';
+import { stripCantillation } from './hebrew.js';
 
 // Carrega os originais do livro (e o léxico) só quando `enabled` (Pro e recurso ligado).
 export function useOriginals(n, enabled) {
@@ -17,7 +18,7 @@ export function useOriginals(n, enabled) {
 
 // Faixa de palavras de um versículo: original (hebraico em RTL), transliteração do lema, Strong e glosa.
 // No hebraico a glosa é a do léxico (do dicionário); no grego é a da Berean (do contexto), quando a fonte a traz.
-export function Strip({ words, lang, lex, label }) {
+export function Strip({ words, lang, lex, label, cantillation = false }) {
   const he = lang === 'he';
   return (
     <div className="ostrip" dir={he ? 'rtl' : 'ltr'} role="group" aria-label={label}>
@@ -26,7 +27,7 @@ export function Strip({ words, lang, lex, label }) {
         const g = gloss ?? (he ? e?.[2] : null);
         return (
           <div className="ow" key={i}>
-            <span className="ow-t" lang={he ? 'he' : 'grc'}>{text}</span>
+            <span className="ow-t" lang={he ? 'he' : 'grc'}>{he && !cantillation ? stripCantillation(text) : text}</span>
             {e?.[1] && <span className="ow-x" lang="en" dir="ltr">{e[1]}</span>}
             {strong && <span className="ow-s" dir="ltr">{strong.replace(/[a-z]$/, '')}</span>}
             {g && <span className="ow-g" lang="en" dir="ltr">{g}</span>}

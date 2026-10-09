@@ -6,7 +6,7 @@ export const WIDTHS = [540, 660, 820]; // px
 export const FONTS = ['serif', 'sans'];
 export const READ_THEMES = ['light', 'sepia', 'dark'];
 
-export const DEFAULTS = { size: 21, spacing: 1.7, width: 660, font: 'serif', verseLines: false, theme: 'light', originals: false };
+export const DEFAULTS = { size: 21, spacing: 1.7, width: 660, font: 'serif', verseLines: false, theme: 'light', originals: false, cantillation: false };
 
 const RULES = {
   size: (v) => SIZES.includes(v),
@@ -16,6 +16,7 @@ const RULES = {
   verseLines: (v) => typeof v === 'boolean',
   theme: (v) => READ_THEMES.includes(v),
   originals: (v) => typeof v === 'boolean', // faixa com o texto em hebraico e grego (plano Pro)
+  cantillation: (v) => typeof v === 'boolean', // mostrar os acentos de cantilação do hebraico (padrão: escondidos)
 };
 
 // Aceita só chaves conhecidas com valores permitidos; o resto é descartado. Guarda apenas o que difere do padrão.

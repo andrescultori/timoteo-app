@@ -585,6 +585,8 @@ const driftSec = async (user, months) => Number((await q(
   eq(cleanPrefs({ size: 99, theme: 'neon', font: 'comic', extra: 1, verseLines: 'sim' }), {}, 'ajustes: valor ou chave inválida é descartada');
   eq(cleanPrefs({ originals: true }), { originals: true }, 'ajustes: originals ligado é guardado');
   eq(cleanPrefs({ originals: false }), {}, 'ajustes: originals desligado é o padrão');
+  eq(cleanPrefs({ cantillation: true, originals: true }), { originals: true, cantillation: true }, 'ajustes: cantillation ligado é guardado');
+  eq(cleanPrefs({ cantillation: 'sim' }), {}, 'ajustes: cantillation só aceita booleano');
   eq(cleanPrefs({ originals: 'sim' }), {}, 'ajustes: originals só aceita booleano');
   eq(cleanPrefs('x'), {}, 'ajustes: texto solto vira vazio');
   eq(cleanPrefs([1]), {}, 'ajustes: lista vira vazio');
@@ -603,7 +605,8 @@ const driftSec = async (user, months) => Number((await q(
   for (const v of READ_THEMES) ok(await valid({ theme: v }), `SQL aceita theme ${v}`);
   ok(await valid({ verseLines: true }) && await valid({ verseLines: false }) && await valid({}), 'SQL aceita verseLines e objeto vazio');
   ok(await valid({ originals: true }) && await valid({ originals: false }), 'SQL aceita originals (booleano)');
-  for (const bad of [{ size: 20 }, { size: '21' }, { spacing: 1.5 }, { width: 700 }, { font: 'mono' }, { theme: 'x' }, { verseLines: 1 }, { originals: 'sim' }, { originals: 1 }, { other: 1 }, [], 'x', 5]) {
+  ok(await valid({ cantillation: true }) && await valid({ cantillation: false }), 'SQL aceita cantillation (booleano)');
+  for (const bad of [{ size: 20 }, { size: '21' }, { spacing: 1.5 }, { width: 700 }, { font: 'mono' }, { theme: 'x' }, { verseLines: 1 }, { originals: 'sim' }, { originals: 1 }, { cantillation: 'sim' }, { cantillation: 0 }, { other: 1 }, [], 'x', 5]) {
     ok(!(await valid(bad)), `SQL recusa ${JSON.stringify(bad)}`);
   }
   ok(!(await valid({ size: 21, junk: 'x'.repeat(400) })), 'SQL recusa JSON grande');

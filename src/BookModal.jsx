@@ -324,7 +324,7 @@ function Reader({ book, lang, t, info, keyChapter, initialChapter }) {
             // Com os originais ligados, cada versículo vira um bloco: texto da versão e, abaixo, a faixa de palavras do original (numeração da KJV).
             <div className="text orig" lang={current.lang}>
               {orig.data.t?.[chapter] && (
-                <div className="overse"><p className="otitle">{t.psalmTitle}</p><Strip words={orig.data.t[chapter]} lang={orig.data.lang} lex={orig.lex} label={t.psalmTitle} /></div>
+                <div className="overse"><p className="otitle">{t.psalmTitle}</p><Strip words={orig.data.t[chapter]} lang={orig.data.lang} lex={orig.lex} label={t.psalmTitle} cantillation={prefs.cantillation} /></div>
               )}
               {verses.map((v, i) => {
                 const words = orig.data.w[chapter - 1]?.[i] ?? [];
@@ -332,7 +332,7 @@ function Reader({ book, lang, t, info, keyChapter, initialChapter }) {
                 return (
                   <div className="overse" key={i}>
                     {v !== null && <p className="vtext"><sup>{i + 1}</sup>{v}</p>}
-                    {words.length > 0 && <Strip words={words} lang={orig.data.lang} lex={orig.lex} label={`${t.originals} ${i + 1}`} />}
+                    {words.length > 0 && <Strip words={words} lang={orig.data.lang} lex={orig.lex} label={`${t.originals} ${i + 1}`} cantillation={prefs.cantillation} />}
                   </div>
                 );
               })}
