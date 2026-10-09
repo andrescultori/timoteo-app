@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
+import { stripCantillation } from '../src/hebrew.js';
 
 const root = path.resolve(import.meta.dirname, '..');
 let failed = 0; let passed = 0;
@@ -30,6 +31,12 @@ ok(!ps.t['1'], 'Sl 1 não tem título');
 for (const [n, cap, v] of [[19, 23, 6], [19, 150, 6], [1, 1, 31]]) ok(nw(book(n), cap, v) > 0, `livro ${n} ${cap}:${v} tem palavras`);
 // qere no lugar do ketiv (Gn 8:17): a palavra lida, com vogais
 ok(gen.w[7][16].some((x) => /ַ/.test(x[0]) && x[1] === 'H3318'), 'Gn 8:17: vale o qere (com vogais)');
+
+// cantilação: tira só os acentos (U+0591 a U+05AF); vogais, maqqef e sof pasuq ficam
+const bere = gen.w[0][0][0][0];
+ok(/\u0596/.test(bere) && !/[\u0591-\u05AF]/.test(stripCantillation(bere)), 'Gn 1:1: tira o acento (tipcha) de "no princípio"');
+eq(stripCantillation(bere), bere.replace(/\u0596/g, ''), 'Gn 1:1: só o acento sai, as vogais ficam');
+eq(stripCantillation('אֶל־אֶרֶץ׃'), 'אֶל־אֶרֶץ׃', 'texto sem acentos fica igual (maqqef e sof pasuq intactos)');
 
 // NT: palavra, Strong, glosa de contexto e numeração
 const jn = book(43);

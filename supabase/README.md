@@ -193,3 +193,6 @@ SQL Editor do Supabase: cole o conteúdo do arquivo e rode. (Pelo assistente do 
 
 ## Atenção: texto legal (decisão de vocês, não alterei)
 A Política de Privacidade (item 3, "Preferências no aparelho") diz que preferências como tema e idioma ficam **só no navegador**. Com esta mudança, os **ajustes de leitura** de quem tem conta passam a ser guardados no servidor (dado pessoal comum, não sensível, apagado com a conta). Revisar o texto (e a tabela do item 3) antes de publicar a sincronização, e depois atualizar `LEGAL_VERSION`.
+
+## Chaves novas dos ajustes de leitura
+Depois da `20261011000000`, aplique **em ordem** `20261012000000_reading_prefs_originals.sql` (chave `originals`: faixa dos originais em hebraico e grego) e `20261013000000_reading_prefs_cantillation.sql` (chave `cantillation`: mostrar os acentos de cantilação). Cada uma só recria `reading_prefs_valid` (idempotente). Sem elas, essas chaves ficam só no aparelho.
