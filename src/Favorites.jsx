@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { bySlug } from './data/books.js';
 import { people } from './data/people.json';
-import BackButton from './BackButton.jsx';
+import PageHead from './PageHead.jsx';
 import { HeartIcon } from './icons.jsx';
 import { hrefs } from './route.js';
 import { usePageTitle } from './pageTitle.js';
@@ -63,15 +63,9 @@ export default function Favorites({ lang, t }) {
   const typeTitle = { book: t.favTypeBook, chapter: t.favTypeChapter, person: t.favTypePerson, place: t.favTypePlace };
 
   return (
-    <div className="page wide" role="region" aria-labelledby="fav-title">
-      <div className="sheet" style={{ '--c': 'var(--s-evangelhos)' }}>
-        <div className="head">
-          <div className="ttl">
-            <h1 id="fav-title">{t.favorites}</h1>
-            <p>{t.favSub}</p>
-          </div>
-          <div className="head-actions"><BackButton t={t} /></div>
-        </div>
+    <div className="page bookpage" role="region" aria-labelledby="fav-title">
+      <PageHead t={t} id="fav-title" title={t.favorites} sub={t.favSub} />
+      <div className="card pg-card" style={{ '--c': 'var(--s-evangelhos)' }}>
         <div className="body">
           {!signedIn && (
             <p className="fav-device" role="note">{t.favNotice} {enabled && <button type="button" className="ghost" onClick={signInWithGoogle}>{t.signInGoogle}</button>}</p>

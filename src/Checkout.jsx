@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import BackButton from './BackButton.jsx';
+import PageHead from './PageHead.jsx';
 import { useSession, signInWithGoogle } from './auth.js';
 import { refreshPlan } from './plan.js';
 import { verifyPayment, checkoutRef, billingEnabled } from './billing.js';
@@ -47,12 +47,9 @@ export default function Checkout({ lang, t }) {
 
   const wait = enabled && auth === 'loading';
   return (
-    <div className="page wide" role="region" aria-labelledby="co-title">
-      <div className="sheet" style={{ '--c': 'var(--accent-2)' }}>
-        <div className="head">
-          <div className="ttl"><h1 id="co-title">{t.checkoutTitle}</h1></div>
-          <div className="head-actions"><BackButton t={t} /></div>
-        </div>
+    <div className="page bookpage" role="region" aria-labelledby="co-title">
+      <PageHead t={t} id="co-title" title={t.checkoutTitle} />
+      <div className="card pg-card" style={{ '--c': 'var(--accent-2)' }}>
         <div className="body">
           <div className="pro-invite" role="status" aria-live="polite">
             {wait && <p>{t.checkoutChecking}</p>}

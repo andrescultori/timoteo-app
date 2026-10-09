@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import BackButton from './BackButton.jsx';
+import PageHead from './PageHead.jsx';
 import { useSession, signInWithGoogle, getClient } from './auth.js';
 import { usePageTitle } from './pageTitle.js';
 import { usePlan, refreshPlan } from './plan.js';
@@ -69,15 +69,9 @@ export default function Profile({ lang, t }) {
   };
 
   return (
-    <div className="page wide" role="region" aria-labelledby="pf-title">
-      <div className="sheet" style={{ '--c': 'var(--s-paulo)' }}>
-        <div className="head">
-          <div className="ttl">
-            <h1 id="pf-title">{t.profile}</h1>
-            <p>{t.profileSub}</p>
-          </div>
-          <div className="head-actions"><BackButton t={t} /></div>
-        </div>
+    <div className="page bookpage" role="region" aria-labelledby="pf-title">
+      <PageHead t={t} id="pf-title" title={t.profile} sub={t.profileSub} />
+      <div className="card pg-card" style={{ '--c': 'var(--s-paulo)' }}>
         <div className="body">
           {(!enabled || status === 'out' || status === 'off') && (
             <div className="profile-out">
