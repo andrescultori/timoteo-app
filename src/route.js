@@ -10,6 +10,7 @@ import { bySlug } from './data/books.js';
 //   #settings                      configurações
 //   #favorites                     meus favoritos
 //   #profile                       meu perfil (conta)
+//   #admin                         administração (só admin; quem não é admin volta ao início)
 //   #terms  #privacy               Termos de Uso e Política de Privacidade
 //   #checkout/retorno              volta do pagamento no Mercado Pago (o servidor confere; a URL não libera nada)
 //   #tree/adao-jesus  #tree/adao-jesus/mt-salomao   genealogia (árvore e nó em foco)
@@ -23,6 +24,7 @@ export function parseHash(hash = location.hash) {
   if (a === 'favorites') return { kind: 'favorites' };
   if (a === 'settings') return { kind: 'settings' };
   if (a === 'profile') return { kind: 'profile' };
+  if (a === 'admin') return { kind: 'admin' };
   if (a === 'checkout') return { kind: 'checkout' };
   if (a === 'terms') return { kind: 'terms' };
   if (a === 'privacy') return { kind: 'privacy' };
@@ -39,6 +41,7 @@ export const hrefs = {
   favorites: '#favorites',
   settings: '#settings',
   profile: '#profile',
+  admin: '#admin',
   checkout: '#checkout/retorno',
   terms: '#terms',
   privacy: '#privacy',
@@ -66,6 +69,9 @@ window.addEventListener('hashchange', () => {
 export const canGoBack = () => idx > 0;
 // Voltar à página anterior do app; sem histórico (link aberto direto), vai para o início.
 export const goBack = () => { if (idx > 0) history.back(); else location.hash = '#'; };
+
+// Sai de uma página sem deixar rastro no histórico e volta ao início (ex.: #admin para quem não é admin)
+export const replaceHome = () => { history.replaceState(null, '', location.pathname + location.search); window.dispatchEvent(new HashChangeEvent('hashchange')); };
 
 export const go = (hash) => { if (location.hash !== hash && !(hash === '#' && !location.hash)) location.hash = hash; };
 // Ajuste dentro da mesma página (troca de aba, lugar selecionado): atualiza o link sem criar entrada no histórico.
