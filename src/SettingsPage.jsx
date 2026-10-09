@@ -6,7 +6,6 @@ import { useSession, signInWithGoogle } from './auth.js';
 import { VERSIONS, loadBook } from './data/bible.js';
 import { SIZES, SPACINGS, WIDTHS, FONTS, READ_THEMES, SITE_THEMES, READ_COLORS, readColors, resolvePrefs } from './readingPrefs.js';
 import { useResolvedSite } from './siteTheme.js';
-import { usePlan } from './plan.js';
 import { readStyle } from './readStyle.js';
 
 // Grupo de opções excludentes (botões com aria-pressed, 44px)
@@ -42,7 +41,6 @@ export default function SettingsPage({ t, lang, settings, canAcademic, onChange 
   const { prefs } = useUserData();
   const p = resolvePrefs(prefs);
   const site = useResolvedSite();
-  const { isAdmin } = usePlan();
   const { enabled, signedIn, consent } = useSession();
   const preview = usePreview(lang);
   const synced = signedIn && consent === 'ok';
@@ -56,14 +54,12 @@ export default function SettingsPage({ t, lang, settings, canAcademic, onChange 
       <h1 id="cfg-title">{t.settings}</h1>
 
       <div className="bk-cols cfg-cols">
-        {isAdmin && (
-          <section className="card cfg-card cfg-appearance" aria-labelledby="cfg-look">
-            <h2 id="cfg-look">{t.cfgAppearance}</h2>
-            <Options label={t.cfgSiteTheme} value={p.siteTheme} onPick={(v) => setPrefs({ siteTheme: v })}
-              items={SITE_THEMES.map((k) => [k, { light: t.cfgLight, dark: t.cfgDark, auto: t.cfgAuto }[k]])} />
-            <p className="cfg-help">{t.cfgSiteThemeHelp}</p>
-          </section>
-        )}
+        <section className="card cfg-card cfg-appearance" aria-labelledby="cfg-look">
+          <h2 id="cfg-look">{t.cfgAppearance}</h2>
+          <Options label={t.cfgSiteTheme} value={p.siteTheme} onPick={(v) => setPrefs({ siteTheme: v })}
+            items={SITE_THEMES.map((k) => [k, { light: t.cfgLight, dark: t.cfgDark, auto: t.cfgAuto }[k]])} />
+          <p className="cfg-help">{t.cfgSiteThemeHelp}</p>
+        </section>
         <section className="card cfg-card" aria-labelledby="cfg-read">
           <div className="cfg-head">
             <h2 id="cfg-read">{t.cfgRead}</h2>
