@@ -5,7 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
-import { PRICE_CENTS, priceKind, priceCents, ITEM_TITLE } from '../supabase/functions/_shared/pricing.js';
+import { PRICE_CENTS, priceKind, priceCents, ITEM_TITLE, alreadyCovered } from '../supabase/functions/_shared/pricing.js';
 import { buildManifest, parseSignature, hmacHex, verifySignature, mapStatus, preferenceBody } from '../supabase/functions/_shared/mp.js';
 import { applyMpPayment, applyAll } from '../supabase/functions/_shared/payments.js';
 import { handleReconcile, reconcileRow } from '../supabase/functions/_shared/reconcile.js';

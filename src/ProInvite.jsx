@@ -4,7 +4,7 @@ import WaitlistButton from './WaitlistButton.jsx';
 import { useSession, signInWithGoogle, openConsent } from './auth.js';
 import billingCfg from './data/billing.json';
 import { hrefs } from './route.js';
-import { usePlan } from './plan.js';
+import { usePlan, refreshPlan } from './plan.js';
 import { billingEnabled, proPrice, formatBRL, startCheckout } from './billing.js';
 import plans from './data/plans.json';
 
@@ -26,7 +26,7 @@ export function SubscribeBlock({ t, lang, renew = false }) {
     setBusy(true);
     setError(false);
     setNeedTerms(false);
-    try { await startCheckout(); } catch (e) { if (e?.message === 'terms_required') setNeedTerms(true); else setError(true); setBusy(false); }
+    try { await startCheckout(); } catch (e) { if (e?.message === 'terms_required') setNeedTerms(true); else if (e?.message === 'already_active') refreshPlan(); /* o plano já vale: busca de novo e o convite some */ else setError(true); setBusy(false); }
   };
 
   return (

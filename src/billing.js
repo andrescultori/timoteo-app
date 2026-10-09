@@ -26,7 +26,7 @@ export async function startCheckout() {
   if (error) {
     let code = '';
     try { code = (await error.context.json())?.error ?? ''; } catch { /* sem corpo legível */ }
-    throw new Error(code === 'terms_required' ? 'terms_required' : 'checkout_unavailable'); // sem aceite dos Termos o servidor recusa (403)
+    throw new Error(code === 'terms_required' || code === 'already_active' ? code : 'checkout_unavailable'); // sem aceite dos Termos o servidor recusa (403); plano já ativo sem prazo (409)
   }
   if (!data?.url) throw new Error('checkout_unavailable');
   const u = new URL(data.url);
