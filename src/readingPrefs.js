@@ -4,9 +4,10 @@ export const SIZES = [17, 19, 21, 23, 26, 30]; // px
 export const SPACINGS = [1.45, 1.7, 2]; // entrelinha
 export const WIDTHS = [540, 660, 820]; // px
 export const FONTS = ['serif', 'sans'];
-export const READ_THEMES = ['light', 'sepia', 'dark'];
+export const READ_THEMES = ['follow', 'light', 'sepia', 'dark']; // follow = acompanha o tema do site
+export const SITE_THEMES = ['light', 'dark', 'auto']; // tema do site: claro (padrão), escuro ou o do sistema
 
-export const DEFAULTS = { size: 21, spacing: 1.7, width: 660, font: 'serif', verseLines: false, theme: 'light', originals: false, cantillation: false };
+export const DEFAULTS = { size: 21, spacing: 1.7, width: 660, font: 'serif', verseLines: false, theme: 'follow', originals: false, cantillation: false, siteTheme: 'light' };
 
 const RULES = {
   size: (v) => SIZES.includes(v),
@@ -17,6 +18,7 @@ const RULES = {
   theme: (v) => READ_THEMES.includes(v),
   originals: (v) => typeof v === 'boolean', // faixa com o texto em hebraico e grego (plano Pro)
   cantillation: (v) => typeof v === 'boolean', // mostrar os acentos de cantilação do hebraico (padrão: escondidos)
+  siteTheme: (v) => SITE_THEMES.includes(v),
 };
 
 // Aceita só chaves conhecidas com valores permitidos; o resto é descartado. Guarda apenas o que difere do padrão.
@@ -29,9 +31,10 @@ export function cleanPrefs(raw) {
 
 export const resolvePrefs = (p) => ({ ...DEFAULTS, ...cleanPrefs(p) });
 
-// Tema de leitura: cores só da superfície de leitura (docs/design/app-b/README.md)
+// Tema de leitura: cores só da superfície de leitura (docs/design/app-b/README.md e app-b-dark/README.md). "follow" usa as do tema do site.
 export const READ_COLORS = {
   light: { bg: '#f8f7f2', fg: '#1f2320', accent: '#3f6553' },
   sepia: { bg: '#f1e7d0', fg: '#3b2f20', accent: '#8a5a2b' },
-  dark: { bg: '#14201b', fg: '#e6e4da', accent: '#a9c1b3' },
+  dark: { bg: '#181a19', fg: '#e6e4da', accent: '#a9c1b3' },
 };
+export const readColors = (theme, siteResolved = 'light') => READ_COLORS[theme === 'follow' ? siteResolved : theme] ?? READ_COLORS.light;

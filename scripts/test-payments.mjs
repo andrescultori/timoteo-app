@@ -10,7 +10,9 @@ import { buildManifest, parseSignature, hmacHex, verifySignature, mapStatus, pre
 import { applyMpPayment, applyAll } from '../supabase/functions/_shared/payments.js';
 import { handleReconcile } from '../supabase/functions/_shared/reconcile.js';
 import { secretMatches } from '../supabase/functions/_shared/http.js';
-import { cleanPrefs, resolvePrefs, DEFAULTS, SIZES, SPACINGS, WIDTHS, FONTS, READ_THEMES } from '../src/readingPrefs.js';
+import { cleanPrefs, resolvePrefs, DEFAULTS, SIZES, SPACINGS, WIDTHS, FONTS, READ_THEMES, SITE_THEMES } from '../src/readingPrefs.js';
+import { resolveSite } from '../src/siteTheme.js';
+import { readColors } from '../src/readingPrefs.js';
 
 const root = path.resolve(import.meta.dirname, '..');
 let failed = 0;
@@ -581,13 +583,21 @@ const driftSec = async (user, months) => Number((await q(
 // Ajustes de leitura (visual B): validação no cliente e a tabela reading_prefs no banco
 {
   eq(cleanPrefs({ size: 23, theme: 'sepia' }), { size: 23, theme: 'sepia' }, 'ajustes: valores permitidos passam');
-  eq(cleanPrefs({ size: 21, spacing: 1.7, width: 660, font: 'serif', verseLines: false, theme: 'light' }), {}, 'ajustes: o padrão não é guardado');
+  eq(cleanPrefs({ size: 21, spacing: 1.7, width: 660, font: 'serif', verseLines: false, theme: 'follow', siteTheme: 'light' }), {}, 'ajustes: o padrão não é guardado');
   eq(cleanPrefs({ size: 99, theme: 'neon', font: 'comic', extra: 1, verseLines: 'sim' }), {}, 'ajustes: valor ou chave inválida é descartada');
   eq(cleanPrefs({ originals: true }), { originals: true }, 'ajustes: originals ligado é guardado');
   eq(cleanPrefs({ originals: false }), {}, 'ajustes: originals desligado é o padrão');
   eq(cleanPrefs({ cantillation: true, originals: true }), { originals: true, cantillation: true }, 'ajustes: cantillation ligado é guardado');
   eq(cleanPrefs({ cantillation: 'sim' }), {}, 'ajustes: cantillation só aceita booleano');
   eq(cleanPrefs({ originals: 'sim' }), {}, 'ajustes: originals só aceita booleano');
+  eq(cleanPrefs({ siteTheme: 'dark', theme: 'sepia' }), { theme: 'sepia', siteTheme: 'dark' }, 'ajustes: tema do site e da leitura são independentes');
+  eq(cleanPrefs({ siteTheme: 'noite', theme: 'roxo' }), {}, 'ajustes: tema inválido usa o padrão');
+  eq(cleanPrefs({ theme: 'light' }), { theme: 'light' }, 'ajustes: leitura em Claro é escolha explícita (o padrão é seguir o site)');
+  eq(resolvePrefs({}).siteTheme, 'light', 'o padrão do site é Claro');
+  eq(['light', 'dark', 'auto'].map((p) => resolveSite(p, true)), ['light', 'dark', 'dark'], 'tema do site: automático segue o sistema escuro');
+  eq(['light', 'dark', 'auto'].map((p) => resolveSite(p, false)), ['light', 'dark', 'light'], 'tema do site: automático segue o sistema claro');
+  eq(resolveSite('lixo', true), 'light', 'tema do site inválido cai em Claro');
+  eq([readColors('follow', 'light').bg, readColors('follow', 'dark').bg, readColors('sepia', 'dark').bg, readColors('dark', 'light').bg], ['#f8f7f2', '#181a19', '#f1e7d0', '#181a19'], 'leitura: seguir o site, ou escolha explícita que vale em qualquer site');
   eq(cleanPrefs('x'), {}, 'ajustes: texto solto vira vazio');
   eq(cleanPrefs([1]), {}, 'ajustes: lista vira vazio');
   eq(resolvePrefs({ width: 820 }), { ...DEFAULTS, width: 820 }, 'ajustes: resolve sobre o padrão');
@@ -603,10 +613,11 @@ const driftSec = async (user, months) => Number((await q(
   for (const v of WIDTHS) ok(await valid({ width: v }), `SQL aceita width ${v}`);
   for (const v of FONTS) ok(await valid({ font: v }), `SQL aceita font ${v}`);
   for (const v of READ_THEMES) ok(await valid({ theme: v }), `SQL aceita theme ${v}`);
+  for (const v of SITE_THEMES) ok(await valid({ siteTheme: v }), `SQL aceita siteTheme ${v}`);
   ok(await valid({ verseLines: true }) && await valid({ verseLines: false }) && await valid({}), 'SQL aceita verseLines e objeto vazio');
   ok(await valid({ originals: true }) && await valid({ originals: false }), 'SQL aceita originals (booleano)');
   ok(await valid({ cantillation: true }) && await valid({ cantillation: false }), 'SQL aceita cantillation (booleano)');
-  for (const bad of [{ size: 20 }, { size: '21' }, { spacing: 1.5 }, { width: 700 }, { font: 'mono' }, { theme: 'x' }, { verseLines: 1 }, { originals: 'sim' }, { originals: 1 }, { cantillation: 'sim' }, { cantillation: 0 }, { other: 1 }, [], 'x', 5]) {
+  for (const bad of [{ size: 20 }, { size: '21' }, { spacing: 1.5 }, { width: 700 }, { font: 'mono' }, { theme: 'x' }, { verseLines: 1 }, { originals: 'sim' }, { originals: 1 }, { cantillation: 'sim' }, { cantillation: 0 }, { siteTheme: 'follow' }, { siteTheme: 1 }, { theme: 'auto' }, { other: 1 }, [], 'x', 5]) {
     ok(!(await valid(bad)), `SQL recusa ${JSON.stringify(bad)}`);
   }
   ok(!(await valid({ size: 21, junk: 'x'.repeat(400) })), 'SQL recusa JSON grande');

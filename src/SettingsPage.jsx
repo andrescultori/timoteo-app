@@ -4,7 +4,9 @@ import { usePageTitle } from './pageTitle.js';
 import { useUserData, setPrefs, resetPrefs, getVersionPref } from './userdata.js';
 import { useSession, signInWithGoogle } from './auth.js';
 import { VERSIONS, loadBook } from './data/bible.js';
-import { SIZES, SPACINGS, WIDTHS, FONTS, READ_THEMES, READ_COLORS, resolvePrefs } from './readingPrefs.js';
+import { SIZES, SPACINGS, WIDTHS, FONTS, READ_THEMES, SITE_THEMES, READ_COLORS, readColors, resolvePrefs } from './readingPrefs.js';
+import { useResolvedSite } from './siteTheme.js';
+import { usePlan } from './plan.js';
 import { readStyle } from './readStyle.js';
 
 // Grupo de opções excludentes (botões com aria-pressed, 44px)
@@ -39,11 +41,13 @@ export default function SettingsPage({ t, lang, settings, canAcademic, onChange 
   usePageTitle([t.settings], t.title);
   const { prefs } = useUserData();
   const p = resolvePrefs(prefs);
+  const site = useResolvedSite();
+  const { isAdmin } = usePlan();
   const { enabled, signedIn, consent } = useSession();
   const preview = usePreview(lang);
   const synced = signedIn && consent === 'ok';
   const si = SIZES.indexOf(p.size);
-  const colors = READ_COLORS[p.theme];
+  const colors = readColors(p.theme, site);
   const step = (d) => setPrefs({ size: SIZES[Math.min(SIZES.length - 1, Math.max(0, si + d))] });
 
   return (
@@ -52,6 +56,14 @@ export default function SettingsPage({ t, lang, settings, canAcademic, onChange 
       <h1 id="cfg-title">{t.settings}</h1>
 
       <div className="bk-cols cfg-cols">
+        {isAdmin && (
+          <section className="card cfg-card cfg-appearance" aria-labelledby="cfg-look">
+            <h2 id="cfg-look">{t.cfgAppearance}</h2>
+            <Options label={t.cfgSiteTheme} value={p.siteTheme} onPick={(v) => setPrefs({ siteTheme: v })}
+              items={SITE_THEMES.map((k) => [k, { light: t.cfgLight, dark: t.cfgDark, auto: t.cfgAuto }[k]])} />
+            <p className="cfg-help">{t.cfgSiteThemeHelp}</p>
+          </section>
+        )}
         <section className="card cfg-card" aria-labelledby="cfg-read">
           <div className="cfg-head">
             <h2 id="cfg-read">{t.cfgRead}</h2>
@@ -92,11 +104,12 @@ export default function SettingsPage({ t, lang, settings, canAcademic, onChange 
           </div>
 
           <Options label={t.cfgTheme} value={p.theme} onPick={(v) => setPrefs({ theme: v })}
-            items={READ_THEMES.map((k) => [k, { light: t.cfgLight, sepia: t.cfgSepia, dark: t.cfgDark }[k], { background: READ_COLORS[k].bg, color: READ_COLORS[k].fg }])} />
+            items={READ_THEMES.map((k) => [k, { follow: t.cfgFollow, light: t.cfgLight, sepia: t.cfgSepia, dark: t.cfgDark }[k], { background: readColors(k, site).bg, color: readColors(k, site).fg }])} />
+          <p className="cfg-help">{t.cfgFollowHelp}</p>
         </section>
 
         <div className="bk-main cfg-side">
-          <section className="card cfg-preview" style={{ ...readStyle(p), background: colors.bg, color: colors.fg }} aria-labelledby="cfg-prev">
+          <section className="card cfg-preview" style={{ ...readStyle(p, site), background: colors.bg, color: colors.fg }} aria-labelledby="cfg-prev">
             <h2 id="cfg-prev" className="bk-label" style={{ color: colors.fg }}>{t.cfgPreview} · {lang === 'pt' ? 'João' : 'John'} 3{preview ? ` · ${preview.version.label}` : ''}</h2>
             <div className={`text${p.verseLines ? ' lines' : ''}`} lang={preview?.version.lang}>
               <p>{(preview?.verses ?? []).map(([n, v]) => <span key={n}><sup>{n}</sup>{v} </span>)}</p>

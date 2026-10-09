@@ -9,6 +9,7 @@
   --accent: #0f2d24; --accent-hover: #2f5445; --accent-2: #3f6553; --on-accent: #f8f7f2;
   --focus: #0f2d24; --danger: #9a3b2c;
   --chip-bg: #e4ebe6; --green-soft: #a9c1b3;
+  --accent-fill: #0f2d24; --card-hi: #0f2d24; --on-hi: #f8f7f2; /* papéis do verde: preenchimento de estado ativo e cartão elevado (iguais ao --accent no claro) */
   --on-section: #f8f7f2; /* texto sobre as cores de seção (≥4,5:1 em todas) */
   --s-lei: #0f2d24; --s-historicos: #7a4a2b; --s-poesia: #6b3f63; --s-profMaiores: #2f4f8a; --s-profMenores: #2d6f7c;
   --s-evangelhos: #8e3b3b; --s-atos: #a5601a; --s-paulo: #55733a; --s-outras: #5b6b7a; --s-profecia: #1f2320;
@@ -628,3 +629,40 @@ a.ghost[aria-disabled='true'] { opacity: 0.4; pointer-events: none; }
 .ow-g { color: var(--r-fg, var(--fg)); max-width: 11em; }
 @media (max-width: 720px) { .ostrip { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 8px; scrollbar-width: thin; } }
 .reader-bar .bar-end, .reader-foot .bar-end { flex-wrap: wrap; }
+
+.cfg-help { margin: 0; font-size: 14px; color: var(--muted); }
+.cfg-appearance { gap: 18px; }
+
+/* ===== Tema escuro (opção B, grafite; docs/design/app-b-dark/README.md) =====
+   Segundo conjunto de tokens ao lado do claro: o claro acima não é tocado. O verde da marca só aparece como acento (--accent-fill). */
+:root[data-theme='dark'] {
+  --bg: #141615; --panel: #1d201e; --panel-2: #252a27;
+  --line: #2d322f; --line-soft: #2d322f; --line-strong: #7d8580; /* borda de controle ≥3:1 (a da spec, #565c58, dá 2,4:1) */
+  --fg: #e9e8df; --muted: #a9adaa;
+  --logo: #f1f0e7; /* marca-bege */
+  --accent: #e4ebe6; --accent-hover: #ffffff; --accent-2: #a9c1b3; --on-accent: #0f2d24; /* --accent = títulos e links */
+  --accent-fill: #a9c1b3; --card-hi: #262b28; --on-hi: #e9e8df;
+  --focus: #a9c1b3; --danger: #f0a090;
+  --chip-bg: #2a302c; --green-soft: #a9c1b3;
+  --s-lei: #3e5f52; --s-profecia: #4a524d; /* as demais cores de seção são as do claro */
+  --sea: #131817; --land: #2c3330; --coast: #68726c; --halo: #141615; --sea-label: #9fb3a8;
+  --shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.55);
+  color-scheme: dark;
+}
+/* estados ativos: preenchimento verde-claro com texto escuro */
+:root[data-theme='dark'] .pill[aria-pressed='true'], :root[data-theme='dark'] .seg button[aria-pressed='true'],
+:root[data-theme='dark'] .tl-chip[aria-pressed='true'], :root[data-theme='dark'] .tl-period[aria-pressed='true'], :root[data-theme='dark'] .mapzoom[aria-pressed='true'],
+:root[data-theme='dark'] .ps-legend .tl-chip[aria-pressed='true'], :root[data-theme='dark'] .acct-plan, :root[data-theme='dark'] .tab[aria-selected='true'],
+:root[data-theme='dark'] .opt[aria-pressed='true'], :root[data-theme='dark'] .ghost.primary, :root[data-theme='dark'] .orig-switch[aria-checked='true'] {
+  background: var(--accent-fill); border-color: var(--accent-fill); color: var(--on-accent);
+}
+:root[data-theme='dark'] .switch[aria-checked='true'] span, :root[data-theme='dark'] .cfg-dots span.on, :root[data-theme='dark'] .gn-dot-i { background: var(--accent-fill); }
+:root[data-theme='dark'] .cfg-opts .opt[style*='background'][aria-pressed='true'] { outline-color: var(--accent-fill); border-color: var(--accent-fill); }
+/* cartões elevados (Continuar e versículo-chave) */
+:root[data-theme='dark'] .continue-card, :root[data-theme='dark'] .bk-key { background: var(--card-hi); color: var(--on-hi); }
+:root[data-theme='dark'] .continue-card .ghost { color: var(--on-hi); }
+:root[data-theme='dark'] .continue-go, :root[data-theme='dark'] .continue-go:hover { background: var(--accent-fill); color: var(--on-accent); }
+:root[data-theme='dark'] .bk-key a { color: var(--on-hi); }
+:root[data-theme='dark'] .continue-card :focus-visible, :root[data-theme='dark'] .bk-key :focus-visible { outline-color: var(--accent-fill); }
+:root[data-theme='dark'] .tab { color: #c9ccc8; }
+:root[data-theme='dark'] .tab:hover { border-color: var(--line-strong); }
