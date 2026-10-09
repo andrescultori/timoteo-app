@@ -214,7 +214,7 @@ ${foot('contato/')}
 `;
 
 const contactBody = config.contactChannel
-  ? `<p><a class="btn btn-main" href="${esc(config.contactChannel.url)}">${esc(config.contactChannel.label)}</a></p>`
+  ? `<p>${esc(C.contact.via)}</p>\n  <p><a class="btn btn-main" href="${esc(config.contactChannel.url)}" rel="noopener noreferrer">${esc(config.contactChannel.label)}</a></p>`
   : `<p class="soon-note">${esc(C.contact.pending)}</p>`;
 if (!config.contactChannel) warnings.push('config.json: contactChannel vazio. A página /contato/ avisa que o canal será informado; defina antes de publicar.');
 if (!config.siteUrl) warnings.push('config.json: siteUrl vazio. Sem canonical e og:url; defina o endereço final antes de publicar.');

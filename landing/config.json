@@ -1,6 +1,11 @@
 {
   "appUrl": "https://timoteo-app.pages.dev",
   "siteUrl": "",
-  "contactChannel": null,
-  "hideVersions": ["alm1911a"]
+  "contactChannel": {
+    "url": "https://www.instagram.com/andrescultori/",
+    "label": "Falar pelo Instagram: @andrescultori"
+  },
+  "hideVersions": [
+    "alm1911a"
+  ]
 }

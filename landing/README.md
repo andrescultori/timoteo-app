@@ -23,6 +23,6 @@ Página estática (HTML + CSS, **sem JavaScript** e sem dependências) gerada po
 Root directory `landing`, build command `node build.mjs`, output `dist`, branch `main`. Sem variáveis de ambiente. Se quiser evitar rebuild a cada push no app, use "Build watch paths" (incluir `landing/*`, `src/data/*`, `src/styles.css`, `supabase/functions/_shared/pricing.js`).
 
 ## Antes de publicar
-1. `config.json`: `siteUrl` (endereço final, para canonical e `og:url`) e `contactChannel` (`{ "url": "...", "label": "..." }`; hoje a página `/contato/` avisa que o canal será informado).
+1. `config.json`: `siteUrl` (endereço final, para canonical e `og:url`); `contactChannel` já definido (`{ "url": "...", "label": "..." }`; hoje o Instagram @andrescultori; sem canal, a página `/contato/` avisa que ele será informado).
 2. Cobrança ligada no app (`VITE_BILLING_ENABLED`) e Termos e Política publicados (a landing aponta para `#terms` e `#privacy` do app e promete compra do Pro).
 3. Refazer as capturas se o app mudar (`landing/capture.mjs`).

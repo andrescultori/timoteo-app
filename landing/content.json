@@ -10,24 +10,64 @@
     "gridLabel": "Tabela com as siglas dos 66 livros da Bíblia, coloridas por seção"
   },
   "numbers": [
-    { "key": "books", "icon": "book", "label": "livros, cada um com ficha de estudo em português e inglês" },
-    { "key": "people", "icon": "people", "label": "personagens, com resumo, livros, eventos e lugares" },
-    { "key": "events", "icon": "timeline", "label": "eventos em {periods} períodos na linha do tempo" },
-    { "key": "versions", "icon": "text", "label": "versões do texto bíblico, de licença clara" }
+    {
+      "key": "books",
+      "icon": "book",
+      "label": "livros, cada um com ficha de estudo em português e inglês"
+    },
+    {
+      "key": "people",
+      "icon": "people",
+      "label": "personagens, com resumo, livros, eventos e lugares"
+    },
+    {
+      "key": "events",
+      "icon": "timeline",
+      "label": "eventos em {periods} períodos na linha do tempo"
+    },
+    {
+      "key": "versions",
+      "icon": "text",
+      "label": "versões do texto bíblico, de licença clara"
+    }
   ],
   "what": {
     "title": "Tudo o que você consulta ao estudar um livro, junto",
     "lead": "Hoje o texto está em um lugar, o mapa em outro, a cronologia em outro. Aqui as peças se ligam: um clique leva de uma à outra.",
     "features": [
-      { "img": "ficha", "alt": "Ficha de estudo do Evangelho de João: dados do livro e, ao lado, versículo-chave, personagens e esboço", "title": "Ficha de estudo", "text": "Autor, data, lugar, destinatários, versículo-chave, tema, contexto histórico, esboço e conexões de cada livro." },
-      { "img": "mapa", "alt": "Mapa dos lugares citados no livro de Êxodo, com a lista de lugares ao lado", "title": "Mapa dos lugares", "text": "Os lugares citados em cada livro, desenhados em mapa, com a localização debatida marcada como incerta." },
-      { "img": "linha-do-tempo", "alt": "Linha do tempo com os períodos da história bíblica e a lista de eventos", "title": "Linha do tempo", "text": "Períodos e eventos com as datas e a base de cada uma. Onde a cronologia é debatida, as duas leituras aparecem." },
-      { "img": "personagens", "alt": "Página de um personagem bíblico, com resumo, livros, eventos e lugares ligados a ele", "title": "Personagens e genealogia", "text": "Quem é cada pessoa, onde aparece e a que eventos e lugares se liga. A árvore de Adão a Jesus, com referência em cada ligação." }
+      {
+        "img": "ficha",
+        "alt": "Ficha de estudo do Evangelho de João: dados do livro e, ao lado, versículo-chave, personagens e esboço",
+        "title": "Ficha de estudo",
+        "text": "Autor, data, lugar, destinatários, versículo-chave, tema, contexto histórico, esboço e conexões de cada livro."
+      },
+      {
+        "img": "mapa",
+        "alt": "Mapa dos lugares citados no livro de Êxodo, com a lista de lugares ao lado",
+        "title": "Mapa dos lugares",
+        "text": "Os lugares citados em cada livro, desenhados em mapa, com a localização debatida marcada como incerta."
+      },
+      {
+        "img": "linha-do-tempo",
+        "alt": "Linha do tempo com os períodos da história bíblica e a lista de eventos",
+        "title": "Linha do tempo",
+        "text": "Períodos e eventos com as datas e a base de cada uma. Onde a cronologia é debatida, as duas leituras aparecem."
+      },
+      {
+        "img": "personagens",
+        "alt": "Página de um personagem bíblico, com resumo, livros, eventos e lugares ligados a ele",
+        "title": "Personagens e genealogia",
+        "text": "Quem é cada pessoa, onde aparece e a que eventos e lugares se liga. A árvore de Adão a Jesus, com referência em cada ligação."
+      }
     ]
   },
   "links": {
     "title": "Linha do tempo, mapa e personagens se ligam nos dois sentidos",
-    "chips": ["Linha do tempo", "Mapa", "Personagens"],
+    "chips": [
+      "Linha do tempo",
+      "Mapa",
+      "Personagens"
+    ],
     "text": "Do Êxodo na linha do tempo, um clique leva ao mapa já no lugar certo. Do lugar no mapa, outro clique mostra os eventos e as pessoas ligados a ele."
   },
   "views": {
@@ -41,45 +81,183 @@
     "title": "Escolha seu plano",
     "lead": "O texto bíblico é livre em todos os planos. O Pro libera o estudo completo, com pagamento anual.",
     "cards": {
-      "essencial": { "badge": "", "note": "Grátis, sem prazo", "cta": "Começar grátis" },
-      "pro": { "badge": "Estudo completo", "cta": "Escolher Pro" },
-      "premium": { "badge": "Em breve", "cta": "Criar conta", "after": "Depois de entrar, peça o aviso em “Avise-me”, dentro do app." }
+      "essencial": {
+        "badge": "",
+        "note": "Grátis, sem prazo",
+        "cta": "Começar grátis"
+      },
+      "pro": {
+        "badge": "Estudo completo",
+        "cta": "Escolher Pro"
+      },
+      "premium": {
+        "badge": "Em breve",
+        "cta": "Criar conta",
+        "after": "Depois de entrar, peça o aviso em “Avise-me”, dentro do app."
+      }
     },
     "priceNote": "no primeiro ano · depois {price} por ano",
-    "legend": { "yes": "Incluído", "no": "Não incluído", "partial": "Incluído em parte", "soon": "Em breve" },
+    "legend": {
+      "yes": "Incluído",
+      "no": "Não incluído",
+      "partial": "Incluído em parte",
+      "soon": "Em breve"
+    },
     "payment": "O pagamento é feito na página segura do Mercado Pago, com cartão ou Pix, sem digitar dados de cartão aqui. É um pagamento único por {months} meses, sem renovação automática, e o preço de entrada vale no primeiro pagamento. Reembolso em até {refundDays} dias. Contas e compras para maiores de 18 anos.",
-    "omit": ["favorites"],
+    "omit": [
+      "favorites"
+    ],
     "rows": [
-      { "ids": ["bible"], "label": "Bíblia em todas as versões disponíveis", "notes": {} },
-      { "ids": ["sheets"], "label": "Fichas dos 66 livros", "notes": { "essencial": "Mapas e estrutura dos livros poéticos limitados", "pro": "Completas, com mapas e estruturas", "premium": "Completas" } },
-      { "ids": ["maps"], "label": "Mapas dos lugares bíblicos", "notes": { "essencial": "Só Evangelhos e Pentateuco", "pro": "Todos os livros com mapa", "premium": "Todos os livros com mapa" } },
-      { "ids": ["structure"], "label": "Estrutura dos livros poéticos", "notes": { "essencial": "Livro de Salmos completo", "pro": "Salmos, Jó, Provérbios, Eclesiastes e Cantares" } },
-      { "ids": ["characters"], "label": "Fichas de personagens", "notes": { "essencial": "50 principais", "pro": "Mais de 200", "premium": "Mais de 200" } },
-      { "ids": ["gamification", "links"], "label": "Leitura gamificada e mais", "notes": { "essencial": "Em breve", "pro": "Em breve" } },
-      { "ids": ["timeline"], "label": "Linha do tempo", "notes": {} },
-      { "ids": ["genealogy"], "label": "Genealogia", "notes": { "pro": "Em expansão", "premium": "Em expansão" } },
-      { "ids": ["academic"], "label": "Posição acadêmica (autoria e datação)", "notes": { "premium": "Com opção de esconder" } },
-      { "ids": ["ai"], "label": "10 devocionais ou pregações por mês, com IA, em PDF", "notes": { "premium": "Em breve" } }
+      {
+        "ids": [
+          "bible"
+        ],
+        "label": "Bíblia em todas as versões disponíveis",
+        "notes": {}
+      },
+      {
+        "ids": [
+          "sheets"
+        ],
+        "label": "Fichas dos 66 livros",
+        "notes": {
+          "essencial": "Mapas e estrutura dos livros poéticos limitados",
+          "pro": "Completas, com mapas e estruturas",
+          "premium": "Completas"
+        }
+      },
+      {
+        "ids": [
+          "maps"
+        ],
+        "label": "Mapas dos lugares bíblicos",
+        "notes": {
+          "essencial": "Só Evangelhos e Pentateuco",
+          "pro": "Todos os livros com mapa",
+          "premium": "Todos os livros com mapa"
+        }
+      },
+      {
+        "ids": [
+          "structure"
+        ],
+        "label": "Estrutura dos livros poéticos",
+        "notes": {
+          "essencial": "Livro de Salmos completo",
+          "pro": "Salmos, Jó, Provérbios, Eclesiastes e Cantares"
+        }
+      },
+      {
+        "ids": [
+          "characters"
+        ],
+        "label": "Fichas de personagens",
+        "notes": {
+          "essencial": "50 principais",
+          "pro": "Mais de 200",
+          "premium": "Mais de 200"
+        }
+      },
+      {
+        "ids": [
+          "gamification",
+          "links"
+        ],
+        "label": "Leitura gamificada e mais",
+        "notes": {
+          "essencial": "Em breve",
+          "pro": "Em breve"
+        }
+      },
+      {
+        "ids": [
+          "timeline"
+        ],
+        "label": "Linha do tempo",
+        "notes": {}
+      },
+      {
+        "ids": [
+          "genealogy"
+        ],
+        "label": "Genealogia",
+        "notes": {
+          "pro": "Em expansão",
+          "premium": "Em expansão"
+        }
+      },
+      {
+        "ids": [
+          "academic"
+        ],
+        "label": "Posição acadêmica (autoria e datação)",
+        "notes": {
+          "premium": "Com opção de esconder"
+        }
+      },
+      {
+        "ids": [
+          "ai"
+        ],
+        "label": "10 devocionais ou pregações por mês, com IA, em PDF",
+        "notes": {
+          "premium": "Em breve"
+        }
+      }
     ]
   },
   "faq": {
     "title": "Perguntas frequentes",
     "items": [
-      { "q": "Preciso me cadastrar para ler?", "a": "Não. A leitura da Bíblia e as fichas do plano Essencial são abertas. O cadastro é opcional e serve para salvar seu progresso e favoritos entre aparelhos. Contas e compras são para maiores de 18 anos." },
-      { "q": "Como funciona o pagamento?", "a": "O pagamento é feito na página segura do Mercado Pago, com cartão ou Pix. Nenhum dado de cartão passa por aqui. Você paga uma vez e ganha {months} meses de acesso, sem renovação automática." },
-      { "q": "Posso pedir reembolso?", "a": "Sim, em até {refundDays} dias após o pagamento, sem perguntas. Ao reembolsar, os {months} meses concedidos por aquele pagamento são retirados." },
-      { "q": "O que acontece quando o Pro vence?", "a": "Sua conta volta ao plano Essencial e você mantém seu progresso e seus favoritos. Para recuperar o acesso completo, basta renovar antes ou depois do vencimento." },
-      { "q": "Quais versões da Bíblia estão disponíveis?", "a": "{versions}. O texto bíblico é livre em todos os planos." },
-      { "q": "Para quem é o Timóteo App?", "a": "Para quem estuda a Bíblia sozinho, em grupo ou prepara aulas e mensagens, e quer o contexto de cada livro sem abrir várias fontes. O conteúdo segue a linha evangélica, com o cânon de 66 livros." }
+      {
+        "q": "Preciso me cadastrar para ler?",
+        "a": "Não. A leitura da Bíblia e as fichas do plano Essencial são abertas. O cadastro é opcional e serve para salvar seu progresso e favoritos entre aparelhos. Contas e compras são para maiores de 18 anos."
+      },
+      {
+        "q": "Como funciona o pagamento?",
+        "a": "O pagamento é feito na página segura do Mercado Pago, com cartão ou Pix. Nenhum dado de cartão passa por aqui. Você paga uma vez e ganha {months} meses de acesso, sem renovação automática."
+      },
+      {
+        "q": "Posso pedir reembolso?",
+        "a": "Sim, em até {refundDays} dias após o pagamento, sem perguntas. Ao reembolsar, os {months} meses concedidos por aquele pagamento são retirados."
+      },
+      {
+        "q": "O que acontece quando o Pro vence?",
+        "a": "Sua conta volta ao plano Essencial e você mantém seu progresso e seus favoritos. Para recuperar o acesso completo, basta renovar antes ou depois do vencimento."
+      },
+      {
+        "q": "Quais versões da Bíblia estão disponíveis?",
+        "a": "{versions}. O texto bíblico é livre em todos os planos."
+      },
+      {
+        "q": "Para quem é o Timóteo App?",
+        "a": "Para quem estuda a Bíblia sozinho, em grupo ou prepara aulas e mensagens, e quer o contexto de cada livro sem abrir várias fontes. O conteúdo segue a linha evangélica, com o cânon de 66 livros."
+      }
     ]
   },
-  "cta": { "title": "Comece pelo Essencial. Passe ao Pro quando quiser ir mais fundo.", "button": "Abrir o app" },
-  "nav": { "label": "Principal", "what": "O que é", "plans": "Planos", "faq": "Perguntas", "open": "Abrir o app", "home": "Timóteo App, início" },
-  "footer": { "madeBy": "Desenvolvido por", "terms": "Termos de uso", "privacy": "Política de privacidade", "contact": "Contato" },
+  "cta": {
+    "title": "Comece pelo Essencial. Passe ao Pro quando quiser ir mais fundo.",
+    "button": "Abrir o app"
+  },
+  "nav": {
+    "label": "Principal",
+    "what": "O que é",
+    "plans": "Planos",
+    "faq": "Perguntas",
+    "open": "Abrir o app",
+    "home": "Timóteo App, início"
+  },
+  "footer": {
+    "madeBy": "Desenvolvido por",
+    "terms": "Termos de uso",
+    "privacy": "Política de privacidade",
+    "contact": "Contato"
+  },
   "contact": {
     "title": "Contato",
     "intro": "Para dúvidas sobre o app, pedido de reembolso (em até {refundDays} dias após o pagamento) ou assuntos de privacidade e dados pessoais, fale com o André Scultori, responsável pelo Timóteo App.",
     "pending": "O canal de contato será informado aqui antes da publicação.",
-    "back": "Voltar ao início"
+    "back": "Voltar ao início",
+    "via": "Por enquanto, o contato é pelo Instagram."
   }
 }
