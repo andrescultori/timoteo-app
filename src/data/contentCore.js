@@ -33,7 +33,7 @@ export function createContent({ source, ess, flags, publicLoaders, fetchPro }) {
 
   const loaders = {
     people: async () => {
-      if (source === 'public') return publicLoaders.people();
+      if (source === 'local') return publicLoaders.people();
       const pub = publicPeople(await publicLoaders.people(), ess);
       if (access.level === 'none') return pub;
       const full = await fetchPro('people.json');
@@ -42,7 +42,7 @@ export function createContent({ source, ess, flags, publicLoaders, fetchPro }) {
       return pub.map((p) => byId.get(p.id) ?? p);
     },
     timeline: async () => {
-      if (source === 'public') return publicLoaders.timeline();
+      if (source === 'local') return publicLoaders.timeline();
       if (access.level === 'none') return EMPTY.timeline;
       const tl = await fetchPro('timeline.json');
       if (!tl) return EMPTY.timeline;
@@ -50,7 +50,7 @@ export function createContent({ source, ess, flags, publicLoaders, fetchPro }) {
       return sch ? restoreScholarly(tl, sch.timeline) : tl;
     },
     genealogy: async () => {
-      if (source === 'public') return publicLoaders.genealogy();
+      if (source === 'local') return publicLoaders.genealogy();
       if (access.level === 'none') return EMPTY.genealogy;
       return (await fetchPro('genealogy.json')) ?? EMPTY.genealogy;
     },
@@ -61,7 +61,7 @@ export function createContent({ source, ess, flags, publicLoaders, fetchPro }) {
   // Ficha do livro. Em `storage`: parte pública (sem mapa/estrutura Pro nem posição acadêmica) + parte Pro, se o banco autorizar.
   const loadInfo = (slug) => memo(`info:${slug}`, async () => {
     const info = await publicLoaders.info(slug);
-    if (!info || source === 'public') return info;
+    if (!info || source === 'local') return info;
     let { rest: out } = splitInfo(slug, info, ess);
     if (access.level !== 'none' && (hasProMap(slug) || hasProStructure(slug))) out = { ...out, ...((await fetchPro(`info/${slug}.json`)) ?? {}) };
     const sch = await adminBundle();
@@ -72,8 +72,8 @@ export function createContent({ source, ess, flags, publicLoaders, fetchPro }) {
   return {
     load,
     loadInfo,
-    canLoad: () => source === 'public' || access.ready,
-    isReady: (keys) => (source === 'public' || access.ready) && keys.every((k) => values.has(fullKey(k))),
+    canLoad: () => source === 'local' || access.ready,
+    isReady: (keys) => (source === 'local' || access.ready) && keys.every((k) => values.has(fullKey(k))),
     hasFailed: (keys) => keys.some((k) => failed.has(fullKey(k))),
     get: (k) => { const v = value(k); if (v === undefined) throw new Error(`conteúdo ${k} ainda não carregado (use useContent/load)`); return v; },
     infoNow: (slug) => value(`info:${slug}`),

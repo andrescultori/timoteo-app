@@ -1,15 +1,16 @@
 // Ponto único de carregamento do conteúdo "de estudo" (personagens, linha do tempo, genealogia, fichas com mapa/estrutura).
-// Duas origens, escolhidas no BUILD por VITE_PRO_SOURCE (padrão `public`, o comportamento de sempre):
-//   public  → tudo vem dos arquivos do pacote público (hoje, o app inteiro).
-//   storage → o conteúdo Pro vem do Supabase Storage (bucket privado `pro`), só para quem o banco autoriza; o público fica com o que o
-//             Essencial pode ver (personagens Pro só com nome e livros; fichas sem mapa/estrutura Pro e sem posição acadêmica).
+// Duas origens, escolhidas no BUILD por VITE_PRO_SOURCE (vite.config.js):
+//   storage → PADRÃO do `vite build`: o site público não leva o Pro (o build o tira dos JSONs); ele chega do Supabase Storage (bucket
+//             privado `pro`), só para quem o banco autoriza. Personagens Pro só com nome e livros; fichas sem mapa/estrutura Pro e sem
+//             posição acadêmica.
+//   local   → PADRÃO do `vite dev`: tudo vem dos arquivos, como sempre. Um build de produção `local` só com ALLOW_LOCAL_PRO=1 (testes).
 // Nenhuma tela importa os JSONs Pro diretamente: tudo passa por aqui, de forma assíncrona. A lógica está em contentCore.js (testada em Node).
 import { useEffect, useSyncExternalStore } from 'react';
 import plans from './plans.json';
 import flags from './content-flags.json';
 import { createContent } from './contentCore.js';
 
-export const SOURCE = import.meta.env?.VITE_PRO_SOURCE === 'storage' ? 'storage' : 'public';
+export const SOURCE = import.meta.env?.VITE_PRO_SOURCE === 'storage' ? 'storage' : 'local';
 export const hasProMap = (slug) => flags.map.includes(slug);
 export const hasProStructure = (slug) => flags.structure.includes(slug);
 

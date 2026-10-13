@@ -177,11 +177,14 @@ O conteúdo Pro e a posição acadêmica vão para o **Supabase Storage** (bucke
 
 Posição acadêmica separada = toda propriedade `scholarly` e todo item de lista com `view: 'scholarly'`. Cada "extra" guarda o caminho e o valor (`{ path, key, value }` ou `{ path, index, value }`) para restaurar exatamente (`restoreScholarly`). Publicar: `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` **só no ambiente**; `node scripts/publish-pro.mjs --dry-run` mostra o que mudaria; a publicação é idempotente (só envia o que mudou pelo hash) e apaga do bucket o que saiu do pacote (`--no-prune` desliga).
 
-### Chave de origem (`VITE_PRO_SOURCE`)
+### Origem do Pro (`VITE_PRO_SOURCE`)
 
-`src/data/content.js` é o único ponto de carregamento de personagens, linha do tempo, genealogia e fichas (a lógica, em `contentCore.js`, é testada em Node). **`public` (padrão)**: tudo do pacote público, como sempre. **`storage`**: o conteúdo Pro vem do Storage, só para quem o banco autoriza:
-- Essencial e deslogado: personagens Pro só com nome e livros (`litePerson`), linha do tempo e genealogia vazias, fichas sem mapa/estrutura Pro e **sem posição acadêmica**; o app nem tenta o Storage.
-- Pro: completa tudo isso a partir do Storage (sem posição acadêmica).
-- Admin: também restaura a posição acadêmica (`admin/scholarly.json`).
-- Se o banco negar (plano vencido no servidor), o app cai para a versão pública, sem erro na tela. Ao trocar de conta ou de plano o cache é descartado.
-`src/data/content-flags.json` (gerado por `scripts/build-content-flags.mjs`, conferido pelo `check`) diz quais livros têm mapa e estrutura Pro, para as abas aparecerem ao Essencial (com o convite) mesmo sem o dado.
+`src/data/content.js` é o único ponto de carregamento de personagens, linha do tempo, genealogia e fichas (a lógica, em `contentCore.js`, é testada em Node). Duas origens, escolhidas no build (`vite.config.js`):
+- **`storage` (padrão do `npm run build`):** o site público **não leva o Pro**. Na hora do build o Vite tira dos JSONs o conteúdo Pro (personagens Pro ficam só com nome e livros; fichas perdem mapa/estrutura Pro e a posição acadêmica; linha do tempo e genealogia saem) e `dist/interlinear` é apagado. O Pro chega do Storage, só para quem o banco autoriza:
+  - Essencial e deslogado: nada do Pro (o app **nem tenta** o Storage).
+  - Pro: completa personagens, linha do tempo, genealogia, mapa, estrutura e originais, sem posição acadêmica.
+  - Admin: também restaura a posição acadêmica (`admin/scholarly.json`).
+  - Negado pelo banco (plano vencido no servidor): cai para o público, sem erro na tela. Ao trocar de conta ou de plano o cache é descartado.
+- **`local` (padrão do `npm run dev`):** tudo vem dos arquivos. Um build de produção `local` só com `ALLOW_LOCAL_PRO=1` (testes, regressão visual, capturas); **nunca publicar**.
+
+As fontes seguem onde estão (edite `src/data/*.json` e `public/interlinear/` como sempre). Depois de mudar qualquer conteúdo Pro, rode `node scripts/publish-pro.mjs` para atualizar o Storage. `scripts/check-dist.mjs` (automático depois do build) falha se algum trecho Pro aparecer no `dist/`. `src/data/content-flags.json` (gerado por `scripts/build-content-flags.mjs`, conferido pelo `check`) diz quais livros têm mapa e estrutura Pro, para as abas aparecerem ao Essencial (com o convite).

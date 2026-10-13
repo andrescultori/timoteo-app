@@ -2,7 +2,7 @@
 //   Capturar:  node scripts/visual-regression.mjs shoot --url http://127.0.0.1:4180 --out /tmp/golden [--site light|dark]
 //   Comparar:  node scripts/visual-regression.mjs diff /tmp/golden /tmp/novo        (sai com erro se algum pixel mudar)
 // Precisa do Playwright (PLAYWRIGHT_MODULE=/caminho/playwright/index.mjs, se não estiver instalado no projeto).
-// Para ver as telas do plano Pro, sirva um build local em que o plano padrão é "pro" (o atalho nunca é commitado).
+// Para ver as telas do plano Pro, sirva um build local em que o plano padrão é "pro" e a origem do Pro é local (ALLOW_LOCAL_PRO=1 VITE_PRO_SOURCE=local npx vite build; o atalho do plano nunca é commitado).
 // Serve para provar que o tema claro não mudou ao mexer no CSS (regra: qualquer pixel de diferença no claro é regressão).
 import fs from 'node:fs';
 import path from 'node:path';

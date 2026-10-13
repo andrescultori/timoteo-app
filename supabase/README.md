@@ -215,12 +215,11 @@ Migration `20261018000000_fase3b_bucket_pro.sql` (aditiva, **não aplicada pelo 
 1. Aplique a migration (SQL Editor).
 2. Prova de conceito, na sua máquina (variáveis só no shell, nada no repositório): `node scripts/storage-poc.mjs` (cabeçalho do script lista as variáveis; precisa do `access_token` de uma conta Pro e de uma Essencial). Ele confere quem lê e quem não lê, a URL assinada e **se o Storage comprime o JSON** (mede o tráfego real). Se algo falhar, me mande a saída: a alternativa é a tabela `jsonb` (A) ou a Edge Function (C), e eu volto antes do PR 3.
 
-## Fase 3B, PR 4: chave de origem (`VITE_PRO_SOURCE`)
-Sem migration. O pacote precisa estar publicado (`node scripts/publish-pro.mjs`; como o PR 4 trocou `people/<id>.json` por um `people.json`, **publique de novo**: o publicador apaga os 160 arquivos antigos e envia o novo).
-- **Teste real:** `node scripts/pro-e2e.mjs` (variáveis só no ambiente: `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`; precisa de rede até o Supabase e do Playwright). Ele constrói o app com `VITE_PRO_SOURCE=storage`, cria contas Pro, Pro vencida e Essencial, e confere no navegador o que cada uma vê e os pedidos ao Storage; apaga as contas no fim.
-- **Ligar em produção:** só depois do e2e verde, e no PR 5 (que tira o Pro do pacote público). Hoje o padrão continua `public`: o app é idêntico ao de antes.
-
-## Como convidar revisores de conteúdo (antes do lançamento)
-1. A pessoa entra em `estudo.timoteo.app.br` com a conta Google e aceita os termos. (A tela de consentimento do Google precisa estar em **Production**, ou a pessoa precisa estar na lista de usuários de teste.)
-2. Em `#admin`, busque pelo e-mail → **Editar** → plano **Pro**, vencimento **sem prazo** (cortesia) e motivo "revisor"; marque o papel **revisor** (ou editor).
-3. A cobrança fica desligada (`VITE_BILLING_ENABLED=false`), então o plano manual não conflita com pagamentos. Reembolso ou estorno **não** desfaz plano editado à mão (migration `20261016`).
+## Fase 3B, PR 4 e 5: o Pro sai do site público
+Sem migration. O PR 5 faz o `npm run build` (e o Cloudflare Pages) **deixar o Pro de fora do site público**; ele só chega pelo Storage, para quem o banco autoriza.
+- **Antes do merge:** o pacote precisa estar publicado e em dia (`node scripts/publish-pro.mjs --dry-run` deve dizer `a enviar: 0`). Já está, com o e2e verde (18 OK).
+- **Depois do merge (Cloudflare):** a próxima publicação do app já sai sem o Pro. `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` precisam estar nas variáveis do projeto do Cloudflare (já estão, o login depende delas). Confira no site: logado como Pro, linha do tempo, personagens, mapas e originais abrem; deslogado ou Essencial, só o convite.
+- **Apagar os deploys antigos** do Cloudflare (Workers & Pages → projeto do app → Deployments): cada um tem URL própria e ainda serve o pacote antigo, com o Pro.
+- **Manter o Storage em dia:** depois de mudar fichas, personagens, linha do tempo, genealogia ou originais, rode `node scripts/publish-pro.mjs` (é idempotente; só envia o que mudou).
+- **Teste real:** `node scripts/pro-e2e.mjs` (variáveis só no ambiente: `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`; precisa de rede até o Supabase e do Playwright). Constrói o app no modo padrão, cria contas Pro, Pro vencida e Essencial, confere o que cada uma vê e os pedidos ao Storage, e apaga as contas.
+- **Desenvolvimento:** `npm run dev` usa o modo `local` (tudo dos arquivos). Build com Pro para testes: `ALLOW_LOCAL_PRO=1 VITE_PRO_SOURCE=local npm run build` (nunca publicar).
