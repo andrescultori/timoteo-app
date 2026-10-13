@@ -1,4 +1,4 @@
-name: Landing: fim do preço de lançamento
+name: "Landing - fim do preço de lançamento"
 # A landing (Cloudflare Pages, projeto separado) é estática e escolhe o preço na hora do build. Quando o preço de lançamento acaba
 # (promoEndsAt em src/data/plans.json), este workflow pede um novo build pelo deploy hook do Cloudflare, para ela passar a mostrar o preço normal.
 # Roda todo dia e só age na janela de 3 dias depois do fim da promoção (scripts/promo-window.mjs). Não custa nada. Também roda à mão.

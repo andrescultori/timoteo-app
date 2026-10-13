@@ -422,6 +422,15 @@ for (const ver of VERSIONS) {
   }
 }
 
+// Workflows do GitHub Actions: um `name:` com ": " dentro invalida o YAML e o workflow falha em todo push (aconteceu em landing-promo-rebuild.yml)
+{
+  const dir = path.join(root, '.github/workflows');
+  for (const f of fs.readdirSync(dir).filter((x) => x.endsWith('.yml'))) {
+    const m = /^name:\s*([^"'\n].*)$/m.exec(fs.readFileSync(path.join(dir, f), 'utf8'));
+    if (m && /:\s/.test(m[1])) err(`.github/workflows/${f}: o "name:" tem ": " sem aspas (YAML inválido); coloque o nome entre aspas`);
+  }
+}
+
 // Cobrança (Fase 4): o preço de src/data/plans.json é o mesmo das Edge Functions (supabase/functions/_shared/pricing.js)
 {
   const all = read('src/data/plans.json');
