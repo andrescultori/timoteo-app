@@ -74,12 +74,13 @@ const check = (ok, msg) => { console.log(`${ok ? 'OK  ' : 'FALHA'} ${msg}`); if 
 const browser = await chromium.launch();
 
 async function visit(who, hash, { prefs, expect, wait = 'h1' }) {
-  const ctx = await browser.newContext({ viewport: { width: 1100, height: 900 } });
+  const ctx = await browser.newContext({ viewport: { width: 1100, height: 900 }, locale: 'pt-BR' }); // o app escolhe o idioma pelo navegador: sem isto vem em inglês e a biografia (PT) não casa
   const s = users[who];
   await ctx.addInitScript(({ s, ref, prefs }) => {
     try {
       if (s) localStorage.setItem(`sb-${ref}-auth-token`, JSON.stringify({ access_token: s.access_token, refresh_token: s.refresh_token, token_type: 'bearer', expires_in: s.expires_in, expires_at: s.expires_at, user: s.user }));
-      if (prefs) localStorage.setItem('readingPrefs', JSON.stringify(prefs));
+      localStorage.setItem('lang', 'pt');
+      if (prefs) localStorage.setItem('readingPrefs', JSON.stringify({ v: prefs, at: new Date().toISOString() })); // formato de src/userdata.js: { v: ajustes, at }
     } catch { /* ignora */ }
   }, { s, ref, prefs });
   const page = await ctx.newPage();
