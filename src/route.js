@@ -7,7 +7,7 @@ import { bySlug } from './data/books.js';
 //   #psa/psalms/51  #psa/read/23   Salmos: aba da tabela com o salmo selecionado; leitor no capítulo
 //   #timeline  #timeline/exodo     linha do tempo (e evento em foco)
 //   #person  #person/davi          personagens (e pessoa)
-//   #settings                      configurações
+//   #settings                      configurações (#settings/reading = opções de leitura)
 //   #favorites                     meus favoritos
 //   #profile                       meu perfil (conta)
 //   #admin                         administração (só admin; quem não é admin volta ao início)
@@ -22,7 +22,7 @@ export function parseHash(hash = location.hash) {
   if (a === 'timeline') return { kind: 'timeline', id: b || null };
   if (a === 'person') return { kind: 'person', id: b || null };
   if (a === 'favorites') return { kind: 'favorites' };
-  if (a === 'settings') return { kind: 'settings' };
+  if (a === 'settings') return { kind: 'settings', view: b === 'reading' ? 'reading' : 'main' };
   if (a === 'profile') return { kind: 'profile' };
   if (a === 'admin') return { kind: 'admin' };
   if (a === 'checkout') return { kind: 'checkout' };
@@ -40,6 +40,7 @@ export const hrefs = {
   person: (id) => (id ? `#person/${id}` : '#person'),
   favorites: '#favorites',
   settings: '#settings',
+  readingSettings: '#settings/reading',
   profile: '#profile',
   admin: '#admin',
   checkout: '#checkout/retorno',

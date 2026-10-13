@@ -250,7 +250,7 @@ export default function App() {
       )}
       {route.kind === 'settings' && (
         <Suspense fallback={<p className="soon page-wait">{t.loading}</p>}>
-          <SettingsPage t={t} lang={lang} settings={settings} canAcademic={plan.can('academic')} onChange={setSettings} />
+          <SettingsPage view={route.view} t={t} lang={lang} settings={settings} canAcademic={plan.can('academic')} onChange={setSettings} />
         </Suspense>
       )}
       {route.kind === 'favorites' && (

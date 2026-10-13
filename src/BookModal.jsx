@@ -327,7 +327,7 @@ function Reader({ book, lang, t, info, keyChapter, initialChapter }) {
               <span className="orig-aleph" aria-hidden="true">א</span>{t.originals}{!canOriginals && !plan.loading && <span className="pro-tag">{t.proTag}</span>}
             </button>
             {prevBtn}{nextBtn}
-            <a className="ghost" href={hrefs.settings} aria-label={t.readSettingsLabel}><span className="aa" aria-hidden="true">Aa</span>{t.readSettings}</a>
+            <a className="ghost" href={hrefs.readingSettings} aria-label={t.readSettingsLabel}><span className="aa" aria-hidden="true">Aa</span>{t.readSettings}</a>
           </span>
         </div>
         {invite && !canOriginals && <div className="orig-invite"><ProInvite t={t} lang={lang} feature="originals" /></div>}
