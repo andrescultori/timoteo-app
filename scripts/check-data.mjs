@@ -436,6 +436,13 @@ for (const ver of VERSIONS) {
   if (Object.keys(manifest.files).length !== files.size - 1) err('pacote Pro: o manifest não lista todos os arquivos');
 }
 
+// content-flags.json (livros com mapa e estrutura Pro) tem de estar em dia com as fichas
+{
+  const { buildFlags } = await import(new URL('./build-content-flags.mjs', import.meta.url).href);
+  const want = JSON.stringify(buildFlags(root));
+  if (JSON.stringify(read('src/data/content-flags.json')) !== want) err('src/data/content-flags.json está velho: rode node scripts/build-content-flags.mjs');
+}
+
 // Workflows do GitHub Actions: um `name:` com ": " dentro invalida o YAML e o workflow falha em todo push (aconteceu em landing-promo-rebuild.yml)
 {
   const dir = path.join(root, '.github/workflows');

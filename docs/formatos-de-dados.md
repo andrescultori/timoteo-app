@@ -170,9 +170,18 @@ O conteúdo Pro e a posição acadêmica vão para o **Supabase Storage** (bucke
 |---|---|
 | `manifest.json` | `{ version, files: { chave: { sha256, bytes } }, totalBytes }`, sem datas (determinístico); vai por último na publicação |
 | `info/<slug>.json` | `{ map?, structure? }` das fichas Pro (os 9 mapas do Essencial ficam públicos) |
-| `people/<id>.json` | personagem completo, dos 160 que não são do Essencial |
+| `people.json` | os 160 personagens que não são do Essencial, completos (um arquivo só: a linha do tempo e o mapa usam todos) |
 | `timeline.json`, `genealogy.json` | inteiros, **sem** a posição acadêmica |
 | `interlinear/<n>.json`, `interlinear/lex-h.json`, `lex-g.json` | originais, byte a byte como em `public/interlinear/` |
 | `admin/scholarly.json` | `{ info: { slug: extras }, timeline: extras }`: a posição acadêmica separada; só admin lê (política `v1/admin/*`) |
 
 Posição acadêmica separada = toda propriedade `scholarly` e todo item de lista com `view: 'scholarly'`. Cada "extra" guarda o caminho e o valor (`{ path, key, value }` ou `{ path, index, value }`) para restaurar exatamente (`restoreScholarly`). Publicar: `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` **só no ambiente**; `node scripts/publish-pro.mjs --dry-run` mostra o que mudaria; a publicação é idempotente (só envia o que mudou pelo hash) e apaga do bucket o que saiu do pacote (`--no-prune` desliga).
+
+### Chave de origem (`VITE_PRO_SOURCE`)
+
+`src/data/content.js` é o único ponto de carregamento de personagens, linha do tempo, genealogia e fichas (a lógica, em `contentCore.js`, é testada em Node). **`public` (padrão)**: tudo do pacote público, como sempre. **`storage`**: o conteúdo Pro vem do Storage, só para quem o banco autoriza:
+- Essencial e deslogado: personagens Pro só com nome e livros (`litePerson`), linha do tempo e genealogia vazias, fichas sem mapa/estrutura Pro e **sem posição acadêmica**; o app nem tenta o Storage.
+- Pro: completa tudo isso a partir do Storage (sem posição acadêmica).
+- Admin: também restaura a posição acadêmica (`admin/scholarly.json`).
+- Se o banco negar (plano vencido no servidor), o app cai para a versão pública, sem erro na tela. Ao trocar de conta ou de plano o cache é descartado.
+`src/data/content-flags.json` (gerado por `scripts/build-content-flags.mjs`, conferido pelo `check`) diz quais livros têm mapa e estrutura Pro, para as abas aparecerem ao Essencial (com o convite) mesmo sem o dado.

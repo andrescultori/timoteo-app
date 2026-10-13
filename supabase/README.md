@@ -214,3 +214,8 @@ Aplique, **nesta ordem**, depois da `20261014000000`:
 Migration `20261018000000_fase3b_bucket_pro.sql` (aditiva, **não aplicada pelo repositório**): cria o bucket privado `pro`, a função `can_read_pro()` (admin, ou Pro/Premium vigente em `entitlements`; vencido = Essencial) e duas políticas de SELECT em `storage.objects` (conteúdo Pro e `v1/admin/*`, só admin). Ninguém do cliente grava: quem sobe é o script de publicação (PR 3), com a `service_role` do **seu shell**.
 1. Aplique a migration (SQL Editor).
 2. Prova de conceito, na sua máquina (variáveis só no shell, nada no repositório): `node scripts/storage-poc.mjs` (cabeçalho do script lista as variáveis; precisa do `access_token` de uma conta Pro e de uma Essencial). Ele confere quem lê e quem não lê, a URL assinada e **se o Storage comprime o JSON** (mede o tráfego real). Se algo falhar, me mande a saída: a alternativa é a tabela `jsonb` (A) ou a Edge Function (C), e eu volto antes do PR 3.
+
+## Fase 3B, PR 4: chave de origem (`VITE_PRO_SOURCE`)
+Sem migration. O pacote precisa estar publicado (`node scripts/publish-pro.mjs`; como o PR 4 trocou `people/<id>.json` por um `people.json`, **publique de novo**: o publicador apaga os 160 arquivos antigos e envia o novo).
+- **Teste real:** `node scripts/pro-e2e.mjs` (variáveis só no ambiente: `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`; precisa de rede até o Supabase e do Playwright). Ele constrói o app com `VITE_PRO_SOURCE=storage`, cria contas Pro, Pro vencida e Essencial, e confere no navegador o que cada uma vê e os pedidos ao Storage; apaga as contas no fim.
+- **Ligar em produção:** só depois do e2e verde, e no PR 5 (que tira o Pro do pacote público). Hoje o padrão continua `public`: o app é idêntico ao de antes.

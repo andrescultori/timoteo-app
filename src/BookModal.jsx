@@ -16,27 +16,13 @@ import { resolvePrefs } from './readingPrefs.js';
 import { readStyle } from './readStyle.js';
 import { useResolvedSite } from './siteTheme.js';
 import { useOriginals, Strip } from './Originals.jsx';
+import { useInfoContent, hasInfoFile, hasProMap, hasProStructure } from './data/content.js';
 
-// Fichas carregadas sob demanda: cada src/data/info/<slug>.json vira um chunk separado.
-const INFO = import.meta.glob('./data/info/*.json');
-const hasInfo = (slug) => `./data/info/${slug}.json` in INFO;
 
 // Mapa (d3-geo + costa) só carrega quando a aba é aberta.
 const MapView = lazy(() => import('./MapView.jsx'));
 const PsalmsView = lazy(() => import('./PsalmsView.jsx'));
 const StructureView = lazy(() => import('./StructureView.jsx'));
-
-function useInfo(slug) {
-  const [state, setState] = useState({ info: null, error: false });
-  useEffect(() => {
-    let alive = true;
-    setState({ info: null, error: false });
-    const load = INFO[`./data/info/${slug}.json`];
-    if (load) load().then((m) => alive && setState({ info: m.default, error: false })).catch(() => alive && setState({ info: null, error: true }));
-    return () => { alive = false; };
-  }, [slug]);
-  return state;
-}
 
 export default function BookModal({ book, lang, t, initialTab, initialPlace, onNavigate, onOpenTimeline, onOpenPerson }) {
   const [tab, setTabState] = useState(initialTab ?? 'summary');
@@ -48,10 +34,10 @@ export default function BookModal({ book, lang, t, initialTab, initialPlace, onN
   const section = SECTIONS.find((s) => s.id === book.section);
   const prev = BOOKS[book.n - 2];
   const next = BOOKS[book.n];
-  const { info, error: infoError } = useInfo(book.slug);
+  const { info, error: infoError } = useInfoContent(book.slug); // ficha pública + (se o plano permitir) mapa/estrutura Pro; ver src/data/content.js
   const plan = usePlan();
   const locked = { map: !plan.loading && !plan.can('map', { slug: book.slug }), structure: !plan.loading && !plan.can('structure', { slug: book.slug }) };
-  const tabs = ['summary', 'sheet', ...(info?.map ? ['map'] : []), ...(book.slug === 'psa' ? ['psalms'] : []), ...(info?.structure ? ['structure'] : []), 'read'];
+  const tabs = ['summary', 'sheet', ...(info?.map || hasProMap(book.slug) ? ['map'] : []), ...(book.slug === 'psa' ? ['psalms'] : []), ...(info?.structure || hasProStructure(book.slug) ? ['structure'] : []), 'read'];
 
   const facts = [
     [t.testament, t[book.testament]],
@@ -90,11 +76,11 @@ export default function BookModal({ book, lang, t, initialTab, initialPlace, onN
             <dl className="facts">
               {facts.map(([k, v]) => (<div key={k}><dt>{k}</dt><dd>{v}</dd></div>))}
             </dl>
-            {!hasInfo(book.slug) && <p className="soon">{t.soon}</p>}
+            {!hasInfoFile(book.slug) && <p className="soon">{t.soon}</p>}
           </div>
         )}
         {tab === 'sheet' && <Sheet book={book} lang={lang} t={t} info={info} error={infoError} keyChapter={keyChapter} />}
-        {tab === 'map' && info?.map && locked.map && <ProInvite t={t} lang={lang} />}
+        {tab === 'map' && (info?.map || hasProMap(book.slug)) && (locked.map || (info && !info.map)) && <ProInvite t={t} lang={lang} />}
         {tab === 'map' && info?.map && !locked.map && (
           <div className="card">
             <Suspense fallback={<p className="soon">{t.loading}</p>}>
@@ -109,7 +95,7 @@ export default function BookModal({ book, lang, t, initialTab, initialPlace, onN
             </Suspense>
           </div>
         )}
-        {tab === 'structure' && info?.structure && locked.structure && <ProInvite t={t} lang={lang} />}
+        {tab === 'structure' && (info?.structure || hasProStructure(book.slug)) && (locked.structure || (info && !info.structure)) && <ProInvite t={t} lang={lang} />}
         {tab === 'structure' && info?.structure && !locked.structure && (
           <div className="card">
             <Suspense fallback={<p className="soon">{t.loading}</p>}>
@@ -220,7 +206,7 @@ function Aside({ book, lang, t, info, keyChapter, chapter }) {
 function Sheet({ book, lang, t, info, error, keyChapter }) {
   const { showScholarly } = useSettings();
   const index = useLinkIndex(book, info, lang);
-  if (!hasInfo(book.slug)) return <p className="soon">{t.soon}</p>;
+  if (!hasInfoFile(book.slug)) return <p className="soon">{t.soon}</p>;
   if (error) return <p className="soon">{t.loadError}</p>;
   if (!info) return <p className="soon">{t.loading}</p>;
 

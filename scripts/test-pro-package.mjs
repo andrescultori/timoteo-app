@@ -56,7 +56,7 @@ t('ida e volta sem perda: fichas, personagens, linha do tempo e genealogia', () 
   for (const p of back.people) assert.deepEqual(p, byId[p.id]);
 });
 t('só os personagens fora do Essencial vão ao pacote Pro', () => {
-  const proIds = [...pro.keys()].filter((k) => k.startsWith('people/')).map((k) => k.slice(7, -5));
+  const proIds = pro.get('people.json').map((p) => p.id);
   assert.equal(proIds.length, src.people.length - src.ess.characters.length);
   for (const id of src.ess.characters) assert.ok(!proIds.includes(id), `${id} é do Essencial`);
   assert.equal(rest.people.length, src.ess.characters.length);

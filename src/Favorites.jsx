@@ -9,29 +9,28 @@ import { pick } from './timelineUtil.js';
 import { useUserData, toggleFav, parseFavKey, FAV_TYPES } from './userdata.js';
 import { useSession, signInWithGoogle } from './auth.js';
 import { usePlan } from './plan.js';
+import { loadInfo, hasInfoFile, hasProMap } from './data/content.js';
 
-// Os lugares do mapa não têm id: para saber se o favorito ainda existe, carrega a ficha do livro (uma vez por livro).
-const INFO = import.meta.glob('./data/info/*.json');
+// Os lugares do mapa não têm id: para saber se o favorito ainda existe, carrega a ficha do livro (uma vez por livro; src/data/content.js).
 const peopleById = Object.fromEntries(people.map((p) => [p.id, p]));
 
-function usePlaceBooks(slugs) {
+function usePlaceBooks(slugs, accessId) {
   const [maps, setMaps] = useState({}); // slug -> lista de lugares | null (sem ficha ou erro)
   const need = slugs.filter((s) => !(s in maps)).join(',');
   useEffect(() => {
     let alive = true;
     need.split(',').filter(Boolean).forEach((slug) => {
-      const load = INFO[`./data/info/${slug}.json`];
       const done = (places) => alive && setMaps((m) => (slug in m ? m : { ...m, [slug]: places }));
-      if (!load) done(null);
-      else load().then((m) => done(m.default?.map?.places ?? [])).catch(() => done(null));
+      if (!hasInfoFile(slug)) done(null);
+      else loadInfo(slug).then((info) => done(info?.map?.places ?? [])).catch(() => done(null));
     });
     return () => { alive = false; };
-  }, [need]);
+  }, [need, accessId]);
   return maps;
 }
 
 // Resolve uma chave guardada em { label, href } ou null (destino que não existe mais nos dados)
-function resolve(key, lang, maps, can) {
+function resolve(key, lang, maps, can, t) {
   const k = parseFavKey(key);
   if (!k) return null;
   if (k.type === 'book') { const b = bySlug[k.slug]; return b && { label: b.name[lang], href: hrefs.book(b.slug) }; }
@@ -44,16 +43,19 @@ function resolve(key, lang, maps, can) {
   const places = maps[k.slug];
   if (!b || places === undefined) return b ? 'loading' : null;
   const pl = places?.find((x) => x.name?.pt === k.name);
+  // lugar de mapa Pro sem dado para este plano: rótulo genérico (o nome só existe no conteúdo Pro) e o link abre o convite
+  if (!pl && hasProMap(k.slug) && !can('map', { slug: k.slug })) return { label: `${t.favPlacePro} (${b.ab[lang]})`, href: hrefs.book(b.slug, 'map', k.name), pro: true };
   return pl ? { label: `${pick(pl.name, lang)} (${b.ab[lang]})`, href: hrefs.book(b.slug, 'map', pl.name.pt), pro: !can('map', { slug: b.slug }) } : null;
 }
 
 export default function Favorites({ lang, t }) {
   const { favs } = useUserData();
   const { enabled, signedIn } = useSession();
-  const { can } = usePlan();
+  const plan = usePlan();
+  const { can } = plan;
   usePageTitle([t.favorites], t.title);
   const placeSlugs = useMemo(() => [...new Set(favs.map((f) => parseFavKey(f.key)).filter((k) => k?.type === 'place' && bySlug[k.slug]).map((k) => k.slug))], [favs]);
-  const maps = usePlaceBooks(placeSlugs);
+  const maps = usePlaceBooks(placeSlugs, `${plan.plan}|${plan.isAdmin}`);
 
   const groups = FAV_TYPES.map((type) => ({
     type,
@@ -76,7 +78,7 @@ export default function Favorites({ lang, t }) {
               <h3 className="pp-group">{typeTitle[g.type] ?? t.favTypeOther} <span>{g.items.length}</span></h3>
               <ul className="fav-list">
                 {g.items.map((f) => {
-                  const r = resolve(f.key, lang, maps, can);
+                  const r = resolve(f.key, lang, maps, can, t);
                   return (
                     <li key={f.key} className={r && r !== 'loading' ? 'fav-item' : 'fav-item fav-missing'}>
                       {r === 'loading' ? <span>{t.loading}</span>
