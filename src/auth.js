@@ -92,6 +92,14 @@ const readPending = () => { try { const p = JSON.parse(ss.get(PENDING_KEY)); ret
 const consentOk = (p) => !!p?.terms_accepted_at && !!p?.sensitive_consent_at && (isDraft || p.terms_version === LEGAL_VERSION);
 
 // Depois do login: grava o aceite pendente (RPC accept_legal, a data é do servidor), confere o perfil e só então liga a sincronização.
+// Aparelho que já concluiu um cadastro (aceite gravado numa conta): as próximas entradas vão direto ao Google, sem repetir as 3 caixas.
+// Quem entra com uma conta NOVA nesse aparelho cai no caminho de sempre: volta do Google sem aceite e o consentimento abre para concluir o cadastro.
+const KNOWN_KEY = 'consentKnownDevice';
+const knownDevice = {
+  has: () => { try { return localStorage.getItem(KNOWN_KEY) === '1'; } catch { return false; } },
+  set: () => { try { localStorage.setItem(KNOWN_KEY, '1'); } catch { /* ignora */ } },
+};
+
 let gate = { userId: null, promise: null };
 function afterSession(client, user) {
   if (gate.userId === user.id && gate.promise) return gate.promise;
@@ -106,7 +114,7 @@ function afterSession(client, user) {
       }
       const { data, error } = await client.from('profiles').select('terms_version,terms_accepted_at,sensitive_consent_at,marketing_consent').eq('id', user.id).maybeSingle();
       if (error) throw error;
-      if (consentOk(data)) { set({ consent: 'ok', legal: data }); connectAccount(client, user.id); }
+      if (consentOk(data)) { set({ consent: 'ok', legal: data }); knownDevice.set(); connectAccount(client, user.id); }
       else set({ consent: 'needed', legal: data ?? null, consentOpen: ss.get(DISMISS_KEY) !== '1' }); // modo local até aceitar
     } catch {
       set({ consent: 'error' }); // sem rede ou erro: não sincroniza; tenta de novo no próximo carregamento
@@ -129,6 +137,7 @@ export async function acceptLegalNow({ marketing }) {
     gate = { userId: null, promise: null };
     ss.remove(DISMISS_KEY);
     set({ consentOpen: false });
+    knownDevice.set();
     if (state.user) await afterSession(client, state.user);
     return true;
   } catch { return false; }
@@ -176,15 +185,20 @@ async function start() {
 }
 if (typeof window !== 'undefined') start();
 
-// Entrar: antes de ir ao Google, mostra o consentimento (3 caixas). A tela chama startGoogleSignIn depois do "Continuar".
-export function signInWithGoogle() { openConsent(); return true; }
+// Entrar: no primeiro cadastro neste aparelho, mostra o consentimento (3 caixas) antes do Google (a tela chama startGoogleSignIn depois do
+// "Continuar"). Depois disso vai direto ao Google; se a conta for nova, o consentimento abre na volta.
+export function signInWithGoogle() {
+  if (knownDevice.has()) { startGoogleSignIn({ direct: true }); return true; }
+  openConsent();
+  return true;
+}
 
-export async function startGoogleSignIn({ marketing }) {
+export async function startGoogleSignIn({ marketing, direct = false }) {
   try {
     const client = await getClient();
     if (!client) return false;
     // as escolhas esperam a volta do OAuth e só então viram o aceite no banco (accept_legal)
-    ss.set(PENDING_KEY, JSON.stringify({ version: LEGAL_VERSION, marketing: !!marketing, at: new Date().toISOString() }));
+    if (!direct) ss.set(PENDING_KEY, JSON.stringify({ version: LEGAL_VERSION, marketing: !!marketing, at: new Date().toISOString() }));
     try { sessionStorage.setItem(RETURN_KEY, window.location.hash); } catch { /* ignora */ }
     set({ error: null, consentOpen: false });
     // As rotas são por hash: o retorno é a origem + caminho, sem hash; a rota é restaurada por cleanReturnUrl()
