@@ -58,6 +58,7 @@
       { "ids": ["structure"], "label": "Estrutura dos livros poéticos", "notes": { "essencial": "Livro de Salmos completo", "pro": "Salmos, Jó, Provérbios, Eclesiastes e Cantares" } },
       { "ids": ["characters"], "label": "Fichas de personagens", "notes": { "essencial": "50 principais", "pro": "Mais de 200", "premium": "Mais de 200" } },
       { "ids": ["offline-bible"], "label": "Texto bíblico offline", "notes": { "essencial": "Baixe as versões que usa" } },
+      { "ids": ["offline-pro"], "label": "Conteúdo Pro offline", "notes": { "pro": "Atualiza sozinho", "premium": "Atualiza sozinho" } },
       { "ids": ["originals"], "label": "Originais em hebraico e grego", "notes": { "pro": "Palavra a palavra, com Strong", "premium": "Palavra a palavra, com Strong" } },
       { "ids": ["gamification", "links"], "label": "Leitura gamificada e mais", "notes": { "essencial": "Em breve", "pro": "Em breve" } },
       { "ids": ["timeline"], "label": "Linha do tempo", "notes": {} },

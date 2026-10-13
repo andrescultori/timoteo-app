@@ -137,6 +137,20 @@
       }
     },
     {
+      "id": "offline-pro",
+      "label": {
+        "pt": "Conteúdo Pro offline",
+        "en": "Offline Pro content"
+      },
+      "essencial": false,
+      "pro": true,
+      "premium": true,
+      "note": {
+        "pt": "Fichas completas, personagens, linha do tempo, genealogia e originais no aparelho, com atualização automática.",
+        "en": "Full sheets, characters, timeline, genealogy and originals on your device, with automatic updates."
+      }
+    },
+    {
       "id": "originals",
       "label": {
         "pt": "Originais em hebraico e grego",

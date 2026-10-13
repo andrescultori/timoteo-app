@@ -44,6 +44,17 @@ export const hasStoredSession = () => {
   } catch { /* sem localStorage */ }
   return false;
 };
+// Usuário da sessão guardada no aparelho (para abrir sem rede quando o token venceu e não dá para renová-lo).
+const storedUser = () => {
+  try {
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('sb-') && k.endsWith('-auth-token')) { const u = JSON.parse(localStorage.getItem(k))?.user; if (u?.id) return u; }
+    }
+  } catch { /* ignora */ }
+  return null;
+};
+const isNetworkError = (e) => (typeof navigator !== 'undefined' && navigator.onLine === false) || e?.name === 'AuthRetryableFetchError' || /fetch|network/i.test(e?.message ?? '');
 const params = () => new URLSearchParams(window.location.search);
 
 // Depois da volta do OAuth (PKCE) o endereço traz ?code=...: limpa o código e devolve a pessoa à rota em que estava (o hash).
@@ -123,6 +134,13 @@ export async function acceptLegalNow({ marketing }) {
   } catch { return false; }
 }
 
+// Sem rede e com sessão guardada: segue como logado (o Pro offline depende disso); o Supabase renova o token quando a rede voltar.
+function offlineOrOut(e) {
+  const u = isNetworkError(e) ? storedUser() : null;
+  if (u) set({ status: 'in', user: u, error: null });
+  else set({ status: 'out', user: null, error: 'auth' });
+}
+
 let started = false;
 async function start() {
   if (started || !authEnabled) return;
@@ -142,13 +160,18 @@ async function start() {
         }
       }, 0);
     });
-    const { data, error } = await client.auth.getSession(); // aguarda a troca do ?code= por sessão
+    // aguarda a troca do ?code= por sessão. Sem rede, o Supabase tenta renovar o token vencido por vários minutos: não esperamos por isso
+    // (sem rede ou depois de 5 s, abre com a sessão guardada; se a renovação terminar bem ou mal, os eventos de auth acertam o estado).
+    const pending = client.auth.getSession();
+    const offline = !returning && typeof navigator !== 'undefined' && navigator.onLine === false;
+    const quick = returning ? pending : Promise.race([pending, new Promise((ok) => setTimeout(() => ok({ data: { session: null }, error: { name: 'AuthRetryableFetchError', message: 'timeout' } }), offline ? 0 : 5000))]);
+    const { data, error } = await quick;
     cleanReturnUrl();
-    if (error) set({ status: 'out', user: null, error: 'auth' });
+    if (error) offlineOrOut(error);
     else applySession(client, data.session);
-  } catch {
+  } catch (e) {
     cleanReturnUrl();
-    set({ status: 'out', user: null, error: 'auth' });
+    offlineOrOut(e);
   }
 }
 if (typeof window !== 'undefined') start();

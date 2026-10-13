@@ -5,7 +5,17 @@ import { getClient } from '../auth.js';
 
 const DENIED = new Set([400, 401, 403, 404]);
 
+// Leitor da cópia offline (registrado por src/data/proOffline.js): devolve o valor guardado, ou undefined para ir à rede.
+let stored = async () => undefined;
+export const setStoredReader = (fn) => { stored = fn; };
+
 export async function fetchProKey(key) {
+  try { const hit = await stored(key); if (hit !== undefined) return hit; } catch { /* cópia ilegível: vai à rede */ }
+  return fetchProNet(key);
+}
+
+// Sempre da rede (o sync usa esta; a leitura das telas usa fetchProKey).
+export async function fetchProNet(key) {
   const client = await getClient();
   if (!client) return null; // sem Supabase configurado: ninguém tem Pro
   const { data, error } = await client.storage.from('pro').download(`v1/${key}`);
