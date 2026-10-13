@@ -4,7 +4,8 @@ import { bySlug } from './data/books.js';
 import { pick } from './timelineUtil.js';
 import PageHead from './PageHead.jsx';
 import { usePageTitle } from './pageTitle.js';
-import { trees, nodes, parentOf, childrenOf, personById, refsText, nodeName } from './genealogy.js';
+import { genealogy, refsText } from './genealogy.js';
+import { useContent } from './data/content.js';
 
 const W = 168; // largura do nó
 const H = 30; // altura do nó
@@ -13,12 +14,19 @@ const DY = 46; // distância entre gerações
 const SPLIT = 34;
 const COLOR = { mt: 'var(--s-evangelhos)' };
 
-function build(id) {
-  return { id, kids: childrenOf(id).map((l) => build(l.to)) };
+function build(id, childrenOf) {
+  return { id, kids: childrenOf(id).map((l) => build(l.to, childrenOf)) };
 }
 
 // Página da árvore genealógica: SVG vertical (d3-hierarchy), com painel de detalhe (referências, notas, página do personagem).
-export default function Genealogy({ lang, t, treeId, focusNode, onOpenBook, onOpenPerson, onSelect }) {
+// Carrega a genealogia e os personagens (assíncrono, ver src/data/content.js) e só então desenha a página.
+export default function Genealogy(props) {
+  const { ready } = useContent('genealogy', 'people');
+  return ready ? <GenealogyView {...props} /> : <p className="soon page-wait">{props.t.loading}</p>;
+}
+
+function GenealogyView({ lang, t, treeId, focusNode, onOpenBook, onOpenPerson, onSelect }) {
+  const { trees, nodes, parentOf, childrenOf, personById, nodeName } = genealogy();
   const tr = trees.find((x) => x.id === treeId) ?? trees[0];
   const sel = focusNode && nodes[focusNode] ? focusNode : null;
   const svgRef = useRef(null);
@@ -26,7 +34,7 @@ export default function Genealogy({ lang, t, treeId, focusNode, onOpenBook, onOp
   const isList = tr.layout === 'list';
   const layout = useMemo(() => {
     if (isList) return null;
-    const root = hierarchy(build(tr.root), (d) => d.kids);
+    const root = hierarchy(build(tr.root, childrenOf), (d) => d.kids);
     d3tree().nodeSize([DX, DY]).separation(() => 1)(root);
     const all = root.descendants();
     all.forEach((n) => { if (nodes[n.data.id].branch) n.y += SPLIT; }); // espaço para o título de cada ramo

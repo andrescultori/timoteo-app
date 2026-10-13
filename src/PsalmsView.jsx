@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { bySlug } from './data/books.js';
 import { psalms } from './data/psalms.json';
-import { people } from './data/people.json';
+import people from './data/people-index.json'; // só id e nome bastam aqui (público e enxuto; ver src/data/content.js)
 import { useSettings } from './settings.js';
 import { usePlan } from './plan.js';
 import { hrefs, go } from './route.js';

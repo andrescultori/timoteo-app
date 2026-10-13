@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { BOOKS, bySlug } from './data/books.js';
-import data from './data/timeline.json';
-import { people } from './data/people.json';
+import { useContent, getPeople, getTimeline } from './data/content.js';
 import { pick, range, views, main } from './timelineUtil.js';
 import { useSettings } from './settings.js';
 import PageHead from './PageHead.jsx';
@@ -28,7 +27,15 @@ function Dates({ dates, t, lang }) {
   );
 }
 
-export default function Timeline({ lang, t, focusId, onClose, onOpenBook, onOpenMap, onOpenPerson }) {
+// Carrega a linha do tempo e os personagens (assíncrono, ver src/data/content.js) e só então desenha a página.
+export default function Timeline(props) {
+  const { ready } = useContent('timeline', 'people');
+  return ready ? <TimelineView {...props} /> : <p className="soon page-wait">{props.t.loading}</p>;
+}
+
+function TimelineView({ lang, t, focusId, onClose, onOpenBook, onOpenMap, onOpenPerson }) {
+  const data = getTimeline();
+  const people = getPeople();
   const { showScholarly } = useSettings();
   const focused = data.events.find((e) => e.id === focusId);
   usePageTitle([focused && pick(focused.title, lang), t.timeline], t.title);
