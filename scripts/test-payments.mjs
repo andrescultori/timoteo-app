@@ -136,6 +136,14 @@ await db.exec(`
   create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
   grant usage on schema auth to authenticated, service_role, anon;
   grant usage on schema public to authenticated, service_role, anon;
+  -- stub mínimo do Storage do Supabase (só as colunas que a migration 20261018 usa); o comportamento real do Storage não roda aqui
+  create schema storage;
+  create table storage.buckets (id text primary key, name text not null, public boolean not null default false, file_size_limit bigint, allowed_mime_types text[]);
+  create table storage.objects (id uuid primary key default gen_random_uuid(), bucket_id text references storage.buckets (id), name text not null, owner uuid);
+  alter table storage.objects enable row level security;
+  grant usage on schema storage to authenticated, anon, service_role;
+  grant select, insert, update, delete on storage.objects to authenticated, anon;
+  grant all on storage.objects, storage.buckets to service_role;
 `);
 for (const f of fs.readdirSync(path.join(root, 'supabase/migrations')).sort()) {
   await db.exec(fs.readFileSync(path.join(root, 'supabase/migrations', f), 'utf8'));
@@ -1028,6 +1036,57 @@ const driftSec = async (user, months) => Number((await q(
   eq([(await ent(friend)).plan, (await ent(friend)).expires_at], ['pro', null], 'cortesia sem prazo continua igual depois do pagamento');
   await as(adminId, () => q(`select public.admin_set_plan($1, 'essencial', null, 'rebaixado')`, [friend]));
   eq([(await ent(friend)).plan, (await q(`select exists(select 1 from public.payments where user_id = $1 and status = 'approved') as p`, [friend]))[0].p], ['essencial', true], 'rebaixar quem tem pagamento aprovado funciona (a tela avisa)');
+}
+
+// Fase 3B (PR 2): bucket `pro` privado e a política de leitura (can_read_pro)
+{
+  const as = async (uid, fn) => {
+    await db.exec(`set role ${uid === 'anon' ? 'anon' : 'authenticated'}; select set_config('request.jwt.claim.sub', '${uid && uid !== 'anon' ? uid : ''}', false);`);
+    try { return await fn(); } finally { await db.exec(`reset role; select set_config('request.jwt.claim.sub', '', false);`); }
+  };
+  const bucket = (await q(`select public, file_size_limit, allowed_mime_types from storage.buckets where id = 'pro'`))[0];
+  eq([bucket.public, Number(bucket.file_size_limit), bucket.allowed_mime_types], [false, 52428800, ['application/json']], 'bucket pro é privado, com limite e só JSON');
+  await q(`insert into storage.buckets (id, name) values ('outro', 'outro')`);
+  const put = (b, n) => q(`insert into storage.objects (bucket_id, name) values ($1, $2)`, [b, n]);
+  await put('pro', 'v1/manifest.json'); await put('pro', 'v1/people/davi.json'); await put('pro', 'v1/admin/scholarly.json'); await put('pro', 'v1/x/administrador.json'); await put('outro', 'v1/people/davi.json');
+  const names = (uid) => as(uid, async () => (await q(`select bucket_id || ':' || name as n from storage.objects order by 1`)).map((r) => r.n));
+  const proAll = ['pro:v1/manifest.json', 'pro:v1/people/davi.json', 'pro:v1/x/administrador.json'];
+
+  const ess = await newUser(); // sem linha ou Essencial
+  const pro = await newUser(); await q(`insert into public.entitlements (user_id, plan, expires_at) values ($1, 'pro', now() + interval '10 days') on conflict (user_id) do update set plan = excluded.plan, expires_at = excluded.expires_at`, [pro]);
+  const proOpen = await newUser(); await q(`insert into public.entitlements (user_id, plan, expires_at) values ($1, 'pro', null) on conflict (user_id) do update set plan = excluded.plan, expires_at = excluded.expires_at`, [proOpen]);
+  const prem = await newUser(); await q(`insert into public.entitlements (user_id, plan, expires_at) values ($1, 'premium', now() + interval '10 days') on conflict (user_id) do update set plan = excluded.plan, expires_at = excluded.expires_at`, [prem]);
+  const old = await newUser(); await q(`insert into public.entitlements (user_id, plan, expires_at) values ($1, 'pro', now() - interval '1 second') on conflict (user_id) do update set plan = excluded.plan, expires_at = excluded.expires_at`, [old]);
+  const essRow = await newUser(); await q(`insert into public.entitlements (user_id, plan) values ($1, 'essencial') on conflict (user_id) do nothing`, [essRow]);
+  const adm = await newUser(); await q(`insert into public.app_admins (user_id) values ($1)`, [adm]);
+
+  eq(await names('anon'), [], 'deslogado não lê nada do bucket');
+  eq(await names(ess), [], 'sem direito algum: nada');
+  eq(await names(essRow), [], 'Essencial: nada');
+  eq(await names(old), [], 'Pro vencido vale como Essencial: nada');
+  eq(await names(pro), proAll, 'Pro vigente lê o conteúdo Pro, mas não v1/admin');
+  eq(await names(proOpen), proAll, 'Pro sem prazo (concessão manual) lê o conteúdo Pro');
+  eq(await names(prem), proAll, 'Premium vigente lê o conteúdo Pro');
+  eq(await names(adm), ['pro:v1/admin/scholarly.json', ...proAll].sort(), 'admin lê tudo do bucket pro (inclusive v1/admin)');
+  ok(!(await names(pro)).includes('outro:v1/people/davi.json') && !(await names(adm)).includes('outro:v1/people/davi.json'), 'a regra vale só para o bucket pro');
+  // a validade é reavaliada a cada leitura: vencer agora tira o acesso, renovar devolve
+  await q(`update public.entitlements set expires_at = now() - interval '1 minute' where user_id = $1`, [pro]);
+  eq(await names(pro), [], 'o plano que vence no meio da sessão perde o acesso na próxima leitura');
+  await q(`update public.entitlements set expires_at = now() + interval '1 day' where user_id = $1`, [pro]);
+  eq(await names(pro), proAll, 'renovado: volta a ler');
+  // o cliente nunca grava
+  for (const [who, label] of [[pro, 'Pro'], [adm, 'admin'], [ess, 'Essencial']]) {
+    await as(who, async () => {
+      await rejects(() => q(`insert into storage.objects (bucket_id, name) values ('pro', 'v1/hack.json')`), `${label} não grava no bucket pro`);
+      eq((await q(`update storage.objects set name = 'v1/x.json' where bucket_id = 'pro'`)).length, 0, `${label} não renomeia objeto do bucket pro`);
+      eq((await q(`delete from storage.objects where bucket_id = 'pro' returning 1`)).length, 0, `${label} não apaga objeto do bucket pro`);
+    });
+  }
+  // can_read_pro: anon não executa; a função não aceita parâmetro (não dá para consultar o plano de outro usuário)
+  await as('anon', async () => rejects(() => q(`select public.can_read_pro()`), 'anon não executa can_read_pro'));
+  eq((await as(pro, () => q(`select public.can_read_pro() as r`)))[0].r, true, 'can_read_pro verdadeiro para Pro vigente');
+  eq((await as(ess, () => q(`select public.can_read_pro() as r`)))[0].r, false, 'can_read_pro falso para Essencial');
+  eq((await q(`select count(*) as n from pg_policies where schemaname = 'storage' and tablename = 'objects'`))[0].n.toString(), '2', 'só as duas políticas de leitura existem em storage.objects');
 }
 
 console.log(failed ? `\n${failed} teste(s) falharam, ${passed} passaram.` : `OK: ${passed} testes de cobrança passaram.`);
