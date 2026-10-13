@@ -87,8 +87,14 @@ async function visit(who, hash, { prefs, expect, wait = 'h1' }) {
   page.on('response', (r) => { const u = r.url(); if (u.includes('/storage/v1/object/')) storage.push({ key: u.split('/pro/')[1] ?? u, status: r.status() }); });
   await page.goto(`${base}${hash}`);
   await page.waitForSelector(wait, { timeout: 20000 }).catch(() => {});
-  await page.waitForTimeout(3500); // plano, Storage e render
+  // espera a condição esperada aparecer (arquivos grandes, como people.json com 534 KB e o interlinear, demoram pela rede/proxy); se for
+  // uma conferência de AUSÊNCIA (convite ao Pro, sem pedidos), a condição também aparece rápido e o tempo extra abaixo cobre pedidos tardios
+  const t0 = Date.now();
+  await page.waitForFunction(expect.js ?? '0', null, { timeout: 40000, polling: 250 }).catch(() => {});
+  await page.waitForTimeout(2500); // sobra para pedidos tardios ao Storage
   const found = await page.evaluate(expect.js ?? '0');
+  const secs = ((Date.now() - t0) / 1000).toFixed(1);
+  if (process.env.E2E_VERBOSE || !found) console.log(`     [${who} ${hash}] condição em ${secs}s; Storage: ${storage.map((x) => `${x.key}=${x.status}`).join(' ') || '(nenhum pedido)'}`);
   await ctx.close();
   return { storage, found };
 }
@@ -105,7 +111,7 @@ const none = (r) => r.storage.length === 0;
   check(m1.found > 0 && has(m1, 'info/rom.json'), 'Pro: mapa de Romanos (Pro) abre com os lugares');
   const s1 = await visit('pro', '#job/structure', { expect: { js: "document.querySelectorAll('.card svg, .card .st-part, .card [class*=st-]').length" } });
   check(s1.found > 0 && has(s1, 'info/job.json'), 'Pro: estrutura de Jó abre');
-  const o1 = await visit('pro', '#joh/read/1', { prefs: { originals: true }, expect: { js: "document.querySelectorAll('[class*=orig]').length" } });
+  const o1 = await visit('pro', '#joh/read/1', { prefs: { originals: true }, expect: { js: "document.querySelectorAll('.ostrip').length" } });
   check(o1.found > 0 && has(o1, 'interlinear/43.json'), 'Pro: originais de João carregam do Storage');
   check(!t1.storage.some((x) => x.key.startsWith('v1/admin')) , 'Pro (não admin) nunca pede a posição acadêmica');
 }
