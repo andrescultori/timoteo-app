@@ -111,6 +111,8 @@ Cada fase vira uma branch e um PR; o merge é do André. O Code diagnostica e es
 
 **Fase 3B: conteúdo Pro fora do site público — PENDENTE** (abaixo; só com confirmação do André)
 
+**PWA offline (decisão do André, 13/10/2026): entra junto da Fase 3B, não antes.** Motivo: a 3B troca de lugar o carregamento do texto bíblico (21 MB) e dos originais (16 MB); fazer o service worker depois evita refazer a regra de cache e garante que só quem tem direito (plano vigente) guarde conteúdo Pro no aparelho. Pontos em aberto para a ETAPA 0 da 3B: o offline é exclusivo do Pro?; aviso de "nova versão disponível" (sem cache velho preso no aparelho); limite de armazenamento e despejo do cache no iOS; ferramenta (`vite-plugin-pwa` ou service worker próprio). Até lá o `manifest` existente só permite instalar na tela inicial, sem prometer offline.
+
 **Fase 3: conteúdo por plano (o que sai do site público)**
 - Definir em **um arquivo de configuração único** o que cada plano inclui (usado pelo app e pela landing, para a tabela ✅/❌ nunca divergir).
 - O pacote público do Essencial contém só o que é do Essencial: fichas sem `map` e sem `structure` (exceto Evangelhos e Pentateuco no mapa, e Salmos na estrutura), os personagens da lista aprovada, sem linha do tempo e sem genealogia.
