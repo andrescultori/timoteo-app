@@ -219,3 +219,8 @@ Migration `20261018000000_fase3b_bucket_pro.sql` (aditiva, **não aplicada pelo 
 Sem migration. O pacote precisa estar publicado (`node scripts/publish-pro.mjs`; como o PR 4 trocou `people/<id>.json` por um `people.json`, **publique de novo**: o publicador apaga os 160 arquivos antigos e envia o novo).
 - **Teste real:** `node scripts/pro-e2e.mjs` (variáveis só no ambiente: `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`; precisa de rede até o Supabase e do Playwright). Ele constrói o app com `VITE_PRO_SOURCE=storage`, cria contas Pro, Pro vencida e Essencial, e confere no navegador o que cada uma vê e os pedidos ao Storage; apaga as contas no fim.
 - **Ligar em produção:** só depois do e2e verde, e no PR 5 (que tira o Pro do pacote público). Hoje o padrão continua `public`: o app é idêntico ao de antes.
+
+## Como convidar revisores de conteúdo (antes do lançamento)
+1. A pessoa entra em `estudo.timoteo.app.br` com a conta Google e aceita os termos. (A tela de consentimento do Google precisa estar em **Production**, ou a pessoa precisa estar na lista de usuários de teste.)
+2. Em `#admin`, busque pelo e-mail → **Editar** → plano **Pro**, vencimento **sem prazo** (cortesia) e motivo "revisor"; marque o papel **revisor** (ou editor).
+3. A cobrança fica desligada (`VITE_BILLING_ENABLED=false`), então o plano manual não conflita com pagamentos. Reembolso ou estorno **não** desfaz plano editado à mão (migration `20261016`).
