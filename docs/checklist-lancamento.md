@@ -7,9 +7,12 @@ Pendências do André e do projeto, em ordem aproximada. `[x]` feito, `[ ]` aber
 - [x] GitHub Pages desligado (Settings → Pages) e `deploy.yml` removido.
 - [x] Workflow da landing corrigido; deploy hook do Cloudflare cadastrado (`LANDING_DEPLOY_HOOK`). Testar rodando o workflow com `force` (esperado HTTP 200).
 - [x] Fase 3B, PRs 1 a 4 (camada de carregamento, bucket `pro`, pacote Pro publicado, chave `VITE_PRO_SOURCE`) e e2e verde (18 OK).
-- [ ] **Fase 3B, PR 5** (o site público deixa de levar o Pro): merge → conferir o site logado como Pro e como Essencial → **apagar os deploys antigos do Cloudflare**.
+- [x] Fase 3B, PR 5 (o site público deixa de levar o Pro): mesclado, site conferido como Pro e como Essencial.
+- [ ] **Apagar os deploys antigos do Cloudflare Pages** (projeto do app, aba Deployments, inclusive os de preview): os anteriores ao PR 5 ainda servem o pacote com o Pro. Adiado pelo André em 14/10/2026. **Fazer antes de tornar o repositório privado e antes de ligar a cobrança.** Passo a passo: no projeto do app, Deployments, ⋯ → Delete deployment em cada um que não seja o de produção ativo.
 - [x] Chaves novas do Supabase (`sb_secret_...`) em uso e chaves legadas (JWT) desativadas em 13/10/2026. Edge Functions, publicador e e2e (18 OK) verificados sem as legadas. Falta só apagar a variável antiga do ambiente da nuvem, se ainda existir.
-- [ ] PWA offline (PRs 6 a 9 da sequência).
+- [x] PWA offline: shell (PR 6), texto bíblico por versão (PR 7) e Pro offline com download automático (PR 8) mesclados.
+- [ ] **Testar o PWA no celular** (iPhone/Chrome): Configurações → Uso offline → baixar as versões; entrar com a conta Pro e esperar "No aparelho · ≈ 16 MB"; modo avião, fechar e reabrir (Linha do tempo, Personagens, mapa de Romanos); sair da conta e conferir que o bloco some. Prefira abrir pela Tela de Início.
+- [ ] **Política de Privacidade:** incluir o armazenamento offline do PWA (texto bíblico e, para assinantes, o conteúdo Pro no aparelho; apagado no logout, ao vencer o plano ou por remoção; Pro offline por até 14 dias sem confirmar o plano). Texto legal é do André; Claude só redige se pedido.
 - [ ] **Fase 8:** repositório privado e licença "Todos os direitos reservados": `LICENSE` e `NOTICE.md` em PR; passo a passo em `docs/fase8-passo-a-passo.md` (inclui apagar os deploys antigos do Cloudflare e o que fazer com o portfólio).
 - [ ] **Mercado Pago:** confirmar a **parcela mínima do anual em 10x** (R$ 39,90 → cerca de R$ 3,99 por parcela). Se o MP recusar, baixar `maxInstallments` do anual em `plans.json` e `MAX_INSTALLMENTS` em `supabase/functions/_shared/pricing.js` (o `check` confere os dois). Também confirmar as taxas atuais (Pix, cartão).
 - [ ] **Textos legais:** revisão jurídica dos Termos e da Política; publicar `LEGAL_VERSION` com data; prazo fiscal (contador); CPF no texto ou não; versão EN. A Política precisa de linha sobre o armazenamento offline do PWA (a listar quando chegar lá).
