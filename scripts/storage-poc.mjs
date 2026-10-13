@@ -5,8 +5,9 @@
 //   SUPABASE_URL=https://<ref>.supabase.co
 //   SUPABASE_SERVICE_ROLE_KEY=...      (só para subir e apagar o arquivo de teste)
 //   SUPABASE_PUBLISHABLE_KEY=...       (chave publishable, pública)
-//   PRO_JWT=...                        (access_token de uma conta Pro vigente; no navegador logado: localStorage `sb-<ref>-auth-token` → access_token)
-//   ESSENCIAL_JWT=...                  (access_token de uma conta Essencial ou com Pro vencido)
+//   PRO_JWT=... e ESSENCIAL_JWT=...    (OPCIONAIS: access_token de uma conta Pro vigente e de uma Essencial; no navegador logado:
+//                                       localStorage `sb-<ref>-auth-token` → access_token). Sem eles, o script CRIA duas contas de teste
+//                                       (poc-pro-*@example.com e poc-essencial-*@example.com), loga com elas e APAGA as duas no fim.
 //   node scripts/storage-poc.mjs [arquivo.json] [--keep]
 import fs from 'node:fs';
 
@@ -14,8 +15,28 @@ const env = (k) => { const v = process.env[k]; if (!v) { console.error(`Falta a 
 const URL_ = env('SUPABASE_URL').replace(/\/$/, '');
 const SERVICE = env('SUPABASE_SERVICE_ROLE_KEY');
 const PUB = env('SUPABASE_PUBLISHABLE_KEY');
-const PRO = env('PRO_JWT');
-const ESS = env('ESSENCIAL_JWT');
+const auto = !process.env.PRO_JWT || !process.env.ESSENCIAL_JWT;
+const created = [];
+const svc = { apikey: PUB, Authorization: `Bearer ${SERVICE}`, 'Content-Type': 'application/json' };
+async function mkUser(tag, pro) {
+  const email = `poc-${tag}-${Date.now()}@example.com`;
+  const password = `${crypto.randomUUID()}Aa1!`;
+  const r = await fetch(`${URL_}/auth/v1/admin/users`, { method: 'POST', headers: svc, body: JSON.stringify({ email, password, email_confirm: true }) });
+  const u = await r.json();
+  if (!r.ok || !u.id) { console.error(`não consegui criar a conta de teste (${r.status})`); process.exit(2); }
+  created.push(u.id);
+  if (pro) {
+    const e = await fetch(`${URL_}/rest/v1/entitlements?on_conflict=user_id`, { method: 'POST', headers: { ...svc, Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify({ user_id: u.id, plan: 'pro', expires_at: new Date(Date.now() + 10 * 864e5).toISOString() }) });
+    if (!e.ok) { console.error(`não consegui dar Pro à conta de teste (${e.status})`); process.exit(2); }
+  }
+  const t = await fetch(`${URL_}/auth/v1/token?grant_type=password`, { method: 'POST', headers: { apikey: PUB, 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
+  const tj = await t.json();
+  if (!t.ok || !tj.access_token) { console.error(`login da conta de teste falhou (${t.status})`); process.exit(2); }
+  return tj.access_token;
+}
+const PRO = auto ? await mkUser('pro', true) : process.env.PRO_JWT;
+const ESS = auto ? await mkUser('essencial', false) : process.env.ESSENCIAL_JWT;
+if (auto) console.log('     (contas de teste criadas: uma Pro vigente e uma Essencial)');
 const file = process.argv.slice(2).find((a) => !a.startsWith('--')) ?? 'public/interlinear/24.json';
 const keep = process.argv.includes('--keep');
 const key = 'v1/_poc/sample.json';
@@ -51,6 +72,10 @@ check(!sgE.ok, `Essencial NÃO gera URL assinada: HTTP ${sgE.status}`);
 if (!keep) {
   const del = await fetch(`${URL_}/storage/v1/object/pro`, { method: 'DELETE', headers: { apikey: PUB, Authorization: `Bearer ${SERVICE}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ prefixes: [key] }) });
   check(del.ok, `arquivo de teste apagado: HTTP ${del.status}`);
+}
+if (auto && !keep) {
+  for (const id of created) await fetch(`${URL_}/auth/v1/admin/users/${id}`, { method: 'DELETE', headers: svc });
+  console.log('     (contas de teste apagadas)');
 }
 console.log(bad ? `\n${bad} verificação(ões) falharam: NÃO siga para o PR 3; me mande a saída.` : '\nTudo certo: o modelo B (Storage privado com política por plano) funciona.');
 process.exit(bad ? 1 : 0);
