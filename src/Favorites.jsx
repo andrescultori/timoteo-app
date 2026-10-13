@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { bySlug } from './data/books.js';
-import { people } from './data/people.json';
+import people from './data/people-index.json'; // só id e nome bastam aqui (público e enxuto; ver src/data/content.js)
 import PageHead from './PageHead.jsx';
 import { HeartIcon } from './icons.jsx';
 import { hrefs } from './route.js';

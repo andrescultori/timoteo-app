@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { BOOKS, bySlug } from './data/books.js';
-import { people } from './data/people.json';
-import timeline from './data/timeline.json';
+import { useContent, getPeople, getTimeline } from './data/content.js';
 import { psalms } from './data/psalms.json';
 import { pick, range, main } from './timelineUtil.js';
 import PageHead from './PageHead.jsx';
@@ -11,13 +10,22 @@ import { usePlan } from './plan.js';
 import ProInvite from './ProInvite.jsx';
 import { hrefs, go } from './route.js';
 import { usePageTitle } from './pageTitle.js';
-import { nodes as gNodes, parentOf, childrenOf, nodesOfPerson, treeOf, refsText, nodeName } from './genealogy.js';
+import { genealogy, refsText } from './genealogy.js';
 
 const norm = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-const byId = Object.fromEntries(people.map((p) => [p.id, p]));
-const evById = Object.fromEntries(timeline.events.map((e) => [e.id, e]));
 
-export default function People({ lang, t, focusId, onOpenBook, onOpenTimeline, onOpenMap, onSelect, onOpenTree }) {
+// Carrega personagens, linha do tempo e genealogia (assíncrono, ver src/data/content.js) e só então desenha a página.
+export default function People(props) {
+  const { ready } = useContent('people', 'timeline', 'genealogy');
+  return ready ? <PeopleView {...props} /> : <p className="soon page-wait">{props.t.loading}</p>;
+}
+
+function PeopleView({ lang, t, focusId, onOpenBook, onOpenTimeline, onOpenMap, onSelect, onOpenTree }) {
+  const people = getPeople();
+  const timeline = getTimeline();
+  const { nodes: gNodes, parentOf, childrenOf, nodesOfPerson, treeOf, nodeName } = genealogy();
+  const byId = useMemo(() => Object.fromEntries(people.map((p) => [p.id, p])), [people]);
+  const evById = useMemo(() => Object.fromEntries(timeline.events.map((e) => [e.id, e])), [timeline]);
   const [query, setQuery] = useState('');
   const [bookFilter, setBookFilter] = useState('all');
   const [sort, setSort] = useState(() => { try { return localStorage.getItem('peopleSort') === 'book' ? 'book' : 'alpha'; } catch { return 'alpha'; } });

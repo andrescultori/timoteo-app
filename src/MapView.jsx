@@ -1,8 +1,7 @@
 import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { geoMercator, geoPath } from 'd3-geo';
 import land from './data/land.json';
-import timeline from './data/timeline.json';
-import { people } from './data/people.json';
+import { useContent, getPeople, getTimeline } from './data/content.js';
 import { pick as pickT, range, main } from './timelineUtil.js';
 import FavButton from './FavButton.jsx';
 import { usePlan } from './plan.js';
@@ -79,7 +78,15 @@ function useWidth(ref) {
   return w;
 }
 
-export default function MapView({ book, map, lang, t, initialPlace, onPlaceChange, onOpenTimeline, onOpenPerson }) {
+// Carrega a linha do tempo e os personagens (assíncrono, ver src/data/content.js) e só então desenha o mapa.
+export default function MapView(props) {
+  const { ready } = useContent('timeline', 'people');
+  return ready ? <MapViewInner {...props} /> : <p className="soon page-wait">{props.t.loading}</p>;
+}
+
+function MapViewInner({ book, map, lang, t, initialPlace, onPlaceChange, onOpenTimeline, onOpenPerson }) {
+  const timeline = getTimeline();
+  const people = getPeople();
   const { can } = usePlan();
   const boxRef = useRef(null);
   const [sel, setSel] = useState(() => Math.max(0, map.places.findIndex((p) => p.name.pt === initialPlace)));
