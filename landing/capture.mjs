@@ -8,7 +8,7 @@ const base = process.env.APP_URL ?? 'http://127.0.0.1:4180';
 const out = path.join(import.meta.dirname, 'img');
 // click: texto de um botão a clicar antes da captura; scroll: px de rolagem
 const shots = {
-  ficha: { hash: '#joh/sheet' },
+  ficha: { hash: '#joh' },
   mapa: { hash: '#joh/map', scroll: 250 },
   'linha-do-tempo': { hash: '#timeline', click: 'Egito e Êxodo' },
   personagens: { hash: '#person/boaz' }, // mostra o bloco Família (pai, mãe citada e filhos, com referências) e o link para a árvore

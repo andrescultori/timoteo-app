@@ -37,7 +37,7 @@ export default function BookModal({ book, lang, t, initialTab, initialPlace, onN
   const { info, error: infoError } = useInfoContent(book.slug); // ficha pública + (se o plano permitir) mapa/estrutura Pro; ver src/data/content.js
   const plan = usePlan();
   const locked = { map: !plan.loading && !plan.can('map', { slug: book.slug }), structure: !plan.loading && !plan.can('structure', { slug: book.slug }) };
-  const tabs = ['summary', 'sheet', ...(info?.map || hasProMap(book.slug) ? ['map'] : []), ...(book.slug === 'psa' ? ['psalms'] : []), ...(info?.structure || hasProStructure(book.slug) ? ['structure'] : []), 'read'];
+  const tabs = ['summary', ...(info?.map || hasProMap(book.slug) ? ['map'] : []), ...(book.slug === 'psa' ? ['psalms'] : []), ...(info?.structure || hasProStructure(book.slug) ? ['structure'] : []), 'read'];
 
   const facts = [
     [t.testament, t[book.testament]],
@@ -70,16 +70,7 @@ export default function BookModal({ book, lang, t, initialTab, initialPlace, onN
       </div>
 
       <div className="bk-body" role="tabpanel">
-        {tab === 'summary' && (
-          <div className="card">
-            <h2>{t.bookData}</h2>
-            <dl className="facts">
-              {facts.map(([k, v]) => (<div key={k}><dt>{k}</dt><dd>{v}</dd></div>))}
-            </dl>
-            {!hasInfoFile(book.slug) && <p className="soon">{t.soon}</p>}
-          </div>
-        )}
-        {tab === 'sheet' && <Sheet book={book} lang={lang} t={t} info={info} error={infoError} keyChapter={keyChapter} />}
+        {tab === 'summary' && <Sheet book={book} lang={lang} t={t} info={info} error={infoError} keyChapter={keyChapter} facts={facts} />}
         {tab === 'map' && (info?.map || hasProMap(book.slug)) && (locked.map || (info && !info.map)) && <ProInvite t={t} lang={lang} />}
         {tab === 'map' && info?.map && !locked.map && (
           <div className="card">
@@ -166,7 +157,7 @@ function Aside({ book, lang, t, info, keyChapter, chapter }) {
   useEffect(() => { setShowAll(false); }, [chapter, book.slug]);
   const byChapter = inChapter.ready && !showAll;
   return (
-    <aside className="bk-side" aria-label={chapter ? t.bookCharacters : t.sheet}>
+    <aside className="bk-side" aria-label={chapter ? t.bookCharacters : t.summary}>
       <section className="bk-key">
         <h2>{t.keyVerse}</h2>
         <span className="bk-keyref">{ref(info.keyVerse)}</span>
@@ -190,7 +181,7 @@ function Aside({ book, lang, t, info, keyChapter, chapter }) {
           </div>
         )}
         {inChapter.hasBook && <button type="button" className="linklike side-link" onClick={() => setShowAll(!showAll)}>{showAll ? t.seeOnlyChapter : t.seeAllBook}</button>}
-        {chapter && !byChapter && <a className="side-link" href={hrefs.book(book.slug, 'sheet')}>{t.seeSheet}</a>}
+        {chapter && !byChapter && <a className="side-link" href={hrefs.book(book.slug)}>{t.seeSheet}</a>}
       </section>
       <section className="card small">
         <h2>{t.outline}</h2>
@@ -203,12 +194,22 @@ function Aside({ book, lang, t, info, keyChapter, chapter }) {
   );
 }
 
-function Sheet({ book, lang, t, info, error, keyChapter }) {
+// Aba única do livro: "Visão geral" (testamento, seção, capítulos...) e, abaixo, a ficha de estudo; a lateral fica ao lado de tudo.
+function Sheet({ book, lang, t, info, error, keyChapter, facts }) {
   const { showScholarly } = useSettings();
   const index = useLinkIndex(book, info, lang);
-  if (!hasInfoFile(book.slug)) return <p className="soon">{t.soon}</p>;
-  if (error) return <p className="soon">{t.loadError}</p>;
-  if (!info) return <p className="soon">{t.loading}</p>;
+  const overview = (
+    <section className="card">
+      <h2>{t.overview}</h2>
+      <dl className="facts">
+        {facts.map(([k, v]) => (<div key={k}><dt>{k}</dt><dd>{v}</dd></div>))}
+      </dl>
+    </section>
+  );
+  const alone = (msg) => <div className="bk-main">{overview}<p className="soon">{msg}</p></div>;
+  if (!hasInfoFile(book.slug)) return alone(t.soon);
+  if (error) return alone(t.loadError);
+  if (!info) return alone(t.loading);
 
   const ref = (r) => `${book.ab[lang]} ${r}`;
   const rich = (v) => <Rich text={pick(v, lang)} index={index} />;
@@ -224,6 +225,7 @@ function Sheet({ book, lang, t, info, error, keyChapter }) {
   return (
     <div className="bk-cols sheetinfo">
       <div className="bk-main">
+        {overview}
         <section className="card">
           <h2>{t.bookData}</h2>
           <div className="bk-fields">
