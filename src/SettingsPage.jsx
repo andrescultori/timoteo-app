@@ -9,6 +9,7 @@ import { useResolvedSite } from './siteTheme.js';
 import { readStyle } from './readStyle.js';
 import { hrefs } from './route.js';
 import OfflineCard from './OfflineCard.jsx';
+import ConsentSummary from './ConsentSummary.jsx';
 
 // Grupo de opções excludentes (botões com aria-pressed, 44px)
 function Options({ label, items, value, onPick }) {
@@ -141,6 +142,8 @@ export default function SettingsPage({ t, lang, settings, canAcademic, onChange,
               </div>
             )}
           </section>
+
+          <ConsentSummary t={t} lang={lang} />
 
           <OfflineCard t={t} lang={lang} />
 

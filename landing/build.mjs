@@ -7,6 +7,7 @@
 // Textos da landing ficam em landing/content.json (nada com número de plano ou preço digitado à mão).
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 
 const here = import.meta.dirname;
 const root = path.resolve(here, '..');
@@ -94,7 +95,9 @@ const planCards = PLAN_IDS.map((id, col) => {
   const old = priced && launch ? money(p.prices.anual.regular) : '';
   const now = priced ? money(p.prices.anual[kind]) : soon ? C.plans.soonPrice : money(0);
   const note = priced ? fill(launch ? C.plans.priceNoteLaunch : C.plans.priceNote, vars) : card.note;
-  const items = rows.map((r) => {
+  // dentro de cada plano: incluído, incluído em parte, em breve, não incluído (a ordem da matriz vale dentro de cada grupo)
+  const rank = { yes: 0, partial: 1, soon: 2, no: 3 };
+  const items = rows.map((r, i) => ({ r, i })).sort((a, b) => rank[a.r.states[col]] - rank[b.r.states[col]] || a.i - b.i).map(({ r }) => {
     const st = r.states[col];
     const n = r.notes[id] ?? '';
     return `<li><span class="mark">${ICONS[st]}<span class="sr">${esc(C.plans.legend[st])}: </span></span><span class="txt"><span>${esc(r.label)}</span>${n ? `<span class="sub">${esc(n)}</span>` : ''}</span></li>`;
@@ -114,7 +117,9 @@ ${items}
 const tiles = books.map((b) => `<span style="background:${sectionColor[b.section]}">${esc(b.ab)}</span>`).join('');
 const legend = sections.map((s) => `<span class="lg"><i style="background:${sectionColor[s.id]}"></i>${esc(s.name)}</span>`).join('');
 const numbers = C.numbers.map((n) => `<div class="stat"><div class="stat-ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0F2D24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${NUM_ICONS[n.icon]}</svg></div><div class="stat-n">${stats[n.key]}</div><div class="stat-l">${esc(fill(n.label, vars))}</div></div>`).join('\n');
-const features = C.what.features.map((f) => `<div class="feat"><img src="img/${f.img}.webp" width="960" height="600" loading="lazy" decoding="async" alt="${esc(f.alt)}"><h3>${esc(f.title)}</h3><p>${esc(f.text)}</p></div>`).join('\n');
+// as capturas mantêm o nome ao serem refeitas: o ?v= (hash do arquivo) força o navegador e a CDN a buscar a nova
+const imgHash = (name) => crypto.createHash('sha256').update(fs.readFileSync(path.join(root, 'landing', 'img', `${name}.webp`))).digest('hex').slice(0, 8);
+const features = C.what.features.map((f) => `<div class="feat"><img src="img/${f.img}.webp?v=${imgHash(f.img)}" width="960" height="600" loading="lazy" decoding="async" alt="${esc(f.alt)}"><h3>${esc(f.title)}</h3><p>${esc(f.text)}</p></div>`).join('\n');
 const faq = C.faq.items.map((q) => `<details><summary><span>${esc(q.q)}</span><span class="plus" aria-hidden="true"></span></summary><p>${esc(fill(q.a, vars))}</p></details>`).join('\n');
 const chips = C.links.chips.map((c) => `<span class="chip">${esc(c)}</span>`).join('<span class="arrows" aria-hidden="true">⇄</span>');
 
@@ -275,7 +280,7 @@ for (const [name, text] of [['index.html', html], ['styles.css', fs.readFileSync
 if (/\bundefined\b|\{\w+\}/.test(html)) fail('sobrou marcador ou "undefined" no HTML');
 if (!/<h1[ >]/.test(html) || (html.match(/<h1[ >]/g) ?? []).length !== 1) fail('a página inicial deve ter exatamente uma h1');
 for (const m of html.matchAll(/<img [^>]*>/g)) { if (!/ alt=/.test(m[0])) fail(`img sem alt: ${m[0].slice(0, 60)}`); if (!/ width=/.test(m[0]) || !/ height=/.test(m[0])) fail(`img sem width/height: ${m[0].slice(0, 60)}`); }
-for (const m of html.matchAll(/src="(img\/[^"]+)"/g)) if (!fs.existsSync(path.join(dist, m[1]))) fail(`imagem ausente: landing/${m[1]} (rode landing/capture.mjs)`);
+for (const m of html.matchAll(/src="(img\/[^"?]+)(?:\?[^"]*)?"/g)) if (!fs.existsSync(path.join(dist, m[1]))) fail(`imagem ausente: landing/${m[1]} (rode landing/capture.mjs)`);
 
 for (const w of warnings) console.warn(`Aviso: ${w}`);
 if (problems.length) { console.error(`\nlanding: ${problems.length} problema(s)\n- ${problems.join('\n- ')}`); process.exit(1); }

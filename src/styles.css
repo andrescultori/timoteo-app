@@ -660,6 +660,18 @@ a.ghost[aria-disabled='true'] { opacity: 0.4; pointer-events: none; }
 
 @media (min-width: 900px) { .cfg-sticky { position: sticky; top: 76px; align-self: flex-start; } }
 
+/* Mapa no desktop: mapa à esquerda (70%) e, à direita (30%), eventos, personagens e a lista de lugares, com rolagem própria na altura do mapa */
+@media (min-width: 1000px) {
+  .mapview { display: grid; grid-template-columns: minmax(0, 7fr) minmax(260px, 3fr); grid-template-areas: 'map side' 'legend side' 'notes side'; column-gap: 24px; align-items: start; }
+  .mapview > .mapbox { grid-area: map; }
+  .mapview > .maplegend { grid-area: legend; }
+  .mapview > .mv-notes { grid-area: notes; }
+  .mapview > .mv-side { grid-area: side; max-height: max(var(--mv-h), 420px); overflow-y: auto; padding-right: 4px; }
+  .mv-side > :first-child { margin-top: 0; }
+  .mv-side .mplaces { margin-top: 0; }
+  .mv-side .mevents + .mplaces, .mv-side .mevents + .mevents { margin-top: 12px; }
+}
+
 /* Aviso do PWA (versão nova / pronto offline); só existe quando aparece */
 .pwa-toast { position: fixed; z-index: 60; left: var(--gutter); right: var(--gutter); bottom: 16px; max-width: 520px; margin-inline: auto; display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; padding: 12px 16px; border-radius: var(--radius-card); background: var(--accent-fill); color: var(--on-accent); box-shadow: 0 6px 24px rgba(0,0,0,.25); }
 .pwa-toast span { flex: 1 1 200px; }

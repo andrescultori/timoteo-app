@@ -2,7 +2,7 @@ import { bySlug } from './data/books.js';
 
 // Rotas por hash, para o botão voltar do navegador e os links compartilháveis funcionarem sem biblioteca:
 //   #                       início (grade)
-//   #joh  #joh/read         livro (e aba: summary | sheet | map | read)
+//   #joh  #joh/read         livro (e aba: summary | map | psalms | structure | read; #joh/sheet = summary)
 //   #2ki/map/Laquis         livro, aba Mapa, lugar selecionado (nome em PT)
 //   #psa/psalms/51  #psa/read/23   Salmos: aba da tabela com o salmo selecionado; leitor no capítulo
 //   #timeline  #timeline/exodo     linha do tempo (e evento em foco)
@@ -14,7 +14,8 @@ import { bySlug } from './data/books.js';
 //   #terms  #privacy               Termos de Uso e Política de Privacidade
 //   #checkout/retorno              volta do pagamento no Mercado Pago (o servidor confere; a URL não libera nada)
 //   #tree/adao-jesus  #tree/adao-jesus/mt-salomao   genealogia (árvore e nó em foco)
-const TABS = ['summary', 'sheet', 'map', 'psalms', 'structure', 'read'];
+const TABS = ['summary', 'map', 'psalms', 'structure', 'read'];
+const TAB_ALIAS = { sheet: 'summary' }; // endereços antigos (#joh/sheet) abrem a aba única
 
 export function parseHash(hash = location.hash) {
   const parts = hash.replace(/^#\/?/, '').split('/').map((x) => { try { return decodeURIComponent(x); } catch { return x; } });
@@ -29,7 +30,7 @@ export function parseHash(hash = location.hash) {
   if (a === 'terms') return { kind: 'terms' };
   if (a === 'privacy') return { kind: 'privacy' };
   if (a === 'tree') return { kind: 'tree', id: b || null, node: c || null };
-  if (bySlug[a]) return { kind: 'book', slug: a, tab: TABS.includes(b) ? b : 'summary', place: c || null };
+  if (bySlug[a]) return { kind: 'book', slug: a, tab: TABS.includes(b) ? b : TAB_ALIAS[b] ?? 'summary', place: c || null };
   return { kind: 'home' };
 }
 
