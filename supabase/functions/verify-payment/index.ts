@@ -4,8 +4,11 @@
 // Nunca confia em dados do navegador: só lê as linhas do usuário no banco e o que o Mercado Pago responde.
 import { corsHeaders, json, bearer } from '../_shared/http.js';
 import { createDb } from '../_shared/db.js';
+import { secretKey, publishableKey } from '../_shared/keys.js';
 import { searchPayments } from '../_shared/mp.js';
 import { applyAll } from '../_shared/payments.js';
+
+const env = (k: string) => Deno.env.get(k);
 
 Deno.serve(async (req: Request) => {
   const appUrl = Deno.env.get('APP_URL') ?? '';
@@ -15,7 +18,7 @@ Deno.serve(async (req: Request) => {
 
   const token = Deno.env.get('MP_ACCESS_TOKEN');
   if (!appUrl || !token) return json({ error: 'not_configured' }, 503, cors);
-  const db = createDb({ url: Deno.env.get('SUPABASE_URL')!, serviceKey: Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')! });
+  const db = createDb({ url: Deno.env.get('SUPABASE_URL')!, serviceKey: secretKey(env)!, publishableKey: publishableKey(env) ?? undefined });
 
   try {
     const user = await db.getUser(bearer(req));

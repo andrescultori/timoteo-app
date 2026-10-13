@@ -1,9 +1,12 @@
 // Exclusão da conta (LGPD). Exige usuário logado e o e-mail da conta digitado no corpo: { email }.
 // 1) delete_account_data (apaga os dados pessoais e anonimiza os pagamentos; recusa o único admin) e 2) apaga o usuário no Auth.
 // Idempotente: se o passo 2 falhar, repetir funciona. NÃO cancela nem reembolsa o Pro (reembolso é pelo painel do Mercado Pago,
-// regra dos 7 dias dos Termos). Sem log com e-mail ou nome. Do ambiente: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY. Secret: APP_URL (CORS).
+// regra dos 7 dias dos Termos). Sem log com e-mail ou nome. Do ambiente: SUPABASE_URL, chave secreta do Supabase (SUPABASE_SECRET_KEYS, ou a legada SUPABASE_SERVICE_ROLE_KEY). Secret: APP_URL (CORS).
 import { corsHeaders, json, bearer } from '../_shared/http.js';
 import { createDb } from '../_shared/db.js';
+import { secretKey, publishableKey } from '../_shared/keys.js';
+
+const env = (k: string) => Deno.env.get(k);
 
 Deno.serve(async (req: Request) => {
   const appUrl = Deno.env.get('APP_URL') ?? '';
@@ -13,7 +16,7 @@ Deno.serve(async (req: Request) => {
   if (!appUrl) return json({ error: 'not_configured' }, 503, cors);
 
   try {
-    const db = createDb({ url: Deno.env.get('SUPABASE_URL')!, serviceKey: Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')! });
+    const db = createDb({ url: Deno.env.get('SUPABASE_URL')!, serviceKey: secretKey(env)!, publishableKey: publishableKey(env) ?? undefined });
     const user = await db.getUser(bearer(req));
     if (!user) return json({ error: 'unauthorized' }, 401, cors);
 

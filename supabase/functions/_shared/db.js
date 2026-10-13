@@ -1,10 +1,13 @@
 // Acesso ao banco pelas Edge Functions, só com `fetch` (PostgREST). Usa a service_role do ambiente da função, que nunca
 // sai do servidor. A autenticação do usuário é conferida no Auth do Supabase com o JWT recebido.
-export function createDb({ url, serviceKey }) {
+import { adminHeaders } from './keys.js';
+
+// `serviceKey`: a chave secreta (nova `sb_secret_...` ou a legada `service_role`; ver keys.js). `publishableKey`: a publishable/anon, usada ao conferir o JWT do usuário.
+export function createDb({ url, serviceKey, publishableKey }) {
   const rest = async (path, init = {}) => {
     const res = await fetch(`${url}/rest/v1/${path}`, {
       ...init,
-      headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, 'Content-Type': 'application/json', ...(init.headers ?? {}) },
+      headers: adminHeaders(serviceKey, { 'Content-Type': 'application/json', ...(init.headers ?? {}) }),
       signal: AbortSignal.timeout(10000),
     });
     if (!res.ok) throw new Error(`banco respondeu ${res.status}: ${(await res.text()).slice(0, 200)}`);
@@ -16,7 +19,7 @@ export function createDb({ url, serviceKey }) {
     // usuário do JWT (null se inválido ou expirado)
     async getUser(jwt) {
       if (!jwt) return null;
-      const res = await fetch(`${url}/auth/v1/user`, { headers: { apikey: serviceKey, Authorization: `Bearer ${jwt}` }, signal: AbortSignal.timeout(10000) });
+      const res = await fetch(`${url}/auth/v1/user`, { headers: { apikey: publishableKey ?? serviceKey, Authorization: `Bearer ${jwt}` }, signal: AbortSignal.timeout(10000) });
       if (!res.ok) return null;
       const u = await res.json();
       return u?.id ? { id: u.id, email: typeof u.email === 'string' ? u.email : null } : null;
@@ -27,7 +30,7 @@ export function createDb({ url, serviceKey }) {
     deleteAccountData: (userId) => rest('rpc/delete_account_data', { method: 'POST', body: JSON.stringify({ p_user_id: userId }) }),
     // apaga o usuário no Auth (Admin API). 404 = já apagado (repetir é seguro).
     async deleteAuthUser(userId) {
-      const res = await fetch(`${url}/auth/v1/admin/users/${userId}`, { method: 'DELETE', headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` }, signal: AbortSignal.timeout(10000) });
+      const res = await fetch(`${url}/auth/v1/admin/users/${userId}`, { method: 'DELETE', headers: adminHeaders(serviceKey), signal: AbortSignal.timeout(10000) });
       if (!res.ok && res.status !== 404) throw new Error(`auth respondeu ${res.status}`);
     },
     getPayment: (id) => one(`payments?id=eq.${id}&select=*`),

@@ -3,16 +3,17 @@
 // (4) se o Storage entrega o JSON comprimido (gzip/br) e quanto trafega. Sobe um arquivo de teste em `v1/_poc/` e apaga no fim.
 // Tudo vem do AMBIENTE do shell (nada de segredo no repositório):
 //   SUPABASE_URL=https://<ref>.supabase.co
-//   SUPABASE_SERVICE_ROLE_KEY=...      (só para subir e apagar o arquivo de teste)
+//   SUPABASE_SECRET_KEY=sb_secret_...  (só para subir e apagar o arquivo de teste; a legada SUPABASE_SERVICE_ROLE_KEY ainda é aceita)
 //   SUPABASE_PUBLISHABLE_KEY=...       (chave publishable, pública)
 //   PRO_JWT=...                        (access_token de uma conta Pro vigente; no navegador logado: localStorage `sb-<ref>-auth-token` → access_token)
 //   ESSENCIAL_JWT=...                  (access_token de uma conta Essencial ou com Pro vencido)
 //   node scripts/storage-poc.mjs [arquivo.json] [--keep]
 import fs from 'node:fs';
+import { adminHeaders, secretFromEnv } from './supabase-keys.mjs';
 
 const env = (k) => { const v = process.env[k]; if (!v) { console.error(`Falta a variável de ambiente ${k} (ver o cabeçalho do script).`); process.exit(2); } return v; };
 const URL_ = env('SUPABASE_URL').replace(/\/$/, '');
-const SERVICE = env('SUPABASE_SERVICE_ROLE_KEY');
+const SERVICE = secretFromEnv();
 const PUB = env('SUPABASE_PUBLISHABLE_KEY');
 const PRO = env('PRO_JWT');
 const ESS = env('ESSENCIAL_JWT');
@@ -24,7 +25,7 @@ let bad = 0;
 const check = (ok, msg) => { console.log(`${ok ? 'OK  ' : 'FALHA'} ${msg}`); if (!ok) bad += 1; };
 const kb = (n) => `${(n / 1024).toFixed(1)} KB`;
 
-const up = await fetch(`${URL_}/storage/v1/object/pro/${key}`, { method: 'POST', headers: { apikey: PUB, Authorization: `Bearer ${SERVICE}`, 'Content-Type': 'application/json', 'x-upsert': 'true' }, body });
+const up = await fetch(`${URL_}/storage/v1/object/pro/${key}`, { method: 'POST', headers: adminHeaders(SERVICE, { 'Content-Type': 'application/json', 'x-upsert': 'true' }), body });
 check(up.ok, `upload do arquivo de teste (${file}, ${kb(body.length)}): HTTP ${up.status}`);
 
 const get = (jwt) => fetch(`${URL_}/storage/v1/object/authenticated/pro/${key}`, { headers: { apikey: PUB, ...(jwt ? { Authorization: `Bearer ${jwt}` } : {}), 'Accept-Encoding': 'gzip, br' } });
@@ -49,7 +50,7 @@ const sgE = await fetch(`${URL_}/storage/v1/object/sign/pro/${key}`, { method: '
 check(!sgE.ok, `Essencial NÃO gera URL assinada: HTTP ${sgE.status}`);
 
 if (!keep) {
-  const del = await fetch(`${URL_}/storage/v1/object/pro`, { method: 'DELETE', headers: { apikey: PUB, Authorization: `Bearer ${SERVICE}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ prefixes: [key] }) });
+  const del = await fetch(`${URL_}/storage/v1/object/pro`, { method: 'DELETE', headers: adminHeaders(SERVICE, { 'Content-Type': 'application/json' }), body: JSON.stringify({ prefixes: [key] }) });
   check(del.ok, `arquivo de teste apagado: HTTP ${del.status}`);
 }
 console.log(bad ? `\n${bad} verificação(ões) falharam: NÃO siga para o PR 3; me mande a saída.` : '\nTudo certo: o modelo B (Storage privado com política por plano) funciona.');

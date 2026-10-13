@@ -1,13 +1,16 @@
 // Cria o pagamento pendente e a preferência do Checkout Pro (Mercado Pago). Exige usuário logado.
 // O preço é decidido aqui, pela DATA da compra (lançamento ou normal) e pelo período; o corpo só traz o NOME do período
 // ({ period: 'mensal' | 'anual', plan?: 'pro' }), nunca um valor. Premium ainda não é vendido (plan_unavailable).
-// Secrets: MP_ACCESS_TOKEN, APP_URL. Do ambiente: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
+// Secrets: MP_ACCESS_TOKEN, APP_URL. Do ambiente: SUPABASE_URL, chave secreta do Supabase (SUPABASE_SECRET_KEYS, ou a legada SUPABASE_SERVICE_ROLE_KEY).
 import { corsHeaders, json, bearer } from '../_shared/http.js';
 import { createDb } from '../_shared/db.js';
+import { secretKey, publishableKey } from '../_shared/keys.js';
 import { createPreference, preferenceBody } from '../_shared/mp.js';
 import { orderFor, alreadyCovered } from '../_shared/pricing.js';
 
 const MAX_PENDING_PER_HOUR = 10;
+
+const env = (k: string) => Deno.env.get(k);
 
 Deno.serve(async (req: Request) => {
   const appUrl = Deno.env.get('APP_URL') ?? '';
@@ -18,7 +21,7 @@ Deno.serve(async (req: Request) => {
   const url = Deno.env.get('SUPABASE_URL')!;
   const token = Deno.env.get('MP_ACCESS_TOKEN');
   if (!appUrl || !token) return json({ error: 'not_configured' }, 503, cors);
-  const db = createDb({ url, serviceKey: Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')! });
+  const db = createDb({ url, serviceKey: secretKey(env)!, publishableKey: publishableKey(env) ?? undefined });
 
   try {
     const user = await db.getUser(bearer(req));

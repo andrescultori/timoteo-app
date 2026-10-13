@@ -1,7 +1,7 @@
 // Teste de ponta a ponta da origem `storage` (Fase 3B, PR 4): constrói o app com VITE_PRO_SOURCE=storage, cria contas de teste
 // (Pro vigente, Pro vencido, Essencial), abre o app num navegador de verdade (Playwright) e confere o que cada uma vê e quais
 // pedidos ao Storage faz. Roda ONDE HÁ REDE ATÉ O SUPABASE (a máquina do André ou a sessão de nuvem com a rede liberada). Fora do CI.
-// Tudo do AMBIENTE (nada no repositório): SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, SUPABASE_SERVICE_ROLE_KEY e, se o Playwright não for
+// Tudo do AMBIENTE (nada no repositório): SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, SUPABASE_SECRET_KEY (a legada SUPABASE_SERVICE_ROLE_KEY ainda é aceita) e, se o Playwright não for
 // uma dependência do projeto, PLAYWRIGHT_MODULE=/caminho/playwright/index.mjs. Precisa do pacote publicado (node scripts/publish-pro.mjs).
 //   node scripts/pro-e2e.mjs [--keep]   (--keep não apaga as contas de teste)
 import fs from 'node:fs';
@@ -9,15 +9,16 @@ import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { adminHeaders, secretFromEnv } from './supabase-keys.mjs';
 
 const env = (k) => { const v = process.env[k]; if (!v) { console.error(`Falta a variável de ambiente ${k} (ver o cabeçalho do script).`); process.exit(2); } return v; };
 const URL_ = env('SUPABASE_URL').replace(/\/$/, '');
 const PUB = env('SUPABASE_PUBLISHABLE_KEY');
-const SERVICE = env('SUPABASE_SERVICE_ROLE_KEY');
+const SERVICE = secretFromEnv();
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ?? 'playwright');
 const root = path.resolve(import.meta.dirname, '..');
 const keep = process.argv.includes('--keep');
-const svc = { apikey: PUB, Authorization: `Bearer ${SERVICE}`, 'Content-Type': 'application/json' };
+const svc = adminHeaders(SERVICE, { 'Content-Type': 'application/json' });
 const ref = new URL(URL_).hostname.split('.')[0];
 
 // ---- dados para as conferências ----
