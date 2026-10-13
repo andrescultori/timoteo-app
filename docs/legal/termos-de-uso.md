@@ -17,9 +17,9 @@ Uma ferramenta de **apoio ao estudo bíblico**: tabela dos 66 livros, fichas de 
 
 ## 4. Planos
 - **Essencial:** gratuito.
-- **Pro:** acesso pago por **12 meses**, pelo valor mostrado no app no momento da compra (hoje: **R$ 49,90**; no **primeiro** pagamento da conta, **R$ 29,90**, preço de entrada que vale uma vez por conta).
-- O valor, o que cada plano inclui e os meios de pagamento são os mostrados na tela de compra. Parcelamento no cartão pode ter juros cobrados pela operadora de pagamento, que são informados antes de você confirmar.
-- **Não há renovação automática.** Quando os 12 meses terminam, sua conta volta ao Essencial. **Seus favoritos e sua posição de leitura continuam guardados.** Se você pagar de novo antes do vencimento, os 12 meses novos **somam** ao tempo que restava.
+- **Pro:** acesso pago, **mensal (1 mês)** ou **anual (12 meses)**, pelo valor anunciado no site e na tela de compra no momento da compra. Os valores podem incluir condição de lançamento por tempo limitado; vale o valor mostrado na tela de compra ao criar o pagamento.
+- O valor, o que cada plano inclui e os meios de pagamento são os mostrados na tela de compra. Parcelamento no cartão (anual) pode ter juros cobrados pela operadora de pagamento, que são informados antes de você confirmar. **Consulte sempre os preços anunciados no site.**
+- **Não há renovação automática.** Quando o período pago termina, sua conta volta ao Essencial. **Seus favoritos e sua posição de leitura continuam guardados.** Se você pagar de novo antes do vencimento, o período novo **soma** ao tempo que restava.
 - Podemos mudar preços e planos no futuro. A mudança **não afeta** o período que você já pagou.
 
 ## 5. Pagamento
@@ -29,7 +29,7 @@ O pagamento é feito no ambiente do **Mercado Pago** (Pix ou cartão). **Nós n�
 - Você pode pedir **reembolso total em até 7 dias** depois da compra, **sem precisar explicar o motivo**, pelo e-mail **[amscultori@gmail.com]**. [Revisar com advogado: conferir o enquadramento no art. 49 do CDC e se prazos maiores valem em algum caso.]
 - Aprovado o reembolso, devolvemos o valor pelo mesmo meio de pagamento (o prazo para aparecer na fatura ou conta depende do banco ou do Mercado Pago), e a conta volta ao Essencial.
 - Se um pagamento for **estornado ou contestado** (chargeback), o acesso Pro correspondente é encerrado.
-- Se você pagar **duas vezes o preço de entrada** (por engano), devolvemos a duplicidade.
+- Se você pagar **duas vezes o mesmo período** (por engano), devolvemos a duplicidade.
 
 ## 7. Regras de uso
 Você concorda em: (a) usar o app só para estudo pessoal e não comercial; (b) **não** copiar em massa, revender ou redistribuir o conteúdo; (c) **não** compartilhar sua conta; (d) não tentar burlar as regras de plano, atacar ou sobrecarregar o serviço. Podemos **suspender ou encerrar** contas que descumpram isso, com aviso quando possível. Se houver encerramento sem culpa sua, devolvemos o valor proporcional ao tempo Pro não usado.
