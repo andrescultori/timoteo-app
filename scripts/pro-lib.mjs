@@ -5,54 +5,19 @@
 // Chaves publicadas (todas em `v1/`):
 //   manifest.json                  hash e tamanho de cada arquivo (gerado por último)
 //   info/<slug>.json               { map?, structure? } das fichas Pro (os 9 mapas do Essencial ficam públicos)
-//   people/<id>.json               personagem completo, só dos 160 que não são do Essencial
+//   people.json                    os 160 personagens que não são do Essencial, completos (um arquivo só: linha do tempo e mapa usam todos)
 //   timeline.json, genealogy.json  inteiros, SEM a posição acadêmica
 //   interlinear/<n>.json, lex-h.json, lex-g.json   originais, arquivos como estão
 //   admin/scholarly.json           posição acadêmica removida de fichas, linha do tempo e estrutura (só admin lê: política v1/admin/*)
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { stripScholarly, restoreScholarly, splitInfo } from '../src/data/proSplit.js';
+
+export { stripScholarly, restoreScholarly };
 
 export const PREFIX = 'v1/';
-export const KEY_RE = /^(manifest|timeline|genealogy|admin\/scholarly)\.json$|^(info|people)\/[a-z0-9-]+\.json$|^interlinear\/(\d{1,2}|lex-[hg])\.json$/;
-
-const clone = (o) => JSON.parse(JSON.stringify(o));
-const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
-
-// ---------- posição acadêmica: separar e devolver sem perda ----------
-// Remove (1) toda propriedade `scholarly` e (2) todo item de lista com `view: 'scholarly'` (leituras da aba Estrutura).
-// Devolve { doc, extras }; cada extra guarda o caminho e o valor para restaurar exatamente (itens, pela posição original).
-export function stripScholarly(input) {
-  const doc = clone(input);
-  const extras = [];
-  (function walk(node, pth) {
-    if (Array.isArray(node)) {
-      const keep = [];
-      node.forEach((v, i) => {
-        if (isObj(v) && v.view === 'scholarly') extras.push({ path: pth, index: i, value: v });
-        else keep.push(v);
-      });
-      node.length = 0;
-      node.push(...keep);
-      node.forEach((v, i) => walk(v, [...pth, i]));
-    } else if (isObj(node)) {
-      for (const k of Object.keys(node)) {
-        if (k === 'scholarly') { extras.push({ path: pth, key: k, value: node[k] }); delete node[k]; } else walk(node[k], [...pth, k]);
-      }
-    }
-  })(doc, []);
-  return { doc, extras };
-}
-
-const at = (doc, pth) => pth.reduce((n, k) => n[k], doc);
-export function restoreScholarly(input, extras) {
-  const doc = clone(input);
-  // propriedades primeiro (a ordem das chaves volta a ser a do arquivo original com `scholarly` no fim do objeto: não importa para o dado)
-  for (const e of extras.filter((x) => 'key' in x)) at(doc, e.path)[e.key] = clone(e.value);
-  // itens: em ordem crescente de posição original, por lista
-  for (const e of extras.filter((x) => 'index' in x).sort((a, b) => a.index - b.index)) at(doc, e.path).splice(e.index, 0, clone(e.value));
-  return doc;
-}
+export const KEY_RE = /^(manifest|people|timeline|genealogy|admin\/scholarly)\.json$|^info\/[a-z0-9-]+\.json$|^interlinear\/(\d{1,2}|lex-[hg])\.json$/;
 
 // ---------- leitura das fontes atuais ----------
 const readJson = (root, p) => JSON.parse(fs.readFileSync(path.join(root, p), 'utf8'));
@@ -77,26 +42,19 @@ export function splitSources(src) {
   const scholarly = { info: {}, timeline: [] };
   const restInfo = {};
   for (const [slug, doc] of Object.entries(src.info)) {
-    const { doc: noSch, extras } = stripScholarly(doc);
+    const { rest, part, extras } = splitInfo(slug, doc, src.ess);
     if (extras.length) scholarly.info[slug] = extras;
-    const rest = { ...noSch };
-    const part = {};
-    if ('map' in rest && !src.ess.mapBooks.includes(slug)) { part.map = rest.map; delete rest.map; }
-    if ('structure' in rest && !src.ess.structureBooks.includes(slug)) { part.structure = rest.structure; delete rest.structure; }
     if (Object.keys(part).length) pro.set(`info/${slug}.json`, part);
     restInfo[slug] = rest;
   }
   const essIds = new Set(src.ess.characters);
-  const restPeople = [];
-  for (const p of src.people) {
-    if (essIds.has(p.id)) restPeople.push(p); else pro.set(`people/${p.id}.json`, p);
-  }
+  pro.set('people.json', src.people.filter((p) => !essIds.has(p.id))); // todos os personagens Pro num arquivo só (a linha do tempo e o mapa usam todos)
   const tl = stripScholarly(src.timeline);
   scholarly.timeline = tl.extras;
   pro.set('timeline.json', tl.doc);
   pro.set('genealogy.json', src.genealogy);
   pro.set('admin/scholarly.json', scholarly);
-  return { pro, rest: { info: restInfo, people: restPeople } };
+  return { pro, rest: { info: restInfo, people: src.people.filter((p) => essIds.has(p.id)) } };
 }
 
 // Inverso de splitSources: reconstrói fichas, personagens e linha do tempo originais (para provar que nada se perde).
@@ -108,8 +66,7 @@ export function joinSources(pro, rest) {
     if (sch.info[slug]) d = restoreScholarly(d, sch.info[slug]);
     info[slug] = d;
   }
-  const people = [...rest.people, ...[...pro.entries()].filter(([k]) => k.startsWith('people/')).map(([, v]) => v)];
-  return { info, people, timeline: restoreScholarly(pro.get('timeline.json'), sch.timeline), genealogy: pro.get('genealogy.json') };
+  return { info, people: [...rest.people, ...pro.get('people.json')], timeline: restoreScholarly(pro.get('timeline.json'), sch.timeline), genealogy: pro.get('genealogy.json') };
 }
 
 // ---------- pacote publicável ----------

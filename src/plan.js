@@ -2,6 +2,7 @@ import { useSyncExternalStore } from 'react';
 import plans from './data/plans.json';
 import { createCan, effectivePlan } from './planRules.js';
 import { subscribeAuth, getAuthState, getClient, hasStoredSession } from './auth.js';
+import { setAccess } from './data/content.js';
 
 // Plano efetivo do usuário (somente leitura no cliente; nada de gravar plano por aqui).
 //   sem login = essencial; com login, lê `entitlements` (a RLS já limita à própria linha) e chama `is_admin()`.
@@ -17,7 +18,9 @@ const write = (v) => { try { v ? localStorage.setItem(CACHE, JSON.stringify(v)) 
 const OFF = { plan: 'essencial', isAdmin: false, loading: false, userId: null, expiresAt: null };
 let state = OFF;
 const listeners = new Set();
-const set = (next) => { state = { ...state, ...next }; listeners.forEach((fn) => fn()); };
+// O conteúdo Pro (src/data/content.js) segue o acesso do usuário: ao mudar login ou plano, recarrega o que for preciso.
+const syncAccess = () => setAccess({ userId: state.userId, ready: !state.loading, level: state.isAdmin ? 'admin' : state.plan === 'pro' || state.plan === 'premium' ? 'pro' : 'none' });
+const set = (next) => { state = { ...state, ...next }; syncAccess(); listeners.forEach((fn) => fn()); };
 
 // "Carregando" enquanto há sessão guardada e o plano ainda não chegou; com cache recente do mesmo aparelho, já mostra o plano guardado.
 function fromCache() {
@@ -26,6 +29,7 @@ function fromCache() {
   return null;
 }
 if (typeof window !== 'undefined' && hasStoredSession()) state = fromCache() ?? { ...OFF, loading: true };
+syncAccess();
 
 let fetchingFor = null;
 async function load(userId) {

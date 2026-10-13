@@ -115,7 +115,7 @@ function PeopleView({ lang, t, focusId, onOpenBook, onOpenTimeline, onOpenMap, o
                             <li key={p.id}>
                               <button type="button" className="pp-card" onClick={() => choose(p.id)}>
                                 <b>{pick(p.name, lang)}{sec.pro && <span className="pro-tag">{t.proTag}</span>}</b>
-                                <span>{pick(p.summary, lang).split(/(?<=[.!?])\s/)[0]}</span>
+                                {p.summary && <span>{pick(p.summary, lang).split(/(?<=[.!?])\s/)[0]}</span>}
                                 <small>{p.books.length} {p.books.length === 1 ? t.peopleBookOne : t.peopleBooks}</small>
                               </button>
                             </li>
