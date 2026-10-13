@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { VitePWA } from 'vite-plugin-pwa';
 import { splitInfo, publicPeople } from './src/data/proSplit.js';
 
 // Origem do conteúdo Pro (Fase 3B):
@@ -38,7 +39,31 @@ export default defineConfig(({ command }) => {
   return {
     // base relativa: funciona na raiz do domínio (Cloudflare Pages) e em qualquer subpasta.
     base: './',
-    plugins: [react(), ...(split ? [split] : [])],
+    plugins: [
+      react(),
+      ...(split ? [split] : []),
+      // PWA (Fase 3B, PR 6): o shell do app fica no aparelho e abre sem rede. O texto bíblico entra no cache só depois de lido (PR 7 traz o download
+      // completo); o Pro nunca passa pelo service worker (vem do Supabase, outra origem). O manifest continua sendo public/manifest.webmanifest.
+      VitePWA({
+        registerType: 'prompt',
+        manifest: false,
+        injectRegister: false,
+        workbox: {
+          globPatterns: ['**/*.{html,js,css,woff2,svg,png,webmanifest}'],
+          globIgnores: ['bible/**', 'interlinear/**', 'licencas/**', 'og-image.png', 'brand/**'],
+          maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
+          navigateFallback: 'index.html',
+          cleanupOutdatedCaches: true,
+          runtimeCaching: [
+            {
+              urlPattern: ({ url, sameOrigin }) => sameOrigin && /\/bible\/[^/]+\/\d+\.json$/.test(url.pathname),
+              handler: 'CacheFirst',
+              options: { cacheName: 'bible-text-v1', cacheableResponse: { statuses: [200] }, expiration: { maxEntries: 600 } },
+            },
+          ],
+        },
+      }),
+    ],
     define: { 'import.meta.env.VITE_PRO_SOURCE': JSON.stringify(source) },
   };
 });

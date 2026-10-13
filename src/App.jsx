@@ -14,6 +14,7 @@ import { SettingsContext } from './settings.js';
 import { parseHash, hrefs, go, replaceHome } from './route.js';
 import { usePageTitle } from './pageTitle.js';
 import { useApplySiteTheme } from './siteTheme.js';
+import UpdatePrompt from './UpdatePrompt.jsx';
 
 // Linha do tempo só carrega quando aberta.
 const Timeline = lazy(() => import('./Timeline.jsx'));
@@ -287,6 +288,7 @@ export default function App() {
         </div>
       </footer>
       <DeviceNotice t={t} />
+      <UpdatePrompt t={t} />
       {session.consentOpen && <ConsentModal t={t} lang={lang} />}
     </SettingsContext.Provider>
   );

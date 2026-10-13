@@ -405,6 +405,11 @@ export const T = {
     admDeletedAccount: 'conta excluída',
     admNoName: '(sem nome)',
     madeBy: 'Desenvolvido por',
+    updateReady: 'Há uma versão nova do app.',
+    updateNow: 'Atualizar',
+    updateLater: 'Depois',
+    offlineReady: 'Pronto para abrir sem internet.',
+    offlineClose: 'Fechar',
   },
   en: {
     title: 'Timoteo App',
@@ -806,5 +811,10 @@ export const T = {
     admDeletedAccount: 'deleted account',
     admNoName: '(no name)',
     madeBy: 'Developed by',
+    updateReady: 'A new version of the app is available.',
+    updateNow: 'Update',
+    updateLater: 'Later',
+    offlineReady: 'Ready to open without internet.',
+    offlineClose: 'Close',
   },
 };
