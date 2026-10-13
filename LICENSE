@@ -1,21 +1,38 @@
-MIT License
+Copyright (c) 2026 André Scultori. Todos os direitos reservados.
+Copyright (c) 2026 André Scultori. All rights reserved.
 
-Copyright (c) 2026 André Scultori
+PORTUGUÊS
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Este software e o seu conteúdo original (código-fonte, textos de fichas de estudo, resumos de personagens, linha do tempo, genealogia, esboços,
+mapas montados, design, marca e logo do Timóteo App) são de propriedade de André Scultori. Nenhum direito é concedido, expressa ou implicitamente,
+para copiar, modificar, publicar, distribuir, sublicenciar, vender ou usar este material, no todo ou em parte, sem autorização prévia e por
+escrito do titular. A visualização do site público do Timóteo App, nos termos de uso do próprio site, não transfere nenhum desses direitos.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+Componentes de terceiros (textos bíblicos, dados, fontes e bibliotecas) NÃO estão cobertos por esta licença: continuam sob as licenças dos seus
+autores, listadas em NOTICE.md, e este arquivo não restringe nenhum direito que essas licenças concedam.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+Cópias do código obtidas antes da publicação desta licença, quando então o repositório usava a licença MIT, continuam regidas pela MIT quanto a
+essas cópias. Versões publicadas a partir de agora são regidas apenas por esta licença.
+
+O SOFTWARE É FORNECIDO "NO ESTADO EM QUE SE ENCONTRA", SEM GARANTIA DE QUALQUER TIPO, EXPRESSA OU IMPLÍCITA. O TITULAR NÃO RESPONDE POR DANOS
+DECORRENTES DO SEU USO, NA MEDIDA PERMITIDA PELA LEI.
+
+Contato para autorizações: contato@timoteo.app.br
+
+ENGLISH
+
+This software and its original content (source code, study-sheet texts, character summaries, timeline, genealogy, outlines, assembled maps,
+design, brand and logo of Timóteo App) are the property of André Scultori. No right is granted, expressly or by implication, to copy, modify,
+publish, distribute, sublicense, sell or use this material, in whole or in part, without the prior written permission of the owner. Viewing the
+public Timóteo App website, under the site's own terms of use, does not transfer any of these rights.
+
+Third-party components (Bible texts, data, fonts and libraries) are NOT covered by this license: they remain under their authors' licenses,
+listed in NOTICE.md, and this file does not restrict any right those licenses grant.
+
+Copies of the code obtained before this license was published, when the repository used the MIT license, remain governed by the MIT license as
+to those copies. Versions published from now on are governed by this license only.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED. THE OWNER IS NOT LIABLE FOR DAMAGES ARISING FROM ITS USE, TO
+THE EXTENT PERMITTED BY LAW.
+
+Contact for permissions: contato@timoteo.app.br
