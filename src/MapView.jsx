@@ -154,7 +154,7 @@ function MapViewInner({ book, map, lang, t, initialPlace, onPlaceChange, onOpenT
   const onKey = (i) => (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); choose(i); } };
 
   return (
-    <div className="mapview" style={{ '--c': color }}>
+    <div className="mapview" style={{ '--c': color, '--mv-h': `${H}px` }}>
       <div className="mapbox" ref={boxRef}>
         {canZoom && (
           <button type="button" className="mapzoom" aria-pressed={zoomed} onClick={() => setZoom(!zoomed)}>
@@ -195,6 +195,7 @@ function MapViewInner({ book, map, lang, t, initialPlace, onPlaceChange, onOpenT
         )}
       </ul>
 
+      <div className="mv-side">
       {can('events') && events.length > 0 && ( // a linha do tempo é do Pro: sem o plano, os chips de evento nem aparecem
         <div className="mevents">
           <h4>{t.mapEvents}: {pickText(places[sel].name, lang)}</h4>
@@ -234,11 +235,15 @@ function MapViewInner({ book, map, lang, t, initialPlace, onPlaceChange, onOpenT
         ))}
       </div>
 
+      </div>
+
+      <div className="mv-notes">
       {map.note && <p className="mapnote">{pickText(map.note, lang)}</p>}
       <p className="mapnote">
         {t.mapUncertainHelp} {t.mapCoast} <a href="https://www.naturalearthdata.com/" target="_blank" rel="noreferrer">Natural Earth</a>. {t.mapPlaces}{' '}
         <a href="https://www.openbible.info/geo/" target="_blank" rel="noreferrer">OpenBible.info</a> (<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">CC BY 4.0</a>). {t.mapApprox}
       </p>
+      </div>
     </div>
   );
 }
