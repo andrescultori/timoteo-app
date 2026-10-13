@@ -5,7 +5,7 @@ Página estática (HTML + CSS, **sem JavaScript** e sem dependências) gerada po
 ## Comandos
 - `npm run landing` gera `landing/dist/`.
 - `npm run check` (e o CI) roda `node landing/build.mjs --check`: o build falha se um preço, nome de plano ou linha da matriz do `src/data/plans.json` não aparecer no HTML, se `plans.json` ganhar uma linha que a landing não mostra nem omite, se faltar imagem, `alt`, `width`/`height`, ou se algo citar recursos do Google.
-- `node landing/capture.mjs` refaz as capturas de `landing/img/` (ver o cabeçalho do arquivo: usa um build **local** do app com plano padrão "pro", que nunca é commitado).
+- `node landing/capture.mjs` refaz as capturas de `landing/img/` (ver o cabeçalho do arquivo: usa um build **local** do app (`ALLOW_LOCAL_PRO=1 VITE_PRO_SOURCE=local npx vite build`, necessário porque o build padrão não leva o Pro) com plano padrão "pro", que nunca é commitado).
 
 ## De onde vem cada coisa (nada digitado em dois lugares)
 | Dado | Fonte |

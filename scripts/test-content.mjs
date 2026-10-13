@@ -31,8 +31,8 @@ const get = async (c, k) => { await c.load(k); return c.get(k); };
 const ess = new Set(src.ess.characters);
 const proIds = src.people.filter((p) => !ess.has(p.id)).map((p) => p.id);
 
-await t('public: devolve exatamente os dados de hoje, sem tocar o Storage', async () => {
-  const calls = []; const c = mk('public', { calls });
+await t('local: devolve exatamente os dados de hoje, sem tocar o Storage', async () => {
+  const calls = []; const c = mk('local', { calls });
   as(c, 'u', 'none');
   assert.deepEqual(await get(c, 'people'), src.people);
   assert.deepEqual(await get(c, 'timeline'), src.timeline);

@@ -6,8 +6,8 @@ Pendências do André e do projeto, em ordem aproximada. `[x]` feito, `[ ]` aber
 - [x] Política de preços (Pro mensal/anual; Premium "Em breve"); migration `20261017` aplicada e funções publicadas.
 - [x] GitHub Pages desligado (Settings → Pages) e `deploy.yml` removido.
 - [x] Workflow da landing corrigido; deploy hook do Cloudflare cadastrado (`LANDING_DEPLOY_HOOK`). Testar rodando o workflow com `force` (esperado HTTP 200).
-- [x] Fase 3B, PRs 1 a 4 (camada de carregamento, bucket `pro`, pacote Pro e publicado, chave `VITE_PRO_SOURCE`).
-- [ ] **e2e do Storage** verde (`node scripts/pro-e2e.mjs`, esperado 18 OK) → PR 5 (tirar o Pro do pacote público e virar o padrão para `storage`) → apagar os deploys antigos do Cloudflare.
+- [x] Fase 3B, PRs 1 a 4 (camada de carregamento, bucket `pro`, pacote Pro publicado, chave `VITE_PRO_SOURCE`) e e2e verde (18 OK).
+- [ ] **Fase 3B, PR 5** (o site público deixa de levar o Pro): merge → conferir o site logado como Pro e como Essencial → **apagar os deploys antigos do Cloudflare**.
 - [ ] **Trocar (rodar) a `service_role`** no painel do Supabase, depois dos testes.
 - [ ] PWA offline (PRs 6 a 9 da sequência).
 - [ ] **Fase 8:** repositório privado e licença "Todos os direitos reservados" (ver abaixo).

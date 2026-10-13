@@ -6,10 +6,11 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "postbuild": "node scripts/check-dist.mjs --if-storage",
     "preview": "vite preview",
     "data:kjv": "node scripts/build-bible-data.mjs kjv",
     "check": "node scripts/check-data.mjs && node landing/build.mjs --check",
-    "test": "node scripts/test-payments.mjs && node scripts/test-interlinear.mjs && node scripts/test-people-chapters.mjs && node scripts/test-pro-package.mjs && node scripts/test-content.mjs",
+    "test": "node scripts/test-payments.mjs && node scripts/test-interlinear.mjs && node scripts/test-people-chapters.mjs && node scripts/test-pro-package.mjs && node scripts/test-content.mjs && node scripts/test-dist.mjs",
     "landing": "node landing/build.mjs"
   },
   "dependencies": {
