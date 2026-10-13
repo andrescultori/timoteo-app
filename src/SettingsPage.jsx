@@ -7,6 +7,7 @@ import { VERSIONS, loadBook } from './data/bible.js';
 import { SIZES, SPACINGS, WIDTHS, FONTS, READ_THEMES, SITE_THEMES, READ_COLORS, readColors, resolvePrefs } from './readingPrefs.js';
 import { useResolvedSite } from './siteTheme.js';
 import { readStyle } from './readStyle.js';
+import OfflineCard from './OfflineCard.jsx';
 
 // Grupo de opções excludentes (botões com aria-pressed, 44px)
 function Options({ label, items, value, onPick }) {
@@ -121,6 +122,8 @@ export default function SettingsPage({ t, lang, settings, canAcademic, onChange 
               </div>
             )}
           </section>
+
+          <OfflineCard t={t} lang={lang} />
 
           {canAcademic && (
             <section className="card small" aria-labelledby="cfg-study">
