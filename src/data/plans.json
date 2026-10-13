@@ -123,6 +123,20 @@
       }
     },
     {
+      "id": "offline-bible",
+      "label": {
+        "pt": "Texto bíblico offline",
+        "en": "Offline Bible text"
+      },
+      "essencial": true,
+      "pro": true,
+      "premium": true,
+      "note": {
+        "pt": "Baixe as versões que usa e leia sem internet (Configurações > Uso offline).",
+        "en": "Download the versions you use and read without internet (Settings > Offline use)."
+      }
+    },
+    {
       "id": "originals",
       "label": {
         "pt": "Originais em hebraico e grego",
