@@ -8,7 +8,7 @@ Pendências do André e do projeto, em ordem aproximada. `[x]` feito, `[ ]` aber
 - [x] Workflow da landing corrigido; deploy hook do Cloudflare cadastrado (`LANDING_DEPLOY_HOOK`). Testar rodando o workflow com `force` (esperado HTTP 200).
 - [x] Fase 3B, PRs 1 a 4 (camada de carregamento, bucket `pro`, pacote Pro publicado, chave `VITE_PRO_SOURCE`) e e2e verde (18 OK).
 - [ ] **Fase 3B, PR 5** (o site público deixa de levar o Pro): merge → conferir o site logado como Pro e como Essencial → **apagar os deploys antigos do Cloudflare**.
-- [ ] **Migrar para as chaves novas do Supabase** (`sb_secret_...`) e desativar as legadas: passo a passo em `supabase/README.md` ("Migrar para as chaves novas"). A `service_role` legada passou pela sessão de nuvem e não pode mais ser girada.
+- [x] Chaves novas do Supabase (`sb_secret_...`) em uso e chaves legadas (JWT) desativadas em 13/10/2026. Edge Functions, publicador e e2e (18 OK) verificados sem as legadas. Falta só apagar a variável antiga do ambiente da nuvem, se ainda existir.
 - [ ] PWA offline (PRs 6 a 9 da sequência).
 - [ ] **Fase 8:** repositório privado e licença "Todos os direitos reservados" (ver abaixo).
 - [ ] **Mercado Pago:** confirmar a **parcela mínima do anual em 10x** (R$ 39,90 → cerca de R$ 3,99 por parcela). Se o MP recusar, baixar `maxInstallments` do anual em `plans.json` e `MAX_INSTALLMENTS` em `supabase/functions/_shared/pricing.js` (o `check` confere os dois). Também confirmar as taxas atuais (Pix, cartão).
