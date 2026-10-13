@@ -110,9 +110,9 @@ Regras: nunca ligar sem referência bíblica; cada nó tem um pai só; todos os 
 
 O item "Configurações" do menu da conta (nome do usuário, no topo) abre as preferências de estudo, guardadas no navegador (`localStorage`). Por enquanto: **mostrar a posição acadêmica** (padrão: ligado). Desligada, a ficha mostra só a posição tradicional de autoria e datação, e a linha do tempo só a leitura tradicional das datas. O aviso de que a outra posição existe fica só na própria tela de Configurações. Em Personagens, a lista pode ser ordenada A–Z ou por livro (lembrada no navegador).
 
-## Publicar no GitHub Pages
+## Publicar
 
-Settings → Pages → Source: *GitHub Actions*. O workflow em `.github/workflows/deploy.yml` faz o build a cada push na `main`.
+O app é publicado pelo **Cloudflare Pages** (build `npm run build`, saída `dist`, branch `main`; ver `docs/comercializacao.md`). O GitHub Pages foi desligado: o workflow `deploy.yml` foi removido e o CI (`.github/workflows/ci.yml`) só confere o PR.
 
 ## Links e navegação
 

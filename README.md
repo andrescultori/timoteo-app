@@ -9,7 +9,7 @@
 
 **Estudo bíblico interativo: cada livro com ficha, mapa, linha do tempo e personagens, e o texto em quatro versões de licença clara.**
 
-Uma tabela dos 66 livros da Bíblia, em que cada livro abre uma ficha de estudo (autor, data, tema, esboço), um mapa dos lugares citados e o texto para leitura. Uma linha do tempo e páginas de personagens se ligam aos livros e aos mapas. Tudo é estático (React + Vite), publicado no GitHub Pages, com interface em português e inglês.
+Uma tabela dos 66 livros da Bíblia, em que cada livro abre uma ficha de estudo (autor, data, tema, esboço), um mapa dos lugares citados e o texto para leitura. Uma linha do tempo e páginas de personagens se ligam aos livros e aos mapas. Tudo é estático (React + Vite), publicado no Cloudflare Pages, com interface em português e inglês.
 
 **▶ Demo ao vivo: <https://estudo.timoteo.app.br/>**
 
@@ -69,7 +69,7 @@ Do Êxodo na linha do tempo, por exemplo, um clique leva ao mapa de Êxodo já n
 | Lugares | OpenBible.info Bible Geocoding Data (CC BY 4.0) |
 | Texto bíblico | arquivos JSON por livro e versão, carregados sob demanda |
 | Validação | `npm run check` (fichas, mapas, linha do tempo, personagens e textos) e CI no GitHub Actions |
-| Publicação | GitHub Pages via GitHub Actions |
+| Publicação | Cloudflare Pages; CI no GitHub Actions |
 
 ## Decisões técnicas
 

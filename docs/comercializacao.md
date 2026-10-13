@@ -83,7 +83,7 @@ Cada fase vira uma branch e um PR; o merge é do André. O Code diagnostica e es
 
 **Fase 1: site atual no Cloudflare Pages (sem reescrever) — FEITA** (hoje em https://estudo.timoteo.app.br/; antes https://timoteo-app.pages.dev/)
 - Build `npm run build`, saída `dist`. O `base: './'` do Vite já funciona na raiz.
-- Projeto do app no Cloudflare Pages (build `npm run build`, saída `dist`, branch de produção `main`), no ar em `timoteo-app.pages.dev`; o GitHub Pages segue no ar até validar.
+- Projeto do app no Cloudflare Pages (build `npm run build`, saída `dist`, branch de produção `main`), no ar em `timoteo-app.pages.dev`; o GitHub Pages foi **desligado** em 14/10/2026 (`deploy.yml` removido).
 - Conferir hash (`#joh`), `public/bible/` e fichas.
 
 **Fase 2: Supabase dedicado (login e dados do usuário) — migrations prontas; aplicação e teste pelo André** (`supabase/`, `src/auth.js`, página `#profile`)

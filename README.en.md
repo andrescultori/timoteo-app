@@ -9,7 +9,7 @@
 
 **Interactive Bible study: every book with a study sheet, a map, a timeline and people pages, and the text in four clearly licensed versions.**
 
-A table of the 66 books of the Bible, where each book opens a study sheet (author, date, theme, outline), a map of the places it mentions and the text for reading. A timeline and people pages link back to the books and the maps. Everything is static (React + Vite), published on GitHub Pages, with a Portuguese and English interface.
+A table of the 66 books of the Bible, where each book opens a study sheet (author, date, theme, outline), a map of the places it mentions and the text for reading. A timeline and people pages link back to the books and the maps. Everything is static (React + Vite), published on Cloudflare Pages, with a Portuguese and English interface.
 
 **▶ Live demo: <https://estudo.timoteo.app.br/>**
 
@@ -69,7 +69,7 @@ From the Exodus on the timeline, for example, one click opens the Exodus map alr
 | Places | OpenBible.info Bible Geocoding Data (CC BY 4.0) |
 | Bible text | JSON files per book and version, loaded on demand |
 | Validation | `npm run check` (sheets, maps, timeline, people and texts) and CI on GitHub Actions |
-| Hosting | GitHub Pages via GitHub Actions |
+| Hosting | Cloudflare Pages; CI on GitHub Actions |
 
 ## Design decisions
 
