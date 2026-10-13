@@ -325,11 +325,11 @@ function Reader({ book, lang, t, info, keyChapter, initialChapter }) {
             </select>
           </span>
           <span className="bar-end">
-            <button type="button" role="switch" aria-checked={showOrig} className="ghost orig-switch" onClick={toggleOriginals} title={t.originalsHelp}>
-              <span className="orig-aleph" aria-hidden="true">א</span>{t.originals}{!canOriginals && !plan.loading && <span className="pro-tag">{t.proTag}</span>}
+            <button type="button" role="switch" aria-checked={showOrig} className="ghost icon-btn orig-switch" onClick={toggleOriginals} title={`${t.originals}${!canOriginals && !plan.loading ? ` (${t.proTag})` : ''}: ${t.originalsHelp}`} aria-label={`${t.originals}${!canOriginals && !plan.loading ? ` (${t.proTag})` : ''}`}>
+              <span className="orig-aleph" aria-hidden="true">א</span>
             </button>
             {prevBtn}{nextBtn}
-            <a className="ghost" href={hrefs.settings} aria-label={t.readSettingsLabel}><span className="aa" aria-hidden="true">Aa</span>{t.readSettings}</a>
+            <a className="ghost icon-btn" href={hrefs.settings} aria-label={t.readSettingsLabel} title={t.readSettings}><span className="aa" aria-hidden="true">Aa</span></a>
           </span>
         </div>
         {invite && !canOriginals && <div className="orig-invite"><ProInvite t={t} lang={lang} feature="originals" /></div>}
