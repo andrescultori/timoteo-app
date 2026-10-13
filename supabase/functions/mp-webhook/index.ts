@@ -4,8 +4,11 @@
 // Secrets: MP_ACCESS_TOKEN, MP_WEBHOOK_SECRET.
 import { json } from '../_shared/http.js';
 import { createDb } from '../_shared/db.js';
+import { secretKey, publishableKey } from '../_shared/keys.js';
 import { getPayment, verifySignature } from '../_shared/mp.js';
 import { applyMpPayment } from '../_shared/payments.js';
+
+const env = (k: string) => Deno.env.get(k);
 
 Deno.serve(async (req: Request) => {
   if (req.method !== 'POST') return json({ error: 'method_not_allowed' }, 405);
@@ -32,7 +35,7 @@ Deno.serve(async (req: Request) => {
   try {
     const mp = await getPayment(token, String(id));
     if (!mp) return json({ result: 'ignored', reason: 'payment_not_found' }); // ex.: notificação de teste do painel
-    const db = createDb({ url: Deno.env.get('SUPABASE_URL')!, serviceKey: Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')! });
+    const db = createDb({ url: Deno.env.get('SUPABASE_URL')!, serviceKey: secretKey(env)!, publishableKey: publishableKey(env) ?? undefined });
     const out = await applyMpPayment(mp, db);
     if (out.result === 'rejected') console.error('mp-webhook: pagamento recusado pela conferência:', out.reason, 'mp_id', mp.id);
     if (out.detail?.result === 'duplicate_payment') console.error('mp-webhook: pagamento duplicado, reembolsar à mão: mp_id', mp.id);

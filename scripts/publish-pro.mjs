@@ -1,13 +1,14 @@
 // Publica o pacote Pro no Supabase Storage (bucket privado `pro`, prefixo v1/). Fase 3B, PR 3.
 // Roda onde o André decidir (a máquina dele ou um ambiente de nuvem), NUNCA em workflow do GitHub. Lê do AMBIENTE (nada no repositório):
 //   SUPABASE_URL=https://<ref>.supabase.co
-//   SUPABASE_SERVICE_ROLE_KEY=...       (só para gravar no bucket; ignora o RLS)
+//   SUPABASE_SECRET_KEY=sb_secret_...    (só para gravar no bucket; ignora o RLS; a legada SUPABASE_SERVICE_ROLE_KEY ainda é aceita)
 // Idempotente: compara o sha256 de cada arquivo com o manifest remoto e envia só o que mudou; o manifest vai por último.
 //   node scripts/publish-pro.mjs --dry-run     mostra o que enviaria/apagaria, sem enviar
 //   node scripts/publish-pro.mjs               publica
 //   node scripts/publish-pro.mjs --no-prune    não apaga do bucket o que saiu do pacote
 import path from 'node:path';
 import { buildPackage, PREFIX } from './pro-lib.mjs';
+import { adminHeaders, secretFromEnv } from './supabase-keys.mjs';
 
 const root = path.resolve(import.meta.dirname, '..');
 const dry = process.argv.includes('--dry-run');
@@ -19,8 +20,8 @@ console.log(`pacote: ${files.size} arquivos, ${(manifest.totalBytes / 1048576).t
 
 if (dry && !process.env.SUPABASE_URL) { console.log('(dry-run sem SUPABASE_URL: só o pacote local; nada foi comparado com o remoto)'); process.exit(0); }
 const URL_ = env('SUPABASE_URL').replace(/\/$/, '');
-const KEY = env('SUPABASE_SERVICE_ROLE_KEY');
-const auth = { apikey: KEY, Authorization: `Bearer ${KEY}` };
+const KEY = secretFromEnv();
+const auth = adminHeaders(KEY);
 
 async function remoteManifest() {
   const r = await fetch(`${URL_}/storage/v1/object/authenticated/pro/${PREFIX}manifest.json`, { headers: auth });

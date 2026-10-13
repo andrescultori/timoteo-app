@@ -70,7 +70,7 @@ supabase secrets set --project-ref zqxodmjrbzmyhnkqszqh \
   MP_WEBHOOK_SECRET='<assinatura secreta do webhook>' \
   APP_URL='https://estudo.timoteo.app.br'
 ```
-(ou Edge Functions → Secrets no painel). `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` já existem no ambiente das funções: **não** os defina nem os copie para lugar nenhum. `APP_URL` é a origem do app, sem barra no fim e sem hash. Para desenvolvimento local, `http://localhost:5173` já é aceito no CORS.
+(ou Edge Functions → Secrets no painel). `SUPABASE_URL` e a chave secreta (`SUPABASE_SECRET_KEYS`, ou a legada `SUPABASE_SERVICE_ROLE_KEY`) já existem no ambiente das funções: **não** os defina nem os copie para lugar nenhum. `APP_URL` é a origem do app, sem barra no fim e sem hash. Para desenvolvimento local, `http://localhost:5173` já é aceito no CORS.
 
 ## 4. Publicar as funções (a conciliação, abaixo, tem a sua)
 ```bash
@@ -221,5 +221,15 @@ Sem migration. O PR 5 faz o `npm run build` (e o Cloudflare Pages) **deixar o Pr
 - **Depois do merge (Cloudflare):** a próxima publicação do app já sai sem o Pro. `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` precisam estar nas variáveis do projeto do Cloudflare (já estão, o login depende delas). Confira no site: logado como Pro, linha do tempo, personagens, mapas e originais abrem; deslogado ou Essencial, só o convite.
 - **Apagar os deploys antigos** do Cloudflare (Workers & Pages → projeto do app → Deployments): cada um tem URL própria e ainda serve o pacote antigo, com o Pro.
 - **Manter o Storage em dia:** depois de mudar fichas, personagens, linha do tempo, genealogia ou originais, rode `node scripts/publish-pro.mjs` (é idempotente; só envia o que mudou).
-- **Teste real:** `node scripts/pro-e2e.mjs` (variáveis só no ambiente: `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`; precisa de rede até o Supabase e do Playwright). Constrói o app no modo padrão, cria contas Pro, Pro vencida e Essencial, confere o que cada uma vê e os pedidos ao Storage, e apaga as contas.
+- **Teste real:** `node scripts/pro-e2e.mjs` (variáveis só no ambiente: `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`; precisa de rede até o Supabase e do Playwright). Constrói o app no modo padrão, cria contas Pro, Pro vencida e Essencial, confere o que cada uma vê e os pedidos ao Storage, e apaga as contas.
 - **Desenvolvimento:** `npm run dev` usa o modo `local` (tudo dos arquivos). Build com Pro para testes: `ALLOW_LOCAL_PRO=1 VITE_PRO_SOURCE=local npm run build` (nunca publicar).
+
+## Migrar para as chaves novas do Supabase (`sb_secret_...` e `sb_publishable_...`)
+As chaves legadas (`anon` e `service_role`, JWT) não podem mais ser giradas e deixam de valer até o fim de 2026. O código aceita as duas gerações (`supabase/functions/_shared/keys.js`): **prefere a secret nova e cai na legada**, então a migração é reversível. Ordem:
+1. No painel, **Project Settings → API Keys → aba "Publishable and secret API keys"** → crie a secret key `default` (se pedir, "Create new API keys"). Confira em **Edge Functions → Secrets** que `SUPABASE_SECRET_KEYS` e `SUPABASE_PUBLISHABLE_KEYS` apareceram.
+2. **Publique as 5 funções** (`create-checkout`, `verify-payment`, `mp-webhook`, `reconcile-payments`, `delete-account`; o `_shared/` mudou). Elas passam a usar a secret nova sozinhas; a secret vai **só** no cabeçalho `apikey`.
+3. **Confira o Cloudflare** (projeto do app): `VITE_SUPABASE_PUBLISHABLE_KEY` deve começar com `sb_publishable_` (não com `eyJ`, que é a `anon` legada). Se estiver com a legada, troque antes do passo 6 e republique o app.
+4. Na sessão de nuvem, cadastre a **secret nova** como variável `SUPABASE_SECRET_KEY` (e remova `SUPABASE_SERVICE_ROLE_KEY`). Rode `node scripts/publish-pro.mjs --dry-run` (esperado `a enviar: 0`) e `node scripts/pro-e2e.mjs` (esperado 18 OK): isso prova Storage, Auth admin e PostgREST com a secret nova.
+5. Teste no site: login, abrir um conteúdo Pro, e (com a cobrança ligada em teste) abrir o checkout.
+6. **Desative as chaves legadas:** em API Keys → aba "Legacy anon, service_role API keys" → desativar. Rode o e2e de novo. Se algo quebrar, dá para reativar.
+7. Apague a variável antiga do ambiente da nuvem.
