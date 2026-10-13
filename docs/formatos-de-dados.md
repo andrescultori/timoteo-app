@@ -161,3 +161,18 @@ Gerados por `node scripts/build-interlinear.mjs [--src /home/user]` a partir de 
 **`lex-h.json`, `lex-g.json`**: `{ v, src, e: { "H7225": [lema, transliteração, glosa], "G3056": [lema, transliteração, definição do Strong] } }`, só com os números usados. Carregam sob demanda (cerca de 135 e 165 KB gzip).
 
 **Peso:** 16,4 MB brutos e 3,9 MB gzip no total; por livro, de 3 KB (Obadias) a 172 KB (Salmos) gzip. Nada vai no pacote inicial.
+
+## Pacote Pro (Fase 3B)
+
+O conteúdo Pro e a posição acadêmica vão para o **Supabase Storage** (bucket privado `pro`, prefixo `v1/`). `scripts/pro-lib.mjs` define o pacote (funções puras, sem rede); `scripts/publish-pro.mjs` o publica; `npm run check` e `npm test` provam que separar e juntar não perde nada. Nesta etapa (PR 3) o app **ainda lê tudo do pacote público**.
+
+| Chave (em `v1/`) | Conteúdo |
+|---|---|
+| `manifest.json` | `{ version, files: { chave: { sha256, bytes } }, totalBytes }`, sem datas (determinístico); vai por último na publicação |
+| `info/<slug>.json` | `{ map?, structure? }` das fichas Pro (os 9 mapas do Essencial ficam públicos) |
+| `people/<id>.json` | personagem completo, dos 160 que não são do Essencial |
+| `timeline.json`, `genealogy.json` | inteiros, **sem** a posição acadêmica |
+| `interlinear/<n>.json`, `interlinear/lex-h.json`, `lex-g.json` | originais, byte a byte como em `public/interlinear/` |
+| `admin/scholarly.json` | `{ info: { slug: extras }, timeline: extras }`: a posição acadêmica separada; só admin lê (política `v1/admin/*`) |
+
+Posição acadêmica separada = toda propriedade `scholarly` e todo item de lista com `view: 'scholarly'`. Cada "extra" guarda o caminho e o valor (`{ path, key, value }` ou `{ path, index, value }`) para restaurar exatamente (`restoreScholarly`). Publicar: `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` **só no ambiente**; `node scripts/publish-pro.mjs --dry-run` mostra o que mudaria; a publicação é idempotente (só envia o que mudou pelo hash) e apaga do bucket o que saiu do pacote (`--no-prune` desliga).
