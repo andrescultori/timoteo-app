@@ -32,6 +32,8 @@ export function checkDist(dir, rootDir = root) {
   const problems = [];
   if (!fs.existsSync(dir)) return [`pasta não existe: ${dir}`];
   if (fs.existsSync(path.join(dir, 'interlinear'))) problems.push('dist/interlinear existe: os originais não podem ir ao ar');
+  const sw = path.join(dir, 'sw.js');
+  if (fs.existsSync(sw) && /interlinear\//.test(fs.readFileSync(sw, 'utf8'))) problems.push('dist/sw.js lista os originais (interlinear/) no cache do service worker');
   const files = walk(dir).filter((f) => /\.(js|css|json|html|webmanifest)$/.test(f));
   const text = files.map((f) => ({ f, t: norm(fs.readFileSync(f, 'utf8')) }));
   for (const s of sentinels(rootDir)) {
