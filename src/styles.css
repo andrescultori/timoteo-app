@@ -654,6 +654,8 @@ a.ghost[aria-disabled='true'] { opacity: 0.4; pointer-events: none; }
 .off-state { font-size: 0.9rem; color: var(--muted); }
 .off-state.ok { color: var(--accent); font-weight: 600; }
 .off-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.off-pro { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); display: grid; gap: 8px; }
+.off-pro h3 { margin: 0; font-size: 1.05rem; }
 .off-err { color: var(--fg); }
 
 /* Aviso do PWA (versão nova / pronto offline); só existe quando aparece */

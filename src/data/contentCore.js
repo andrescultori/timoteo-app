@@ -83,6 +83,8 @@ export function createContent({ source, ess, flags, publicLoaders, fetchPro }) {
       access = { ...access, ...next };
       if (source === 'storage' && `${accessKey()}|${access.ready}` !== before) { cache = new Map(); values = new Map(); failed = new Map(); bump(); }
     },
+    // depois de atualizar a cópia offline: descarta o que está em memória para reler (a tela recarrega sozinha)
+    invalidate() { if (source === 'storage') { cache = new Map(); values = new Map(); failed = new Map(); bump(); } },
     subscribe: (fn) => { listeners.add(fn); return () => listeners.delete(fn); },
     version: () => version,
     accessId: () => `${accessKey()}|${access.ready}`,

@@ -31,6 +31,7 @@ const content = createContent({
 export const hasInfoFile = (slug) => `./info/${slug}.json` in INFO;
 
 export const setAccess = content.setAccess;
+export const invalidateContent = content.invalidate;
 // avisa quando o acesso (usuário, nível, pronto) muda; devolve a função para cancelar
 export const onAccessChange = (fn) => { let last = content.accessId(); return content.subscribe(() => { const k = content.accessId(); if (k !== last) { last = k; fn(); } }); };
 export const loadContent = content.load;

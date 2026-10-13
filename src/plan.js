@@ -3,6 +3,7 @@ import plans from './data/plans.json';
 import { createCan, effectivePlan } from './planRules.js';
 import { subscribeAuth, getAuthState, getClient, hasStoredSession } from './auth.js';
 import { setAccess } from './data/content.js';
+import { setOfflineAccess } from './data/proOffline.js';
 
 // Plano efetivo do usuário (somente leitura no cliente; nada de gravar plano por aqui).
 //   sem login = essencial; com login, lê `entitlements` (a RLS já limita à própria linha) e chama `is_admin()`.
@@ -11,7 +12,8 @@ import { setAccess } from './data/content.js';
 export const can = createCan(plans);
 
 const CACHE = 'planCache';
-const MAX_AGE = 24 * 60 * 60 * 1000;
+// Também é a janela de graça do Pro offline (14 dias sem confirmar o plano online): passou dela, o plano guardado deixa de valer.
+const MAX_AGE = 14 * 24 * 60 * 60 * 1000;
 const read = () => { try { return JSON.parse(localStorage.getItem(CACHE)); } catch { return null; } };
 const write = (v) => { try { v ? localStorage.setItem(CACHE, JSON.stringify(v)) : localStorage.removeItem(CACHE); } catch { /* ignora */ } };
 
@@ -19,7 +21,11 @@ const OFF = { plan: 'essencial', isAdmin: false, loading: false, userId: null, e
 let state = OFF;
 const listeners = new Set();
 // O conteúdo Pro (src/data/content.js) segue o acesso do usuário: ao mudar login ou plano, recarrega o que for preciso.
-const syncAccess = () => setAccess({ userId: state.userId, ready: !state.loading, level: state.isAdmin ? 'admin' : state.plan === 'pro' || state.plan === 'premium' ? 'pro' : 'none' });
+const syncAccess = () => {
+  const a = { userId: state.userId, ready: !state.loading, level: state.isAdmin ? 'admin' : state.plan === 'pro' || state.plan === 'premium' ? 'pro' : 'none' };
+  setAccess(a);
+  setOfflineAccess(a);
+};
 const set = (next) => { state = { ...state, ...next }; syncAccess(); listeners.forEach((fn) => fn()); };
 
 // "Carregando" enquanto há sessão guardada e o plano ainda não chegou; com cache recente do mesmo aparelho, já mostra o plano guardado.
@@ -37,6 +43,8 @@ async function load(userId) {
   fetchingFor = userId;
   const cached = fromCache();
   if (state.userId === userId && !state.loading) { /* atualização: mantém o que já aparece até a resposta chegar */ } else if (cached && cached.userId === userId) set(cached); else set({ plan: 'essencial', isAdmin: false, loading: true, userId });
+  // rede lenta ou fora do ar: depois de 8 s para de "carregar" (Essencial até a resposta chegar, se chegar)
+  const slow = setTimeout(() => { if (state.loading && state.userId === userId) set({ loading: false }); }, 8000);
   try {
     const client = await getClient();
     const [e, a] = await Promise.all([
@@ -50,7 +58,7 @@ async function load(userId) {
     write({ userId, plan: row?.plan ?? 'essencial', expires_at: row?.expires_at ?? null, isAdmin, at: Date.now() });
   } catch {
     set({ loading: false, userId });
-  } finally { fetchingFor = null; }
+  } finally { clearTimeout(slow); fetchingFor = null; }
 }
 
 if (typeof window !== 'undefined') {
