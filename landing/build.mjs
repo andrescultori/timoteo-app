@@ -22,7 +22,6 @@ const config = JSON.parse(fs.readFileSync(path.join(here, 'config.json'), 'utf8'
 const C = JSON.parse(fs.readFileSync(path.join(here, 'content.json'), 'utf8'));
 const plansData = json('src/data/plans.json');
 const billing = json('src/data/billing.json');
-const { PRO_MONTHS } = await import(new URL('../supabase/functions/_shared/pricing.js', import.meta.url).href);
 const { VERSIONS } = await import(new URL('../src/data/bible.js', import.meta.url).href);
 
 // ---------- dados do app ----------
@@ -41,8 +40,16 @@ const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 const fill = (s, vars) => s.replace(/\{(\w+)\}/g, (_, k) => { if (!(k in vars)) { fail(`marcador {${k}} sem valor em: ${s.slice(0, 50)}`); return ''; } return vars[k]; });
 
 const proPlan = plansData.plans.pro;
+// Preço de lançamento ou normal conforme a data do build (a landing é estática: um workflow agendado a reconstrói quando a promoção acaba)
+const promoEnd = new Date(plansData.promoEndsAt);
+const launch = Date.now() <= promoEnd.getTime();
+const kind = launch ? 'launch' : 'regular';
+const promoDate = promoEnd.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+const annualPrice = proPlan.prices.anual[kind];
+const monthlyPrice = proPlan.prices.mensal[kind];
+const saving = Math.round(((monthlyPrice * 12 - annualPrice) / (monthlyPrice * 12)) * 100);
 const vars = {
-  refundDays: billing.refundDays, months: PRO_MONTHS, price: money(proPlan.price), entry: money(proPlan.entryPrice),
+  refundDays: billing.refundDays, annual: money(annualPrice), monthly: money(monthlyPrice), saving, promoDate,
   periods: timeline.periods.length, versions: versions.map((v) => v.label).join(', ').replace(/, ([^,]*)$/, ' e $1'),
 };
 const stats = { books: books.length, people, events: timeline.events.length, versions: versions.length };
@@ -82,9 +89,11 @@ const planCards = PLAN_IDS.map((id, col) => {
   const card = C.plans.cards[id];
   const soon = p.available === false;
   const featured = id === 'pro';
-  const old = p.entryPrice != null ? money(p.price) : '';
-  const now = p.entryPrice != null ? money(p.entryPrice) : money(p.price);
-  const note = p.entryPrice != null ? fill(C.plans.priceNote, { price: money(p.price) }) : card.note;
+  // Pro: anual em destaque (e o mensal na nota). Premium ainda não é vendido: sem preço na landing, só "Em breve". Essencial: grátis.
+  const priced = p.prices && !soon;
+  const old = priced && launch ? money(p.prices.anual.regular) : '';
+  const now = priced ? money(p.prices.anual[kind]) : soon ? C.plans.soonPrice : money(0);
+  const note = priced ? fill(launch ? C.plans.priceNoteLaunch : C.plans.priceNote, vars) : card.note;
   const items = rows.map((r) => {
     const st = r.states[col];
     const n = r.notes[id] ?? '';
@@ -255,8 +264,11 @@ fs.writeFileSync(path.join(dist, 'robots.txt'), 'User-agent: *\nAllow: /\n');
 const html = index;
 for (const [id, p] of Object.entries(plansData.plans)) {
   if (!html.includes(`>${p.name.pt}</h3>`)) fail(`plano ${id}: nome "${p.name.pt}" não apareceu`);
-  if (p.price > 0 && !html.includes(money(p.price))) fail(`plano ${id}: preço ${money(p.price)} não apareceu`);
-  if (p.entryPrice != null && !html.includes(money(p.entryPrice))) fail(`plano ${id}: preço de entrada ${money(p.entryPrice)} não apareceu`);
+  if (p.prices && p.available !== false) {
+    if (!html.includes(money(p.prices.anual[kind])) || !html.includes(money(p.prices.mensal[kind]))) fail(`plano ${id}: preço vigente (anual ${money(p.prices.anual[kind])} e mensal ${money(p.prices.mensal[kind])}) não apareceu`);
+  }
+  // Premium não está à venda: nenhum preço dele pode aparecer na landing
+  if (p.prices && p.available === false) for (const per of Object.values(p.prices)) for (const v of Object.values(per)) if (html.includes(`${money(v)} `) && !Object.values(plansData.plans.pro.prices).some((x) => Object.values(x).includes(v))) fail(`plano ${id}: o preço ${money(v)} não deve aparecer enquanto o plano não é vendido`);
 }
 if ((html.match(/<li><span class="mark">/g) ?? []).length - 4 !== rows.length * 3) fail('a matriz não tem linhas × 3 planos');
 for (const [name, text] of [['index.html', html], ['styles.css', fs.readFileSync(path.join(here, 'styles.css'), 'utf8')]]) if (/googleapis|gstatic|google-analytics|googletagmanager/i.test(text)) fail(`${name}: a landing não pode carregar recursos do Google (Política de Privacidade)`);

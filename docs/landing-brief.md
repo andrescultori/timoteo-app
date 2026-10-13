@@ -25,7 +25,7 @@ Estudantes da Bíblia, líderes e professores de escola bíblica, brasileiros ev
 
 ## Planos para a tabela
 
-Preços: Essencial R$0; Pro R$49,90/ano (primeiro pagamento R$29,90); Premium R$79,90/ano (primeiro pagamento R$49,90), em breve. Exibir o preço riscado e o de entrada, como o André pediu ("de R$49,90 por R$29,90 no 1º ano").
+Preços (política de 13/10/2026; os valores vêm de `src/data/plans.json`): Essencial R$0; Pro mensal R$3,90 e anual R$39,90 no lançamento (depois R$4,90 e R$49,90); Premium **em breve, sem preço na landing**. No lançamento, o anual aparece com o preço normal riscado e a data do fim do lançamento; depois dela a landing é reconstruída só com o preço normal.
 
 Itens (✅ inclui, ❌ não inclui):
 - Bíblia em todas as versões disponíveis: Essencial ✅, Pro ✅, Premium ✅

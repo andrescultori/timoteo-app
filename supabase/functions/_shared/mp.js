@@ -1,6 +1,6 @@
 // Mercado Pago (Checkout Pro): preferência, consulta de pagamento e validação do x-signature. Só `fetch` e Web Crypto
 // (funciona no Deno das Edge Functions e no Node dos testes). Nada aqui lê segredo do ambiente: o token vem por parâmetro.
-import { CURRENCY, ITEM_TITLE, MAX_INSTALLMENTS } from './pricing.js';
+import { CURRENCY } from './pricing.js';
 
 const API = 'https://api.mercadopago.com';
 const TIMEOUT_MS = 10000; // o webhook precisa responder em até 22 s
@@ -64,18 +64,19 @@ export function mapStatus(mpStatus) {
 }
 
 // ---- preferência de checkout -------------------------------------------------------------------------------------------
-export function preferenceBody({ paymentId, cents, appUrl, notificationUrl }) {
+// `order`: o pedido validado de pricing.js (orderFor): item, valor e parcelas vêm dele, nunca do navegador.
+export function preferenceBody({ paymentId, order, appUrl, notificationUrl }) {
   const base = appUrl.replace(/\/+$/, '');
   const back = (k) => `${base}/?checkout=${k}`;
   return {
-    items: [{ id: 'timoteo-pro-12m', title: ITEM_TITLE, quantity: 1, unit_price: cents / 100, currency_id: CURRENCY }],
+    items: [{ id: order.itemId, title: order.title, quantity: 1, unit_price: order.cents / 100, currency_id: CURRENCY }],
     external_reference: paymentId,
     notification_url: notificationUrl,
     back_urls: { success: back('success'), pending: back('pending'), failure: back('failure') },
     auto_return: 'approved',
     payment_methods: {
       excluded_payment_types: [{ id: 'ticket' }], // sem boleto
-      installments: MAX_INSTALLMENTS,
+      installments: order.installments,
     },
   };
 }

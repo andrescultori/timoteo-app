@@ -49,8 +49,11 @@ Já está configurado no painel (credencial OAuth e URLs de retorno). O app usa 
 
 Migration `20261008000000_fase4_pagamentos.sql` (aplique **depois** da da Fase 2; ela não altera a anterior) e três Edge Functions em `functions/`. Nada é aplicado ou publicado automaticamente, e nenhuma credencial vai para o repositório.
 
+## Política de preços de 13/10/2026 (migration `20261017000000_precos_periodos.sql`)
+Ordem de publicação (importante): **1)** aplique a migration `20261017000000` (adiciona `payments.months`; aditiva) **antes** de **2)** publicar a nova `create-checkout`, que grava `months` (sem a coluna, o checkout falha e ninguém é cobrado: falha fechada). **3)** Publique também `mp-webhook`, `verify-payment` e `reconcile-payments` (o `_shared/` mudou). **4)** Só depois publique o app. O secret `LANDING_DEPLOY_HOOK` (URL do deploy hook da landing no Cloudflare) vai em GitHub → Settings → Secrets → Actions. Para prorrogar o lançamento: mude `promoEndsAt` em `src/data/plans.json` e `PROMO_ENDS_AT` em `functions/_shared/pricing.js` (o `npm run check` confere) e republique `create-checkout`.
+
 ## O que há
-- `entitlements.usou_preco_de_entrada`, tabela `payments`, `apply_payment()` e funções de data (ver o comentário no início da migration).
+- `entitlements.usou_preco_de_entrada` (sem uso desde a migration `20261017`), tabela `payments`, `apply_payment()` e funções de data (ver o comentário no início da migration).
 - `functions/create-checkout` (logado), `functions/verify-payment` (logado) e `functions/mp-webhook` (`verify_jwt = false`, protegido pelo `x-signature`). Código comum em `functions/_shared/` (JS puro, sem SDK).
 - Testes: `npm test` roda as funções puras e as migrations de verdade em Postgres (PGlite). O CI roda isso em todo PR.
 
@@ -85,13 +88,13 @@ Em `.env.local` (desenvolvimento) ou nas variáveis do projeto do Cloudflare Pag
 
 ## 7. Roteiro de teste de ponta a ponta (credenciais de teste)
 Use o comprador de teste. Para cada caso, confira o plano em `#profile` e as linhas em `payments`/`entitlements` (SQL Editor).
-1. **Aprovado (cartão de teste aprovado):** `#timeline` (conta Essencial) → "Assinar o Pro" mostra R$ 29,90 → paga → volta em `#checkout/retorno` → "Pagamento aprovado", Pro por 12 meses, `usou_preco_de_entrada = true`. A próxima oferta mostra R$ 49,90.
+1. **Aprovado (cartão de teste aprovado):** `#timeline` (conta Essencial) → "Assinar o Pro" mostra Anual (marcado, "Melhor opção") e Mensal, ao preço de lançamento enquanto a data não passou → paga o anual (R$ 39,90) → volta em `#checkout/retorno` → "Pagamento aprovado", Pro por 12 meses, `payments.months = 12`. Repita com o Mensal (R$ 3,90): soma 1 mês. Depois de `promoEndsAt`, os valores são R$ 49,90 e R$ 4,90.
 2. **Pix pendente depois aprovado:** pague com Pix e **não** conclua: a página mostra "ainda não foi confirmado" e o plano segue Essencial. Conclua o Pix (no ambiente de teste, simule o pagamento): em até alguns minutos a página (ou o botão "Conferir pagamento" do perfil) vira "aprovado".
 3. **Recusado:** cartão de teste com resultado "recusado": a página mostra "não foi aprovado"; `payments.status = 'rejected'`; plano inalterado.
 4. **Webhook repetido:** no painel, reenvie a notificação do pagamento aprovado: resposta 200, `expires_at` não muda.
 5. **Webhook perdido:** desative o webhook (ou rode com `MP_WEBHOOK_SECRET` errado) e pague: ao voltar, `verify-payment` aplica o pagamento; o plano é liberado pela página de retorno.
-6. **Renovação antecipada:** com Pro vigente, "Renovar por mais 12 meses" no perfil (R$ 49,90) → o `expires_at` soma 12 meses ao vencimento atual (≈ 24 meses a partir de hoje).
-7. **Reembolso:** reembolse o pagamento no painel do Mercado Pago (7 dias). Em instantes o webhook devolve o prazo (renovação: volta aos 12 meses; único pagamento: volta ao Essencial e libera o preço de entrada). Se o webhook não chegar, o botão "Conferir pagamento" resolve.
+6. **Renovação antecipada:** com Pro vigente, "Renovar o Pro" no perfil (anual) → o `expires_at` soma 12 meses ao vencimento atual (≈ 24 meses a partir de hoje); no mensal, soma 1 mês.
+7. **Reembolso:** reembolse o pagamento no painel do Mercado Pago (7 dias). Em instantes o webhook devolve o prazo (renovação: volta ao prazo anterior; único pagamento: volta ao Essencial). Se o webhook não chegar, o botão "Conferir pagamento" resolve.
 8. **Vencido:** `update public.entitlements set expires_at = now() - interval '1 day' where user_id = ...;` → o app mostra Essencial; pagar de novo conta da data do pagamento.
 
 ## O que conferir no primeiro teste (a documentação do Mercado Pago não estava acessível quando o código foi escrito)
@@ -100,7 +103,7 @@ Use o comprador de teste. Para cada caso, confira o plano em `#profile` e as lin
 - A assinatura do webhook é aceita (manifest `id:<data.id minúsculo>;request-id:<x-request-id>;ts:<ts>;`). Se der 401 com o segredo certo, comparar com o modelo atual da documentação em `functions/_shared/mp.js` (`buildManifest`).
 - Em pagamento parcelado com juros, `transaction_amount` deve continuar igual ao preço do item (os juros ficam em outro campo). Se vier maior, a função recusa por valor diferente (log `amount`): ajustar a conferência para `transaction_amount` sem juros.
 - Pix pago em duplicidade e o log `pagamento duplicado, reembolsar à mão`: reembolsar no painel.
-- **Como tratar `duplicate_payment` e `duplicate_entry`** (aparecem como `console.error` do `mp-webhook` em Edge Functions → Logs, e em `payments` como aprovado com `months_granted = 0`): o dinheiro entrou mas não concedeu meses. Reembolse esse pagamento no painel do Mercado Pago; o reembolso não mexe no plano. `duplicate_payment` = o mesmo checkout pago duas vezes; `duplicate_entry` = dois checkouts a preço de entrada (só o primeiro vale).
+- **Como tratar `duplicate_payment`** (aparecem como `console.error` do `mp-webhook` em Edge Functions → Logs, e em `payments` como aprovado com `months_granted = 0`): o dinheiro entrou mas não concedeu meses. Reembolse esse pagamento no painel do Mercado Pago; o reembolso não mexe no plano. `duplicate_payment` = o mesmo checkout pago duas vezes. Desde a migration `20261017` dois checkouts diferentes pagos pelo mesmo usuário **somam** (como renovação); não existe mais `duplicate_entry`.
 
 
 ---
@@ -138,8 +141,8 @@ curl -sS -X POST -H "x-reconcile-secret: $RECONCILE_SECRET" \
   https://zqxodmjrbzmyhnkqszqh.supabase.co/functions/v1/reconcile-payments
 ```
 Resposta esperada: `{"read":N,"changed":M,"errors":0}` com HTTP 200. `read` = pagamentos reconferidos (até 200); `changed` = quantos mudaram de estado (por exemplo, um reembolso aplicado); `errors` > 0 devolve HTTP 500 (alguma consulta ao Mercado Pago falhou; as demais foram processadas e a linha com erro é tentada de novo na próxima). Nada de dado pessoal no resumo nem no log.
-- Quando algo mudar, o rastro está em Edge Functions → `reconcile-payments` → Logs: `reembolso aplicado`, `estorno aplicado`, `duplicate_payment`/`duplicate_entry` e `reembolso parcial`, sempre com o id do pagamento (o `payments.id`, que é o `external_reference`).
-- Para conferir um caso: depois da execução, o pagamento está `refunded`/`charged_back` e o `entitlements` do usuário voltou ao Essencial (se esse era o único com meses), com `usou_preco_de_entrada = false`.
+- Quando algo mudar, o rastro está em Edge Functions → `reconcile-payments` → Logs: `reembolso aplicado`, `estorno aplicado`, `duplicate_payment` e `reembolso parcial`, sempre com o id do pagamento (o `payments.id`, que é o `external_reference`).
+- Para conferir um caso: depois da execução, o pagamento está `refunded`/`charged_back` e o `entitlements` do usuário voltou ao Essencial (se esse era o único com meses).
 
 
 ---

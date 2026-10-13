@@ -21,7 +21,7 @@ export function createDb({ url, serviceKey }) {
       const u = await res.json();
       return u?.id ? { id: u.id, email: typeof u.email === 'string' ? u.email : null } : null;
     },
-    getEntitlement: (userId) => one(`entitlements?user_id=eq.${userId}&select=plan,expires_at,usou_preco_de_entrada`),
+    getEntitlement: (userId) => one(`entitlements?user_id=eq.${userId}&select=plan,expires_at`),
     // Fase 7: aceite dos Termos (create-checkout exige) e exclusão de conta
     getProfileTerms: (userId) => one(`profiles?id=eq.${userId}&select=terms_accepted_at`),
     deleteAccountData: (userId) => rest('rpc/delete_account_data', { method: 'POST', body: JSON.stringify({ p_user_id: userId }) }),

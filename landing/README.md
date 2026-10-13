@@ -10,7 +10,7 @@ Página estática (HTML + CSS, **sem JavaScript** e sem dependências) gerada po
 ## De onde vem cada coisa (nada digitado em dois lugares)
 | Dado | Fonte |
 |---|---|
-| Nomes, preços, preço de entrada, matriz ✅/❌/em parte/em breve | `src/data/plans.json` |
+| Nomes, preços (lançamento e normal, mensal e anual), data do fim do lançamento, matriz ✅/❌/em parte/em breve | `src/data/plans.json` |
 | Personagens, eventos, períodos | `src/data/people.json`, `src/data/timeline.json` |
 | Livros, siglas e seções | `src/data/books.js`; cores das seções: `src/styles.css` (`--s-*`) |
 | Versões do texto bíblico | `src/data/bible.js` (menos as de `hideVersions` em `config.json`) |

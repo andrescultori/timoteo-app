@@ -1,13 +1,23 @@
 {
   "currency": "BRL",
+  "promoEndsAt": "2027-01-13T23:59:59-03:00",
+  "periods": {
+    "mensal": {
+      "months": 1,
+      "maxInstallments": 1
+    },
+    "anual": {
+      "months": 12,
+      "maxInstallments": 10
+    }
+  },
   "plans": {
     "essencial": {
       "name": {
         "pt": "Essencial",
         "en": "Essencial"
       },
-      "price": 0,
-      "entryPrice": null,
+      "prices": null,
       "available": true
     },
     "pro": {
@@ -15,8 +25,16 @@
         "pt": "Pro",
         "en": "Pro"
       },
-      "price": 49.9,
-      "entryPrice": 29.9,
+      "prices": {
+        "mensal": {
+          "launch": 3.9,
+          "regular": 4.9
+        },
+        "anual": {
+          "launch": 39.9,
+          "regular": 49.9
+        }
+      },
       "available": true
     },
     "premium": {
@@ -24,8 +42,16 @@
         "pt": "Premium",
         "en": "Premium"
       },
-      "price": 79.9,
-      "entryPrice": 49.9,
+      "prices": {
+        "mensal": {
+          "launch": 6.9,
+          "regular": 9.9
+        },
+        "anual": {
+          "launch": 69.9,
+          "regular": 99.0
+        }
+      },
       "available": false
     }
   },

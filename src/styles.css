@@ -442,6 +442,17 @@ a.ghost { color: var(--accent); }
 .pro-buy p { margin: 0; }
 .pro-price { font-weight: 600; }
 .pro-cta { font-weight: 700; border-color: var(--accent-2); }
+.pro-launch { color: var(--accent-2); }
+.pro-periods { display: grid; gap: 8px; width: 100%; max-width: 460px; }
+.pro-period { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; min-height: 44px; border: 1px solid var(--line-strong); border-radius: var(--radius-card); background: var(--panel); cursor: pointer; }
+.pro-period.on { border-color: var(--accent-2); box-shadow: 0 0 0 1px var(--accent-2); }
+.pro-period input { margin-top: 4px; width: 18px; height: 18px; flex: none; }
+.pro-period-body { display: grid; gap: 2px; }
+.pro-period-name { font-weight: 700; }
+.pro-best { margin-left: 8px; padding: 0 8px; border: 1px solid var(--accent-2); border-radius: var(--radius-pill); font: 600 12px/20px var(--f-body, inherit); font-style: normal; color: var(--accent-2); }
+.pro-period-price s { color: var(--muted); }
+.pro-period-price small, .pro-saving { color: var(--muted); font-size: 0.85rem; }
+.pro-premium { display: grid; gap: 6px; justify-items: start; margin-top: 8px; padding-top: 10px; border-top: 1px solid var(--line); }
 .profile-pay { margin-top: 26px; padding-top: 14px; border-top: 1px solid var(--line-strong); display: grid; gap: 10px; justify-items: start; max-width: 620px; }
 .profile-pay h3 { margin: 0; font: 700 1.15rem var(--f-display); }
 .profile-pay h4 { margin: 8px 0 0; font: 700 1rem var(--f-display); }

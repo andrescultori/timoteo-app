@@ -1,0 +1,41 @@
+name: Landing: fim do preço de lançamento
+# A landing (Cloudflare Pages, projeto separado) é estática e escolhe o preço na hora do build. Quando o preço de lançamento acaba
+# (promoEndsAt em src/data/plans.json), este workflow pede um novo build pelo deploy hook do Cloudflare, para ela passar a mostrar o preço normal.
+# Roda todo dia e só age na janela de 3 dias depois do fim da promoção (scripts/promo-window.mjs). Não custa nada. Também roda à mão.
+# Segredo LANDING_DEPLOY_HOOK (Settings → Secrets and variables → Actions): URL do deploy hook do projeto da landing, criada em
+# Cloudflare → Workers & Pages → (projeto da landing) → Settings → Builds → Deploy hooks. É uma URL secreta: nunca vai para o repositório.
+on:
+  schedule:
+    - cron: '35 3 * * *'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Reconstruir mesmo fora da janela'
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: landing-promo-rebuild
+  cancel-in-progress: false
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: A promoção acabou?
+        id: janela
+        run: node scripts/promo-window.mjs >> "$GITHUB_OUTPUT"
+      - name: Pedir novo build da landing
+        if: steps.janela.outputs.rebuild == 'true' || inputs.force
+        env:
+          HOOK: ${{ secrets.LANDING_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$HOOK" ]; then echo "O secret LANDING_DEPLOY_HOOK não está cadastrado no GitHub."; exit 1; fi
+          code=$(curl -sS -m 60 -o /dev/null -w '%{http_code}' -X POST "$HOOK")
+          echo "HTTP $code"
+          [ "$code" -ge 200 ] && [ "$code" -lt 300 ]

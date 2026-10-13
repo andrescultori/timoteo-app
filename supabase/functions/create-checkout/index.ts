@@ -1,10 +1,11 @@
 // Cria o pagamento pendente e a preferência do Checkout Pro (Mercado Pago). Exige usuário logado.
-// O preço é decidido aqui, pelo banco (entrada ou cheio); o corpo da requisição não tem nenhum valor.
+// O preço é decidido aqui, pela DATA da compra (lançamento ou normal) e pelo período; o corpo só traz o NOME do período
+// ({ period: 'mensal' | 'anual', plan?: 'pro' }), nunca um valor. Premium ainda não é vendido (plan_unavailable).
 // Secrets: MP_ACCESS_TOKEN, APP_URL. Do ambiente: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
 import { corsHeaders, json, bearer } from '../_shared/http.js';
 import { createDb } from '../_shared/db.js';
 import { createPreference, preferenceBody } from '../_shared/mp.js';
-import { priceKind, PRICE_CENTS, alreadyCovered } from '../_shared/pricing.js';
+import { orderFor, alreadyCovered } from '../_shared/pricing.js';
 
 const MAX_PENDING_PER_HOUR = 10;
 
@@ -27,25 +28,28 @@ Deno.serve(async (req: Request) => {
     const terms = await db.getProfileTerms(user.id);
     if (!terms?.terms_accepted_at) return json({ error: 'terms_required' }, 403, cors);
 
+    const body = await req.json().catch(() => ({}));
+    const plan = typeof body?.plan === 'string' ? body.plan : 'pro';
+    const order = orderFor(plan, body?.period);
+    if (!order) return json({ error: plan === 'premium' ? 'plan_unavailable' : 'invalid_period' }, plan === 'premium' ? 403 : 400, cors);
+
     const ent = await db.getEntitlement(user.id);
     // plano sem prazo (cortesia) ou Premium vigente: o pagamento não concederia nada, então nem abre o checkout
     if (alreadyCovered(ent)) return json({ error: 'already_active' }, 409, cors);
-    const kind = priceKind(ent?.usou_preco_de_entrada === true);
-    const cents = PRICE_CENTS[kind];
 
     // trava simples contra checkouts em excesso (cada um é uma linha e uma preferência no Mercado Pago)
     if ((await db.countPendingSince(user.id, new Date(Date.now() - 3600e3).toISOString())) >= MAX_PENDING_PER_HOUR) {
       return json({ error: 'too_many_requests' }, 429, cors);
     }
 
-    const row = await db.insertPayment({ user_id: user.id, plan: 'pro', amount_cents: cents, price_kind: kind });
+    const row = await db.insertPayment({ user_id: user.id, plan: order.plan, amount_cents: order.cents, price_kind: order.price_kind, months: order.months });
     try {
       const pref = await createPreference(token, preferenceBody({
-        paymentId: row.id, cents, appUrl, notificationUrl: `${url}/functions/v1/mp-webhook`,
+        paymentId: row.id, order, appUrl, notificationUrl: `${url}/functions/v1/mp-webhook`,
       }), row.id);
       if (!pref?.id || !pref?.init_point) throw new Error('resposta sem init_point');
       await db.setPreference(row.id, pref.id);
-      return json({ url: pref.init_point, price_kind: kind, amount_cents: cents }, 200, cors);
+      return json({ url: pref.init_point, price_kind: order.price_kind, amount_cents: order.cents, months: order.months }, 200, cors);
     } catch (e) {
       await db.cancelPayment(row.id).catch(() => {});
       console.error('create-checkout: preferência falhou:', (e as Error).message);

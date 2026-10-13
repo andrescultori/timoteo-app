@@ -364,8 +364,13 @@ for (const ver of VERSIONS) {
   if (JSON.stringify(Object.keys(cfg.plans)) !== JSON.stringify(PLAN_ORDER)) err(`${w}: os planos devem ser ${PLAN_ORDER.join(', ')}`);
   for (const [id, p] of Object.entries(cfg.plans)) {
     bilingual(p.name, `${w}.plans.${id}.name`);
-    if (typeof p.price !== 'number' || p.price < 0) err(`${w}.plans.${id}: preço inválido`);
-    if (p.entryPrice !== null && (typeof p.entryPrice !== 'number' || p.entryPrice > p.price)) err(`${w}.plans.${id}: preço de entrada inválido`);
+    if (p.prices !== null) {
+      for (const per of Object.keys(cfg.periods)) {
+        const x = p.prices?.[per];
+        if (!x || typeof x.launch !== 'number' || typeof x.regular !== 'number' || x.launch <= 0 || x.launch > x.regular) err(`${w}.plans.${id}.prices.${per}: precisa de launch e regular (launch <= regular)`);
+      }
+    }
+    if ('price' in p || 'entryPrice' in p) err(`${w}.plans.${id}: price/entryPrice foram trocados por prices (mensal/anual × launch/regular)`);
   }
   const ess = cfg.essencial;
   if (new Set(ess.characters).size !== ess.characters.length) err(`${w}: ids de personagens repetidos em essencial.characters`);
@@ -419,11 +424,21 @@ for (const ver of VERSIONS) {
 
 // Cobrança (Fase 4): o preço de src/data/plans.json é o mesmo das Edge Functions (supabase/functions/_shared/pricing.js)
 {
-  const cfg = read('src/data/plans.json').plans.pro;
-  const { PRICE_CENTS, PRO_MONTHS } = await import(new URL('../supabase/functions/_shared/pricing.js', import.meta.url).href);
-  if (Math.round(cfg.price * 100) !== PRICE_CENTS.cheio) err(`preço do Pro diverge: plans.json ${cfg.price} x pricing.js ${PRICE_CENTS.cheio / 100}`);
-  if (Math.round(cfg.entryPrice * 100) !== PRICE_CENTS.entrada) err(`preço de entrada do Pro diverge: plans.json ${cfg.entryPrice} x pricing.js ${PRICE_CENTS.entrada / 100}`);
-  if (PRO_MONTHS !== 12) err('pricing.js: o Pro dura 12 meses');
+  const all = read('src/data/plans.json');
+  const { PRICE_CENTS, PERIODS, MAX_INSTALLMENTS, PROMO_ENDS_AT, PREMIUM_ON_SALE } = await import(new URL('../supabase/functions/_shared/pricing.js', import.meta.url).href);
+  for (const plan of ['pro', 'premium']) {
+    for (const per of Object.keys(all.periods)) {
+      for (const kind of ['launch', 'regular']) {
+        const fromJson = Math.round(all.plans[plan].prices[per][kind] * 100);
+        if (fromJson !== PRICE_CENTS[plan][per][kind]) err(`preço diverge (${plan} ${per} ${kind}): plans.json ${fromJson / 100} x pricing.js ${PRICE_CENTS[plan][per][kind] / 100}`);
+      }
+      if (all.periods[per].months !== PERIODS[per].months) err(`pricing.js: ${per} deveria durar ${all.periods[per].months} meses`);
+      if (all.periods[per].maxInstallments !== MAX_INSTALLMENTS[per]) err(`pricing.js: parcelas máximas do ${per} divergem de plans.json`);
+    }
+  }
+  if (Date.parse(all.promoEndsAt) !== Date.parse(PROMO_ENDS_AT)) err(`promoEndsAt diverge: plans.json ${all.promoEndsAt} x pricing.js ${PROMO_ENDS_AT}`);
+  if (!/[+-]\d{2}:\d{2}$/.test(all.promoEndsAt)) err('plans.json: promoEndsAt precisa de fuso explícito (ex.: -03:00)');
+  if (PREMIUM_ON_SALE !== all.plans.premium.available) err('pricing.js PREMIUM_ON_SALE diverge de plans.json premium.available');
   const billing = read('src/data/billing.json');
   if (!Number.isInteger(billing.refundDays) || billing.refundDays < 7) err('billing.json: refundDays deve ser inteiro e no mínimo 7 (política combinada)');
   if (typeof billing.refundContact !== 'string') err('billing.json: refundContact deve ser texto');
@@ -468,11 +483,10 @@ for (const ver of VERSIONS) {
   }
 
   // o que os textos afirmam (preços, prazo de reembolso) tem que bater com a configuração
-  const cfg = read('src/data/plans.json').plans.pro;
-  const brl = (v) => `R$ ${v.toFixed(2).replace('.', ',')}`;
   const billing = read('src/data/billing.json');
-  if (!termos.includes(brl(cfg.price))) err(`termos-de-uso.md não cita o preço do Pro (${brl(cfg.price)}) de plans.json`);
-  if (!termos.includes(brl(cfg.entryPrice))) err(`termos-de-uso.md não cita o preço de entrada (${brl(cfg.entryPrice)}) de plans.json`);
+  // os Termos devem remeter aos preços anunciados no site; enquanto o André não aprovar a troca do texto, só avisa
+  const known = new Set(Object.values(read('src/data/plans.json').plans).flatMap((p) => Object.values(p.prices ?? {}).flatMap((x) => [x.launch, x.regular])).map((v) => v.toFixed(2).replace('.', ',')));
+  for (const m of termos.matchAll(/R\$\s?(\d+(?:,\d{2})?)/g)) if (!known.has(m[1].includes(',') ? m[1] : `${m[1]},00`)) console.warn(`Aviso: termos-de-uso.md cita R$ ${m[1]}, que não é preço de plans.json. Texto legal só muda com o André: ver a proposta no PR da política de preços (os Termos devem remeter aos preços do site).`);
   if (!termos.includes(`${billing.refundDays} dias`)) err(`termos-de-uso.md não cita o prazo de reembolso de billing.json (${billing.refundDays} dias)`);
   if (!consent.includes(`${billing.refundDays} dias`)) err(`consentimento.md não cita o prazo de reembolso de billing.json (${billing.refundDays} dias)`);
 

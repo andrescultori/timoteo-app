@@ -1,5 +1,5 @@
 {
-  "_sobre": "Textos da landing (só PT por ora). Preços, nomes dos planos, estados da matriz, contagens, dias de reembolso e meses do Pro NÃO ficam aqui: vêm de src/data/*.json e do build (landing/build.mjs). Marcadores: {refundDays} {months} {price} {entry} {n}.",
+  "_sobre": "Textos da landing (só PT por ora). Preços, nomes dos planos, estados da matriz, contagens, dias de reembolso e meses do Pro NÃO ficam aqui: vêm de src/data/*.json e do build (landing/build.mjs). Marcadores: {refundDays} {annual} {monthly} {saving} {promoDate} {n}.",
   "title": "Timóteo App: estudo bíblico com contexto",
   "description": "Os 66 livros da Bíblia em uma tabela, com ficha de estudo, mapa dos lugares, linha do tempo, personagens e texto para leitura. Comece grátis.",
   "hero": {
@@ -39,15 +39,17 @@
   },
   "plans": {
     "title": "Escolha seu plano",
-    "lead": "O texto bíblico é livre em todos os planos. O Pro libera o estudo completo, com pagamento anual.",
+    "lead": "O texto bíblico é livre em todos os planos. O Pro libera o estudo completo, no plano mensal ou no anual.",
     "cards": {
       "essencial": { "badge": "", "note": "Grátis, sem prazo", "cta": "Começar grátis" },
       "pro": { "badge": "Estudo completo", "cta": "Escolher Pro" },
-      "premium": { "badge": "Em breve", "cta": "Criar conta", "after": "Depois de entrar, peça o aviso em “Avise-me”, dentro do app." }
+      "premium": { "badge": "Em breve", "note": "O valor será divulgado no lançamento", "cta": "Criar conta", "after": "Depois de entrar, peça o aviso em “Avise-me”, dentro do app." }
     },
-    "priceNote": "no primeiro ano · depois {price} por ano",
+    "priceNoteLaunch": "por ano · preço de lançamento até {promoDate} · ou {monthly} por mês",
+    "priceNote": "por ano · ou {monthly} por mês",
+    "soonPrice": "Em breve",
     "legend": { "yes": "Incluído", "no": "Não incluído", "partial": "Incluído em parte", "soon": "Em breve" },
-    "payment": "O pagamento é feito na página segura do Mercado Pago, com cartão ou Pix, sem digitar dados de cartão aqui. É um pagamento único por {months} meses, sem renovação automática, e o preço de entrada vale no primeiro pagamento. Reembolso em até {refundDays} dias. Contas e compras para maiores de 18 anos.",
+    "payment": "O pagamento é feito na página segura do Mercado Pago, com cartão ou Pix, sem digitar dados de cartão aqui. Escolha o plano mensal (1 mês) ou o anual (12 meses, com parcelamento em até 10 vezes no cartão). Cada compra é um pagamento único, sem renovação automática. Reembolso em até {refundDays} dias. Contas e compras para maiores de 18 anos.",
     "omit": ["favorites"],
     "rows": [
       { "ids": ["bible"], "label": "Bíblia em todas as versões disponíveis", "notes": {} },
@@ -67,8 +69,8 @@
     "title": "Perguntas frequentes",
     "items": [
       { "q": "Preciso me cadastrar para ler?", "a": "Não. A leitura da Bíblia e as fichas do plano Essencial são abertas. O cadastro é opcional e serve para salvar seu progresso e favoritos entre aparelhos. Contas e compras são para maiores de 18 anos." },
-      { "q": "Como funciona o pagamento?", "a": "O pagamento é feito na página segura do Mercado Pago, com cartão ou Pix. Nenhum dado de cartão passa por aqui. Você paga uma vez e ganha {months} meses de acesso, sem renovação automática." },
-      { "q": "Posso pedir reembolso?", "a": "Sim, em até {refundDays} dias após o pagamento, sem perguntas. Ao reembolsar, os {months} meses concedidos por aquele pagamento são retirados." },
+      { "q": "Como funciona o pagamento?", "a": "O pagamento é feito na página segura do Mercado Pago, com cartão ou Pix. Nenhum dado de cartão passa por aqui. Você escolhe o plano mensal (1 mês) ou o anual (12 meses) e paga uma vez, sem renovação automática. O anual pode ser parcelado em até 10 vezes no cartão (juros por conta de quem compra)." },
+      { "q": "Posso pedir reembolso?", "a": "Sim, em até {refundDays} dias após o pagamento, sem perguntas. Ao reembolsar, os meses concedidos por aquele pagamento são retirados." },
       { "q": "O que acontece quando o Pro vence?", "a": "Sua conta volta ao plano Essencial e você mantém seu progresso e seus favoritos. Para recuperar o acesso completo, basta renovar antes ou depois do vencimento." },
       { "q": "Quais versões da Bíblia estão disponíveis?", "a": "{versions}. O texto bíblico é livre em todos os planos." },
       { "q": "Para quem é o Timóteo App?", "a": "Para quem estuda a Bíblia sozinho, em grupo ou prepara aulas e mensagens, e quer o contexto de cada livro sem abrir várias fontes. O conteúdo segue a linha evangélica, com o cânon de 66 livros." }
