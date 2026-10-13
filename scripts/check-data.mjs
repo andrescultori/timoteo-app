@@ -422,6 +422,20 @@ for (const ver of VERSIONS) {
   }
 }
 
+// Pacote Pro (Fase 3B): monta o que iria ao Supabase Storage (sem rede) e confere chaves, manifest, posição acadêmica separada e ida e volta sem perda
+{
+  const lib = await import(new URL('./pro-lib.mjs', import.meta.url).href);
+  const src = lib.loadSources(root);
+  const { pro, rest } = lib.splitSources(src);
+  const { files, manifest } = lib.buildPackage(root);
+  for (const k of files.keys()) if (!lib.KEY_RE.test(k)) err(`pacote Pro: chave fora do padrão: ${k}`);
+  for (const [k, v] of pro) if (k !== 'admin/scholarly.json' && /"scholarly"\s*:|"view":"scholarly"/.test(JSON.stringify(v))) err(`pacote Pro: ${k} tem posição acadêmica fora de admin/scholarly.json`);
+  if (/"scholarly"/.test(JSON.stringify(rest))) err('pacote público: sobrou posição acadêmica nas fichas separadas');
+  const back = lib.joinSources(pro, rest);
+  if (JSON.stringify(back.info) !== JSON.stringify(src.info) || JSON.stringify(back.timeline) !== JSON.stringify(src.timeline)) err('pacote Pro: separar e juntar fichas/linha do tempo não devolve o original');
+  if (Object.keys(manifest.files).length !== files.size - 1) err('pacote Pro: o manifest não lista todos os arquivos');
+}
+
 // Workflows do GitHub Actions: um `name:` com ": " dentro invalida o YAML e o workflow falha em todo push (aconteceu em landing-promo-rebuild.yml)
 {
   const dir = path.join(root, '.github/workflows');
