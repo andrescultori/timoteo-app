@@ -10,7 +10,7 @@ Pendências do André e do projeto, em ordem aproximada. `[x]` feito, `[ ]` aber
 - [ ] **Fase 3B, PR 5** (o site público deixa de levar o Pro): merge → conferir o site logado como Pro e como Essencial → **apagar os deploys antigos do Cloudflare**.
 - [x] Chaves novas do Supabase (`sb_secret_...`) em uso e chaves legadas (JWT) desativadas em 13/10/2026. Edge Functions, publicador e e2e (18 OK) verificados sem as legadas. Falta só apagar a variável antiga do ambiente da nuvem, se ainda existir.
 - [ ] PWA offline (PRs 6 a 9 da sequência).
-- [ ] **Fase 8:** repositório privado e licença "Todos os direitos reservados" (ver abaixo).
+- [ ] **Fase 8:** repositório privado e licença "Todos os direitos reservados": `LICENSE` e `NOTICE.md` em PR; passo a passo em `docs/fase8-passo-a-passo.md` (inclui apagar os deploys antigos do Cloudflare e o que fazer com o portfólio).
 - [ ] **Mercado Pago:** confirmar a **parcela mínima do anual em 10x** (R$ 39,90 → cerca de R$ 3,99 por parcela). Se o MP recusar, baixar `maxInstallments` do anual em `plans.json` e `MAX_INSTALLMENTS` em `supabase/functions/_shared/pricing.js` (o `check` confere os dois). Também confirmar as taxas atuais (Pix, cartão).
 - [ ] **Textos legais:** revisão jurídica dos Termos e da Política; publicar `LEGAL_VERSION` com data; prazo fiscal (contador); CPF no texto ou não; versão EN. A Política precisa de linha sobre o armazenamento offline do PWA (a listar quando chegar lá).
 - [ ] **Ligar `VITE_BILLING_ENABLED` em produção** só depois dos itens acima (Fase 8 e textos legais).

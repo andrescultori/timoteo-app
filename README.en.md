@@ -104,4 +104,4 @@ Every pull request runs `npm run check` and `npm run build`; deployment to Pages
 
 Original idea of the table: "TaBíblia Periódica" (Grupo de Jovens Conquistando as Nações; source cited: Sociedade Bíblica do Brasil). This project has its own design and code.
 
-*Code license: [MIT](LICENSE). Bible texts and third-party data follow the licenses stated above.*
+*© 2026 André Scultori. All rights reserved ([`LICENSE`](LICENSE)). Third-party Bible texts, data, fonts and libraries follow their authors' licenses ([`NOTICE.md`](NOTICE.md)).*
