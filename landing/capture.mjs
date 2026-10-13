@@ -11,7 +11,7 @@ const shots = {
   ficha: { hash: '#joh/sheet' },
   mapa: { hash: '#joh/map', scroll: 250 },
   'linha-do-tempo': { hash: '#timeline', click: 'Egito e Êxodo' },
-  personagens: { hash: '#person/davi' },
+  personagens: { hash: '#person/boaz' }, // mostra o bloco Família (pai, mãe citada e filhos, com referências) e o link para a árvore
 };
 fs.mkdirSync(out, { recursive: true });
 const b = await chromium.launch();
