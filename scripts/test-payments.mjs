@@ -5,11 +5,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
-import { PRICE_CENTS, priceKind, priceCents, ITEM_TITLE, alreadyCovered } from '../supabase/functions/_shared/pricing.js';
+import { PRICE_CENTS, PERIODS, MAX_INSTALLMENTS, PROMO_ENDS_AT, PREMIUM_ON_SALE, isLaunch, orderFor, alreadyCovered } from '../supabase/functions/_shared/pricing.js';
 import { buildManifest, parseSignature, hmacHex, verifySignature, mapStatus, preferenceBody } from '../supabase/functions/_shared/mp.js';
 import { applyMpPayment, applyAll } from '../supabase/functions/_shared/payments.js';
 import { handleReconcile, reconcileRow } from '../supabase/functions/_shared/reconcile.js';
 import { secretMatches } from '../supabase/functions/_shared/http.js';
+import { needsRebuild } from './promo-window.mjs';
 import { cleanPrefs, resolvePrefs, DEFAULTS, SIZES, SPACINGS, WIDTHS, FONTS, READ_THEMES, SITE_THEMES } from '../src/readingPrefs.js';
 import { resolveSite } from '../src/siteTheme.js';
 import { rpcProblem, addMonths, shortcutExpiry, toDateInput, fromDateInput, planView, downgradesPaid, barRows, cents, SEX_ORDER, AGE_ORDER } from '../src/adminData.js';
@@ -25,11 +26,41 @@ const rejects = async (fn, msg) => { try { await fn(); ok(false, `${msg} (não l
 // ---------------------------------------------------------------------------------------------------------------------
 // 1) funções puras
 // ---------------------------------------------------------------------------------------------------------------------
-eq(priceKind(false), 'entrada', 'primeiro pagamento = preço de entrada');
-eq(priceKind(true), 'cheio', 'depois do primeiro = preço cheio');
-eq(priceCents(false), 2990, 'entrada em centavos');
-eq(priceCents(true), 4990, 'cheio em centavos');
-eq(Object.keys(PRICE_CENTS).sort(), ['cheio', 'entrada'], 'só dois preços');
+// preços por período e por data (política de 13/10/2026)
+{
+  const T = (iso) => new Date(iso);
+  const before = T('2027-01-13T23:59:59-03:00'); // exatamente o fim: ainda é lançamento
+  eq(PROMO_ENDS_AT, '2027-01-13T23:59:59-03:00', 'o fim do lançamento tem offset explícito');
+  eq(isLaunch(T('2026-10-13T12:00:00-03:00')), true, 'antes do fim: lançamento');
+  eq(isLaunch(before), true, 'borda: 23:59:59 (-03:00) ainda é lançamento');
+  eq(isLaunch(T('2027-01-13T23:59:59.999-03:00')), false, 'borda: 23:59:59.999 já passou do limite (23:59:59.000 inclusive)');
+  eq(isLaunch(T('2027-01-14T00:00:00-03:00')), false, 'borda: 00:00:00 do dia seguinte já é preço normal');
+  eq(isLaunch(T('2027-01-14T02:59:59Z')), true, 'a mesma borda em UTC (02:59:59Z = 23:59:59 em Brasília)');
+  eq(isLaunch(T('2027-01-14T03:00:00Z')), false, 'a mesma borda em UTC (03:00:00Z = 00:00:00 em Brasília)');
+  // janela do rebuild da landing: só depois do fim e por 3 dias
+  eq([needsRebuild(PROMO_ENDS_AT, T('2027-01-13T12:00:00-03:00')), needsRebuild(PROMO_ENDS_AT, T('2027-01-14T00:00:00-03:00')), needsRebuild(PROMO_ENDS_AT, T('2027-01-16T12:00:00-03:00')), needsRebuild(PROMO_ENDS_AT, T('2027-01-17T12:00:00-03:00'))], [false, true, true, false], 'janela do rebuild da landing');
+  const lc = (plan, period, iso) => orderFor(plan, period, T(iso));
+  eq(lc('pro', 'mensal', '2026-10-13T12:00:00-03:00')?.cents, 390, 'Pro mensal, lançamento');
+  eq(lc('pro', 'anual', '2026-10-13T12:00:00-03:00')?.cents, 3990, 'Pro anual, lançamento');
+  eq(lc('pro', 'mensal', '2027-01-14T00:00:00-03:00')?.cents, 490, 'Pro mensal, preço normal');
+  eq(lc('pro', 'anual', '2027-01-14T00:00:00-03:00')?.cents, 4990, 'Pro anual, preço normal');
+  eq(lc('pro', 'anual', '2027-01-13T23:59:59-03:00')?.price_kind, 'entrada', 'lançamento grava price_kind entrada');
+  eq(lc('pro', 'anual', '2027-01-14T00:00:00-03:00')?.price_kind, 'cheio', 'preço normal grava price_kind cheio');
+  eq([lc('pro', 'mensal', '2026-11-01T00:00:00Z').months, lc('pro', 'anual', '2026-11-01T00:00:00Z').months], [1, 12], 'mensal concede 1 mês; anual, 12');
+  eq([MAX_INSTALLMENTS.mensal, MAX_INSTALLMENTS.anual], [1, 10], 'mensal à vista; anual até 10x');
+  eq([orderFor('pro', 'mensal').installments, orderFor('pro', 'anual').installments], [1, 10], 'o pedido leva as parcelas do período');
+  eq(PREMIUM_ON_SALE, false, 'Premium não é vendido');
+  eq(orderFor('premium', 'anual'), null, 'Premium recusado enquanto não está à venda');
+  eq(orderFor('premium', 'mensal'), null, 'Premium mensal também');
+  eq(PRICE_CENTS.premium.mensal.regular + PRICE_CENTS.premium.anual.regular, 990 + 9900, 'preços do Premium já definidos (só não vendidos)');
+  for (const bad of [undefined, null, '', 'semanal', 'ANUAL', 'Anual', 12, 1, {}, [], 'toString', 'constructor', '__proto__']) eq(orderFor('pro', bad), null, `período inválido recusado: ${JSON.stringify(bad)}`);
+  for (const bad of [undefined, null, '', 'ouro', 'Pro', 'toString', '__proto__', 'constructor']) eq(orderFor(bad, 'anual'), null, `plano inválido recusado: ${JSON.stringify(bad)}`);
+  eq(Object.keys(PERIODS), ['mensal', 'anual'], 'só dois períodos');
+  const o = orderFor('pro', 'anual', T('2026-10-13T12:00:00-03:00'));
+  eq([o.itemId, o.title], ['timoteo-pro-12m', 'Timóteo App Pro, anual (12 meses)'], 'item do Mercado Pago do anual');
+  eq(orderFor('pro', 'mensal', T('2026-10-13T12:00:00-03:00')).itemId, 'timoteo-pro-1m', 'item do mensal');
+  eq(orderFor('pro', 'anual', T('2026-10-13T12:00:00-03:00')).cents, 3990, 'valor nunca depende de nada além de plano, período e data');
+}
 
 eq(buildManifest({ dataId: 'ABC123', requestId: 'r-1', ts: '1742505638683' }), 'id:abc123;request-id:r-1;ts:1742505638683;', 'manifest: id alfanumérico em minúsculas');
 eq(buildManifest({ dataId: '123-X', requestId: 'r', ts: '1' }), 'id:123-X;request-id:r;ts:1;', 'manifest: id com hífen fica como veio');
@@ -57,10 +88,13 @@ eq(['pending', 'in_process', 'authorized', 'in_mediation', 'algo-novo', undefine
 
 {
   const id = '3f1b2c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d';
-  const b = preferenceBody({ paymentId: id, cents: 2990, appUrl: 'https://timoteo-app.pages.dev/', notificationUrl: 'https://x.supabase.co/functions/v1/mp-webhook' });
+  const order = orderFor('pro', 'anual', new Date('2026-10-13T12:00:00-03:00'));
+  const b = preferenceBody({ paymentId: id, order, appUrl: 'https://timoteo-app.pages.dev/', notificationUrl: 'https://x.supabase.co/functions/v1/mp-webhook' });
   eq(b.external_reference, id, 'preferência: external_reference = id do pagamento');
-  eq(b.items, [{ id: 'timoteo-pro-12m', title: ITEM_TITLE, quantity: 1, unit_price: 29.9, currency_id: 'BRL' }], 'preferência: um item, valor do servidor');
-  eq(b.payment_methods, { excluded_payment_types: [{ id: 'ticket' }], installments: 12 }, 'preferência: sem boleto, até 12 parcelas');
+  eq(b.items, [{ id: 'timoteo-pro-12m', title: 'Timóteo App Pro, anual (12 meses)', quantity: 1, unit_price: 39.9, currency_id: 'BRL' }], 'preferência: um item, valor do servidor');
+  eq(b.payment_methods, { excluded_payment_types: [{ id: 'ticket' }], installments: 10 }, 'preferência: sem boleto, anual até 10 parcelas');
+  const bm = preferenceBody({ paymentId: id, order: orderFor('pro', 'mensal', new Date('2026-10-13T12:00:00-03:00')), appUrl: 'https://x/', notificationUrl: 'https://x/n' });
+  eq([bm.items[0].id, bm.items[0].unit_price, bm.payment_methods.installments], ['timoteo-pro-1m', 3.9, 1], 'preferência do mensal: R$3,90, à vista');
   eq(b.auto_return, 'approved', 'preferência: auto_return');
   eq(b.back_urls.success, 'https://timoteo-app.pages.dev/?checkout=success', 'preferência: back_url sem barra duplicada');
   eq(b.notification_url, 'https://x.supabase.co/functions/v1/mp-webhook', 'preferência: notification_url');
@@ -110,8 +144,8 @@ await db.exec(`grant select, insert, update on public.entitlements to service_ro
 
 const q = async (sql, params) => (await db.query(sql, params)).rows;
 const newUser = async () => (await q(`insert into auth.users (email) values ($1) returning id`, [`u${Math.random()}@t.com`]))[0].id;
-const newPay = async (user, cents = 2990, kind = 'entrada') =>
-  (await q(`insert into public.payments (user_id, amount_cents, price_kind) values ($1, $2, $3) returning id`, [user, cents, kind]))[0].id;
+const newPay = async (user, cents = 2990, kind = 'entrada', months = 12) =>
+  (await q(`insert into public.payments (user_id, amount_cents, price_kind, months) values ($1, $2, $3, $4) returning id`, [user, cents, kind, months]))[0].id;
 let mpSeq = 1000;
 const apply = async (id, status, cents = 2990, mpId = null) => (await q(`select public.apply_payment($1, $2, $3, $4) as r`, [id, mpId ?? `mp${mpSeq += 1}`, status, cents]))[0].r;
 const ent = async (user) => (await q(`select plan, expires_at, usou_preco_de_entrada from public.entitlements where user_id = $1`, [user]))[0];
@@ -144,7 +178,7 @@ const driftSec = async (user, months) => Number((await q(
   const r = await apply(p, 'approved', 2990, 'mpA');
   eq(r.result, 'granted', 'aprovado concede');
   const e = await ent(u);
-  eq([e.plan, e.usou_preco_de_entrada], ['pro', true], 'plano Pro e preço de entrada marcado');
+  eq([e.plan, e.usou_preco_de_entrada], ['pro', false], 'plano Pro; usou_preco_de_entrada não é mais gravado');
   ok((await driftSec(u, 12)) < 60, 'vence em 12 meses');
   eq(await pay(p), { status: 'approved', months_granted: 12, mp_payment_id: 'mpA' }, 'pagamento registrado');
   // idempotência: o mesmo evento de novo não concede de novo
@@ -188,11 +222,11 @@ const driftSec = async (user, months) => Number((await q(
   ok((await driftSec(u, 24)) < 60, 'renovação antecipada soma ao vencimento atual (24 meses)');
   eq((await apply(p2, 'refunded', 4990, 'mp2')).result, 'reversed', 'reembolso da renovação');
   ok((await driftSec(u, 12)) < 60, 'reembolso da renovação volta aos 12 meses');
-  eq([(await ent(u)).plan, (await ent(u)).usou_preco_de_entrada], ['pro', true], 'segue Pro; entrada continua gasta (sobrou o 1º pagamento)');
+  eq((await ent(u)).plan, 'pro', 'segue Pro (sobrou o 1º pagamento)');
   eq((await apply(p2, 'refunded', 4990, 'mp2')).result, 'noop', 'reembolso repetido não subtrai duas vezes');
   eq((await apply(p2, 'approved', 4990, 'mp2')).reason, 'already_reversed', 'aprovação tardia depois do reembolso é ignorada');
   eq((await apply(p1, 'charged_back', 2990, 'mp1')).result, 'reversed', 'estorno do primeiro pagamento');
-  eq([(await ent(u)).plan, (await ent(u)).expires_at, (await ent(u)).usou_preco_de_entrada], ['essencial', null, false], 'sem pagamentos aprovados: volta ao Essencial e libera o preço de entrada');
+  eq([(await ent(u)).plan, (await ent(u)).expires_at, (await ent(u)).usou_preco_de_entrada], ['essencial', null, false], 'sem pagamentos aprovados: volta ao Essencial (usou_preco_de_entrada segue sem uso)');
 }
 {
   // vencido: conta da data do pagamento
@@ -285,51 +319,90 @@ const driftSec = async (user, months) => Number((await q(
   ok(logs5.some((m) => m.includes('decidir à mão') && m.includes(rid)), 'conciliação registra reembolso de cortesia');
 }
 
-// preço de entrada pago duas vezes
+// mensal e anual (política de 13/10/2026): meses por pagamento, soma, reembolso e duplicidade
 {
+  // mensal concede 1 mês; anual, 12
   const u = await newUser();
-  const p1 = await newPay(u, 2990, 'entrada');
-  const p2 = await newPay(u, 2990, 'entrada');
-  eq((await apply(p1, 'approved', 2990, 'mpE1')).result, 'granted', 'entrada: o primeiro aprovado concede');
-  const before = (await ent(u)).expires_at.toISOString();
-  const r2 = await apply(p2, 'approved', 2990, 'mpE2');
-  eq(r2.result, 'duplicate_entry', 'entrada: o segundo aprovado é duplicado');
-  eq((await pay(p2)), { status: 'approved', months_granted: 0, mp_payment_id: 'mpE2' }, 'entrada duplicada fica registrada como aprovada com 0 meses');
-  eq((await ent(u)).expires_at.toISOString(), before, 'entrada duplicada não muda o vencimento');
-  ok((await driftSec(u, 12)) < 60, 'entrada duplicada: continua com 12 meses, não 24');
-  eq((await apply(p2, 'approved', 2990, 'mpE2')).result, 'noop', 'entrada duplicada repetida pelo webhook: sem efeito');
-  // reembolso do duplicado: não mexe no plano
-  eq((await apply(p2, 'refunded', 2990, 'mpE2')).result, 'reversed', 'reembolso do duplicado é registrado');
-  eq((await ent(u)).expires_at.toISOString(), before, 'reembolso do duplicado não tira meses');
-  eq([(await ent(u)).plan, (await ent(u)).usou_preco_de_entrada], ['pro', true], 'reembolso do duplicado: segue Pro e entrada gasta');
-  // reembolso do primeiro: volta ao Essencial e libera a entrada
-  eq((await apply(p1, 'refunded', 2990, 'mpE1')).result, 'reversed', 'reembolso do primeiro');
-  eq([(await ent(u)).plan, (await ent(u)).expires_at, (await ent(u)).usou_preco_de_entrada], ['essencial', null, false], 'depois do reembolso: Essencial e preço de entrada disponível de novo');
-  // e uma nova compra a preço de entrada volta a valer
-  const p3 = await newPay(u, 2990, 'entrada');
-  eq((await apply(p3, 'approved', 2990, 'mpE3')).result, 'granted', 'nova entrada depois do reembolso concede');
-  ok((await driftSec(u, 12)) < 60, 'nova entrada: 12 meses');
+  const pm = await newPay(u, 390, 'entrada', 1);
+  const r = await apply(pm, 'approved', 390, 'mpM1');
+  eq([r.result, r.months], ['granted', 1], 'mensal: concede 1 mês');
+  ok((await driftSec(u, 1)) < 60, 'mensal: vence em 1 mês');
+  eq(await pay(pm), { status: 'approved', months_granted: 1, mp_payment_id: 'mpM1' }, 'mensal registrado com 1 mês');
+  // anual depois do mensal: soma ao vencimento atual (13 meses)
+  const pa = await newPay(u, 3990, 'entrada', 12);
+  await apply(pa, 'approved', 3990, 'mpM2');
+  ok((await driftSec(u, 13)) < 60, 'mensal e depois anual: 13 meses');
+  // reembolso do mensal depois do anual tira só 1 mês
+  eq((await apply(pm, 'refunded', 390, 'mpM1')).result, 'reversed', 'reembolso do mensal');
+  ok((await driftSec(u, 12)) < 60, 'reembolso do mensal tira só o 1 mês dele (sobram 12)');
+  eq((await ent(u)).plan, 'pro', 'segue Pro');
+  eq((await apply(pa, 'refunded', 3990, 'mpM2')).result, 'reversed', 'reembolso do anual');
+  eq([(await ent(u)).plan, (await ent(u)).expires_at], ['essencial', null], 'sem pagamentos: volta ao Essencial');
 }
 {
-  // entrada duplicada seguida de renovação a preço cheio: o cheio soma normalmente
+  // anual e depois mensal: 13 meses; reembolsar o anual deixa o mensal
   const u = await newUser();
-  const p1 = await newPay(u, 2990, 'entrada');
-  const p2 = await newPay(u, 2990, 'entrada');
-  await apply(p1, 'approved', 2990, 'mpF1');
-  await apply(p2, 'approved', 2990, 'mpF2');
-  const p3 = await newPay(u, 4990, 'cheio');
-  eq((await apply(p3, 'approved', 4990, 'mpF3')).result, 'granted', 'preço cheio depois do duplicado concede');
-  ok((await driftSec(u, 24)) < 60, 'entrada + cheio = 24 meses');
+  const pa = await newPay(u, 3990, 'entrada', 12);
+  await apply(pa, 'approved', 3990, 'mpA1');
+  const pm = await newPay(u, 390, 'entrada', 1);
+  await apply(pm, 'approved', 390, 'mpA2');
+  ok((await driftSec(u, 13)) < 60, 'anual e depois mensal: 13 meses');
+  await apply(pa, 'refunded', 3990, 'mpA1');
+  ok((await driftSec(u, 1)) < 60, 'reembolsar o anual deixa 1 mês');
 }
 {
-  // duas aprovações disparadas juntas. O PGlite tem uma conexão só (as chamadas entram em fila), então isto cobre o resultado;
-  // a concorrência real (duas sessões, a segunda esperando o bloqueio de `entitlements`) foi conferida em Postgres 16 com psql.
+  // mensal com o plano vencido: conta da data do pagamento, não do vencimento antigo
   const u = await newUser();
-  const p1 = await newPay(u, 2990, 'entrada');
-  const p2 = await newPay(u, 2990, 'entrada');
-  const results = await Promise.all([apply(p1, 'approved', 2990, 'mpC1'), apply(p2, 'approved', 2990, 'mpC2')]);
-  eq(results.map((r) => r.result).sort(), ['duplicate_entry', 'granted'], 'aprovações simultâneas: uma concede, a outra é duplicada');
-  ok((await driftSec(u, 12)) < 60, 'aprovações simultâneas: 12 meses, não 24');
+  await q(`update public.entitlements set plan = 'pro', expires_at = now() - interval '10 days' where user_id = $1`, [u]);
+  const pm = await newPay(u, 490, 'cheio', 1);
+  await apply(pm, 'approved', 490, 'mpV1');
+  ok((await driftSec(u, 1)) < 60, 'vencido + mensal: 1 mês a partir do pagamento');
+}
+{
+  // dois checkouts diferentes do mesmo período, os dois pagos: somam (como renovação); não há mais "preço de entrada duplicado"
+  const u = await newUser();
+  const p1 = await newPay(u, 3990, 'entrada', 12);
+  const p2 = await newPay(u, 3990, 'entrada', 12);
+  eq((await apply(p1, 'approved', 3990, 'mpD1')).result, 'granted', 'primeiro anual concede');
+  const r2 = await apply(p2, 'approved', 3990, 'mpD2');
+  eq([r2.result, r2.months], ['granted', 12], 'segundo anual (outro checkout) também concede e soma');
+  ok((await driftSec(u, 24)) < 60, 'dois anuais pagos: 24 meses');
+  eq((await apply(p2, 'refunded', 3990, 'mpD2')).result, 'reversed', 'reembolso do segundo (7 dias, a pedido)');
+  ok((await driftSec(u, 12)) < 60, 'volta aos 12 meses');
+}
+{
+  // o MESMO checkout pago duas vezes (Pix duplicado) continua sem conceder de novo
+  const u = await newUser();
+  const p = await newPay(u, 390, 'entrada', 1);
+  await apply(p, 'approved', 390, 'mpS1');
+  eq((await apply(p, 'approved', 390, 'mpS2')).result, 'duplicate_payment', 'mesmo checkout pago duas vezes: duplicate_payment (0 meses)');
+  ok((await driftSec(u, 1)) < 60, 'continua com 1 mês');
+}
+{
+  // aprovações simultâneas de checkouts diferentes: as duas concedem (sem regra de 1º pagamento) e o resultado é a soma
+  const u = await newUser();
+  const p1 = await newPay(u, 390, 'entrada', 1);
+  const p2 = await newPay(u, 390, 'entrada', 1);
+  const results = await Promise.all([apply(p1, 'approved', 390, 'mpC1'), apply(p2, 'approved', 390, 'mpC2')]);
+  eq(results.map((r) => r.result), ['granted', 'granted'], 'aprovações simultâneas de checkouts diferentes: as duas concedem');
+  ok((await driftSec(u, 2)) < 60, 'aprovações simultâneas: 2 meses (serializadas pelo bloqueio da linha de entitlements)');
+}
+{
+  // linha antiga (sem months informado) continua valendo 12 meses; months inválido é recusado pelo banco
+  const u = await newUser();
+  const p = (await q(`insert into public.payments (user_id, amount_cents, price_kind) values ($1, 2990, 'entrada') returning id, months`, [u]))[0];
+  eq(p.months, 12, 'pagamento sem months: padrão 12 (comportamento anterior)');
+  await rejects(() => q(`insert into public.payments (user_id, amount_cents, price_kind, months) values ($1, 100, 'cheio', 6)`, [u]), 'months só aceita 1 ou 12');
+  await rejects(() => q(`insert into public.payments (user_id, amount_cents, price_kind, months) values ($1, 100, 'cheio', 0)`, [u]), 'months 0 recusado');
+}
+{
+  // cortesia sem prazo + mensal: plano intacto, 0 meses, já ativo
+  const u = await newUser();
+  await q(`update public.entitlements set plan = 'pro', expires_at = null where user_id = $1`, [u]);
+  const p = await newPay(u, 390, 'entrada', 1);
+  const r = await apply(p, 'approved', 390, 'mpK1');
+  eq([r.result, r.months], ['already_active', 0], 'cortesia sem prazo + mensal: já ativo, 0 meses');
+  eq([(await ent(u)).plan, (await ent(u)).expires_at], ['pro', null], 'plano intacto');
 }
 
 // conciliação: reembolso e estorno que o webhook não avisou
@@ -434,21 +507,21 @@ const driftSec = async (user, months) => Number((await q(
   const u6 = await newUser();
   const pa = await newPay(u6);
   const pb = await newPay(u6);
-  mpStore[pa] = [mpPay(pa, 'mpD1')];
+  mpStore[pa] = [mpPay(pa, 'mpQ1')];
   await run();
-  mpStore[pb] = [mpPay(pb, 'mpD2')];
+  mpStore[pb] = [mpPay(pb, 'mpQ2')];
   logs.length = 0;
   await run();
-  ok(logs.some((m) => m.includes('duplicate_entry')), 'duplicate_entry visto na conciliação vai para o log');
-  eq((await pay(pb)).months_granted, 0, 'duplicado sem meses');
+  ok(!logs.some((m) => m.includes('duplicate')), 'dois checkouts pagos do mesmo usuário somam: nada de duplicidade no log');
+  eq((await pay(pb)).months_granted, 12, 'segundo checkout pago soma 12 meses (renovação)');
 
   // erro numa linha: as outras seguem, a execução devolve 500 e a linha com erro não é marcada
   const u7 = await newUser();
   const p7 = await newPay(u7);
-  await apply(p7, 'approved', 2990, 'mpE7');
+  await apply(p7, 'approved', 2990, 'mpCE7');
   const u8 = await newUser();
   const p8 = await newPay(u8);
-  await apply(p8, 'approved', 2990, 'mpE8');
+  await apply(p8, 'approved', 2990, 'mpCE8');
   await q(`update public.payments set reconciled_at = null where id in ($1, $2)`, [p7, p8]);
   logs.length = 0;
   r = await run({ search: async (id) => { if (id === p7) throw new Error('Mercado Pago respondeu 503'); return mpStore[id] ?? []; } });

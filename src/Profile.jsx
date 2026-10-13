@@ -132,7 +132,7 @@ export default function Profile({ lang, t }) {
                   {payments.map((p) => (
                     <li key={p.id}>
                       <span>{new Date(p.created_at).toLocaleDateString(lang === 'pt' ? 'pt-BR' : 'en-US')}</span>
-                      <span>{formatBRL(p.amount_cents / 100, lang)} <small>({t[`payKind_${p.price_kind}`]})</small></span>
+                      <span>{formatBRL(p.amount_cents / 100, lang)} <small>({p.months === 1 ? `${t.proPeriod_mensal}, ` : p.months === 12 ? `${t.proPeriod_anual}, ` : ''}{t[`payKind_${p.price_kind}`]})</small></span>
                       <b>{t[`payStatus_${p.status}`] ?? p.status}</b>
                     </li>
                   ))}
