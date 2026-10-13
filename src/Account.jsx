@@ -4,7 +4,7 @@ import { hrefs } from './route.js';
 import { usePlan } from './plan.js';
 
 // Botão de conta do cabeçalho: "Entrar" (Google) quando deslogado; logado, o nome (com PRO ou PREMIUM ao lado, se tiver o plano) e um menu pequeno
-// com Favoritos, Perfil, Configurações, Administração (só admin) e Sair. Não aparece sem Supabase.
+// com Favoritos, Perfil, Configurações, Opções de leitura, Administração (só admin) e Sair. Não aparece sem Supabase.
 export default function Account({ t }) {
   const { enabled, status, name, error, consent } = useSession();
   const pending = consent === 'needed'; // sem o aceite dos Termos: favoritos só neste aparelho
@@ -44,6 +44,7 @@ export default function Account({ t }) {
           <a role="menuitem" href={hrefs.favorites} onClick={() => setOpen(false)}>{t.favorites}</a>
           <a role="menuitem" href={hrefs.profile} onClick={() => setOpen(false)}>{t.profile}</a>
           <a role="menuitem" href={hrefs.settings} onClick={() => setOpen(false)}>{t.settings}</a>
+          <a role="menuitem" href={hrefs.readingSettings} onClick={() => setOpen(false)}>{t.cfgRead}</a>
           {isAdmin && <a role="menuitem" href={hrefs.admin} onClick={() => setOpen(false)}>{t.admin}</a>}
           <button type="button" role="menuitem" onClick={() => { setOpen(false); signOut(); }}>{t.signOut}</button>
         </div>
