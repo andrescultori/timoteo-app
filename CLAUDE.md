@@ -1,8 +1,8 @@
 # Timóteo App (repo `timoteo-app`)
 
-Nome comercial: **Timóteo App** (em inglês, **Timoteo App**). "TaBíblia" era só o nome de trabalho, inspirado no "TaBíblia Periódica", e não é o nome do produto. O repositório é `andrescultori/timoteo-app` (renomeado de `biblia`) e o app fica em estudo.timoteo.app.br (a landing em timoteo.app.br; o GitHub Pages andrescultori.github.io/timoteo-app/ segue no ar como cópia).
+Nome comercial: **Timóteo App** (em inglês, **Timoteo App**). "TaBíblia" era só o nome de trabalho, inspirado no "TaBíblia Periódica", e não é o nome do produto. O repositório é `andrescultori/timoteo-app` (renomeado de `biblia`) e o app fica em estudo.timoteo.app.br (a landing em timoteo.app.br). O GitHub Pages foi **desligado** (o `deploy.yml` saiu em 14/10/2026): o único host do app é o Cloudflare Pages.
 
-Tabela interativa dos 66 livros da Bíblia (inspirada no "TaBíblia Periódica"), com ficha de estudo e leitor de texto, para uso público em estudo bíblico. Stack: React 18 + Vite, sem backend. Publicação: GitHub Pages via GitHub Actions.
+Tabela interativa dos 66 livros da Bíblia (inspirada no "TaBíblia Periódica"), com ficha de estudo e leitor de texto, para uso público em estudo bíblico. Stack: React 18 + Vite, sem backend. Publicação: Cloudflare Pages (o app em estudo.timoteo.app.br), com o CI do GitHub Actions só conferindo (`check`, `test`, `build`).
 
 ## Como trabalhar (preferências do André)
 - Este é um projeto pessoal do André, não da UniMissional. Só trate como da UniMissional (nome, instituição, contas, licenças em nome dela) quando ele pedir isso de forma explícita.
@@ -66,7 +66,7 @@ Tabela interativa dos 66 livros da Bíblia (inspirada no "TaBíblia Periódica")
 - ESV e NKJV: avaliadas, não adicionadas. ESV só via API não comercial e exigiria proxy; NKJV exige permissão escrita.
 
 ## Roadmap
-1. Publicar o repositório e o GitHub Pages. **Feito.**
+1. Publicar o repositório e o site. **Feito** (o GitHub Pages foi desligado; hoje só Cloudflare Pages).
 2. Fichas completas por livro: autor, data, local, destinatários, versículo-chave, tema, contexto histórico, personagens, esboço, conexões. **Rascunho dos 66 livros pronto**; a revisão do André é manual e segue em andamento (pontos de atenção: autoria das cartas do NT, datação de Daniel, versículos-chave, traduções em EN).
 3. Mapa: costa em vetor com d3 (sem tiles externos). **Aba pronta** (demo em `docs/map-demo/`); **mapas feitos para todas as seções**, com revisão do André em andamento. Sem mapa de propósito: Jó, Salmos, Provérbios, Eclesiastes, Cantares (adiados a pedido do André), Lamentações, Joel, Habacuque, Ageu, Malaquias, Efésios, 2 Tessalonicenses, Filemom, Hebreus, Tiago, 2 Pedro, 1–3 João e Judas (poucos ou nenhum lugar distinto no OpenBible). **Linha do tempo: pronta** (`src/Timeline.jsx`, dados em `src/data/timeline.json`, base das datas em `docs/linha-do-tempo-fontes.md`; revisão do André pendente).
 4. Textos: **KJV, WEB, ASV e Bíblia Livre no site, mais a Almeida 1911 atualizada (66 livros, em revisão).** Pendentes: ARA e NAA (autorização da SBB) e, se aparecer fonte confiável, a ARC de 1898.
