@@ -96,14 +96,14 @@ h1 { font-size: 56px; line-height: 1.05; letter-spacing: -0.025em; }
 .plan { background: var(--panel); border: 1.5px solid var(--line); border-radius: 20px; padding: 28px; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 .plan-pro { border: 2.5px solid var(--accent); box-shadow: 0 16px 40px rgba(15, 45, 36, 0.12); }
 .plan-soon { background: var(--bg); border: 1.5px dashed var(--line-strong); }
-.plan-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 32px; }
+.plan-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 36px; }
 .plan-head h3 { font-size: 28px; }
 .badge { background: var(--chip); color: var(--accent); font-weight: 600; font-size: 14px; padding: 4px 12px; border-radius: 999px; white-space: nowrap; }
 .badge-dark { background: var(--accent); color: var(--on); }
 .price { display: flex; flex-direction: column; gap: 2px; min-height: 104px; }
 .price-old { font-size: 16px; color: var(--muted); min-height: 24px; }
 .price-now { font: 700 44px/1.1 var(--f-display); color: var(--accent); }
-.price-note { font-size: 15px; color: var(--muted); }
+.price-note { font-size: 15px; line-height: 1.5; min-height: 3em; color: var(--muted); } /* 2 linhas reservadas: o botão fica alinhado entre os planos */
 .plan-after { font-size: 15px; color: var(--muted); margin-top: -8px; }
 .items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
 .items li { display: flex; align-items: flex-start; gap: 12px; }
