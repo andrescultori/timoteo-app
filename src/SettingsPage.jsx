@@ -7,6 +7,7 @@ import { VERSIONS, loadBook } from './data/bible.js';
 import { SIZES, SPACINGS, WIDTHS, FONTS, READ_THEMES, SITE_THEMES, READ_COLORS, readColors, resolvePrefs } from './readingPrefs.js';
 import { useResolvedSite } from './siteTheme.js';
 import { readStyle } from './readStyle.js';
+import { hrefs } from './route.js';
 import OfflineCard from './OfflineCard.jsx';
 import ConsentSummary from './ConsentSummary.jsx';
 
@@ -38,8 +39,8 @@ function usePreview(lang) {
 }
 
 // Página de Configurações (#settings): ajustes de leitura (com pré-visualização ao vivo), onde ficam salvos e o cartão "Estudo" (admin).
-export default function SettingsPage({ t, lang, settings, canAcademic, onChange }) {
-  usePageTitle([t.settings], t.title);
+export default function SettingsPage({ t, lang, settings, canAcademic, onChange, view = 'main' }) {
+  usePageTitle(view === 'reading' ? [t.settings, t.cfgRead] : [t.settings], t.title);
   const { prefs } = useUserData();
   const p = resolvePrefs(prefs);
   const site = useResolvedSite();
@@ -49,6 +50,69 @@ export default function SettingsPage({ t, lang, settings, canAcademic, onChange 
   const si = SIZES.indexOf(p.size);
   const colors = readColors(p.theme, site);
   const step = (d) => setPrefs({ size: SIZES[Math.min(SIZES.length - 1, Math.max(0, si + d))] });
+
+  if (view === 'reading') {
+    return (
+      <div className="page bookpage" style={{ '--c': 'var(--muted)' }}>
+        <BackButton t={t} />
+        <h1 id="cfg-title">{t.cfgRead}</h1>
+        <div className="bk-cols cfg-cols">
+          <section className="card cfg-card" aria-labelledby="cfg-read">
+            <div className="cfg-head">
+              <h2 id="cfg-read">{t.cfgReadCard}</h2>
+              <button type="button" className="linklike cfg-reset" onClick={resetPrefs}>{t.cfgReset}</button>
+            </div>
+
+            <div className="cfg-group" role="group" aria-label={t.cfgSize}>
+              <span className="bk-label" aria-hidden="true">{t.cfgSize}</span>
+              <div className="cfg-size">
+                <button type="button" className="ghost icon-btn" aria-label={t.cfgSmaller} disabled={si <= 0} onClick={() => step(-1)}><span className="aa-s" aria-hidden="true">A</span></button>
+                <div className="cfg-dots" aria-hidden="true">{SIZES.map((s) => <span key={s} className={s === p.size ? 'on' : undefined} />)}</div>
+                <button type="button" className="ghost icon-btn" aria-label={t.cfgLarger} disabled={si >= SIZES.length - 1} onClick={() => step(1)}><span className="aa-l" aria-hidden="true">A</span></button>
+              </div>
+              <span className="cfg-now" role="status">{p.size} px</span>
+            </div>
+
+            <Options label={t.cfgSpacing} value={p.spacing} onPick={(v) => setPrefs({ spacing: v })}
+              items={[[SPACINGS[0], t.cfgCompact], [SPACINGS[1], t.cfgNormal], [SPACINGS[2], t.cfgWide]]} />
+            <Options label={t.cfgWidth} value={p.width} onPick={(v) => setPrefs({ width: v })}
+              items={[[WIDTHS[0], t.cfgNarrow], [WIDTHS[1], t.cfgMedium], [WIDTHS[2], t.cfgBroad]]} />
+            <Options label={t.cfgFont} value={p.font} onPick={(v) => setPrefs({ font: v })}
+              items={[[FONTS[0], t.cfgSerif, { fontFamily: 'var(--f-read)' }], [FONTS[1], t.cfgSans, { fontFamily: 'var(--f-body)' }]]} />
+
+            <div className="cfg-switch">
+              <span className="cfg-switch-text">
+                <span id="cfg-lines-l">{t.cfgLines}</span>
+                <small id="cfg-lines-d">{t.cfgLinesHelp}</small>
+              </span>
+              <button type="button" role="switch" className="switch" aria-checked={p.verseLines} aria-labelledby="cfg-lines-l" aria-describedby="cfg-lines-d" onClick={() => setPrefs({ verseLines: !p.verseLines })}><span /></button>
+            </div>
+
+            <div className="cfg-switch">
+              <span className="cfg-switch-text">
+                <span id="cfg-cant-l">{t.cfgCantillation}</span>
+                <small id="cfg-cant-d">{t.cfgCantillationHelp}</small>
+              </span>
+              <button type="button" role="switch" className="switch" aria-checked={p.cantillation} aria-labelledby="cfg-cant-l" aria-describedby="cfg-cant-d" onClick={() => setPrefs({ cantillation: !p.cantillation })}><span /></button>
+            </div>
+
+            <Options label={t.cfgTheme} value={p.theme} onPick={(v) => setPrefs({ theme: v })}
+              items={READ_THEMES.map((k) => [k, { follow: t.cfgFollow, light: t.cfgLight, sepia: t.cfgSepia, dark: t.cfgDark }[k], { background: readColors(k, site).bg, color: readColors(k, site).fg }])} />
+            <p className="cfg-help">{t.cfgFollowHelp}</p>
+          </section>
+
+          <div className="bk-main cfg-side cfg-sticky">
+          <section className="card cfg-preview" style={{ ...readStyle(p, site), background: colors.bg, color: colors.fg }} aria-labelledby="cfg-prev">
+            <h2 id="cfg-prev" className="bk-label" style={{ color: colors.fg }}>{t.cfgPreview} · {lang === 'pt' ? 'João' : 'John'} 3{preview ? ` · ${preview.version.label}` : ''}</h2>
+            <div className={`text${p.verseLines ? ' lines' : ''}`} lang={preview?.version.lang}>
+              <p>{(preview?.verses ?? []).map(([n, v]) => <span key={n}><sup>{n}</sup>{v} </span>)}</p>
+            </div>
+          </section>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="page bookpage" style={{ '--c': 'var(--muted)' }}>
@@ -62,56 +126,11 @@ export default function SettingsPage({ t, lang, settings, canAcademic, onChange 
             items={SITE_THEMES.map((k) => [k, { light: t.cfgLight, dark: t.cfgDark, auto: t.cfgAuto }[k]])} />
           <p className="cfg-help">{t.cfgSiteThemeHelp}</p>
         </section>
-        <section className="card cfg-card" aria-labelledby="cfg-read">
-          <div className="cfg-head">
-            <h2 id="cfg-read">{t.cfgRead}</h2>
-            <button type="button" className="linklike cfg-reset" onClick={resetPrefs}>{t.cfgReset}</button>
-          </div>
-
-          <div className="cfg-group" role="group" aria-label={t.cfgSize}>
-            <span className="bk-label" aria-hidden="true">{t.cfgSize}</span>
-            <div className="cfg-size">
-              <button type="button" className="ghost icon-btn" aria-label={t.cfgSmaller} disabled={si <= 0} onClick={() => step(-1)}><span className="aa-s" aria-hidden="true">A</span></button>
-              <div className="cfg-dots" aria-hidden="true">{SIZES.map((s) => <span key={s} className={s === p.size ? 'on' : undefined} />)}</div>
-              <button type="button" className="ghost icon-btn" aria-label={t.cfgLarger} disabled={si >= SIZES.length - 1} onClick={() => step(1)}><span className="aa-l" aria-hidden="true">A</span></button>
-            </div>
-            <span className="cfg-now" role="status">{p.size} px</span>
-          </div>
-
-          <Options label={t.cfgSpacing} value={p.spacing} onPick={(v) => setPrefs({ spacing: v })}
-            items={[[SPACINGS[0], t.cfgCompact], [SPACINGS[1], t.cfgNormal], [SPACINGS[2], t.cfgWide]]} />
-          <Options label={t.cfgWidth} value={p.width} onPick={(v) => setPrefs({ width: v })}
-            items={[[WIDTHS[0], t.cfgNarrow], [WIDTHS[1], t.cfgMedium], [WIDTHS[2], t.cfgBroad]]} />
-          <Options label={t.cfgFont} value={p.font} onPick={(v) => setPrefs({ font: v })}
-            items={[[FONTS[0], t.cfgSerif, { fontFamily: 'var(--f-read)' }], [FONTS[1], t.cfgSans, { fontFamily: 'var(--f-body)' }]]} />
-
-          <div className="cfg-switch">
-            <span className="cfg-switch-text">
-              <span id="cfg-lines-l">{t.cfgLines}</span>
-              <small id="cfg-lines-d">{t.cfgLinesHelp}</small>
-            </span>
-            <button type="button" role="switch" className="switch" aria-checked={p.verseLines} aria-labelledby="cfg-lines-l" aria-describedby="cfg-lines-d" onClick={() => setPrefs({ verseLines: !p.verseLines })}><span /></button>
-          </div>
-
-          <div className="cfg-switch">
-            <span className="cfg-switch-text">
-              <span id="cfg-cant-l">{t.cfgCantillation}</span>
-              <small id="cfg-cant-d">{t.cfgCantillationHelp}</small>
-            </span>
-            <button type="button" role="switch" className="switch" aria-checked={p.cantillation} aria-labelledby="cfg-cant-l" aria-describedby="cfg-cant-d" onClick={() => setPrefs({ cantillation: !p.cantillation })}><span /></button>
-          </div>
-
-          <Options label={t.cfgTheme} value={p.theme} onPick={(v) => setPrefs({ theme: v })}
-            items={READ_THEMES.map((k) => [k, { follow: t.cfgFollow, light: t.cfgLight, sepia: t.cfgSepia, dark: t.cfgDark }[k], { background: readColors(k, site).bg, color: readColors(k, site).fg }])} />
-          <p className="cfg-help">{t.cfgFollowHelp}</p>
-        </section>
-
         <div className="bk-main cfg-side">
-          <section className="card cfg-preview" style={{ ...readStyle(p, site), background: colors.bg, color: colors.fg }} aria-labelledby="cfg-prev">
-            <h2 id="cfg-prev" className="bk-label" style={{ color: colors.fg }}>{t.cfgPreview} · {lang === 'pt' ? 'João' : 'John'} 3{preview ? ` · ${preview.version.label}` : ''}</h2>
-            <div className={`text${p.verseLines ? ' lines' : ''}`} lang={preview?.version.lang}>
-              <p>{(preview?.verses ?? []).map(([n, v]) => <span key={n}><sup>{n}</sup>{v} </span>)}</p>
-            </div>
+          <section className="card small" aria-labelledby="cfg-readlink">
+            <h2 id="cfg-readlink">{t.cfgRead}</h2>
+            <p className="cfg-help">{t.cfgReadLinkHelp}</p>
+            <a className="ghost primary" href={hrefs.readingSettings}>{t.cfgReadOpen}</a>
           </section>
 
           <section className="card small" aria-labelledby="cfg-where">

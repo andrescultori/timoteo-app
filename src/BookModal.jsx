@@ -329,7 +329,7 @@ function Reader({ book, lang, t, info, keyChapter, initialChapter }) {
               <span className="orig-aleph" aria-hidden="true">א</span>
             </button>
             {prevBtn}{nextBtn}
-            <a className="ghost icon-btn" href={hrefs.settings} aria-label={t.readSettingsLabel} title={t.readSettings}><span className="aa" aria-hidden="true">Aa</span></a>
+            <a className="ghost icon-btn" href={hrefs.readingSettings} aria-label={t.readSettingsLabel} title={t.readSettings}><span className="aa" aria-hidden="true">Aa</span></a>
           </span>
         </div>
         {invite && !canOriginals && <div className="orig-invite"><ProInvite t={t} lang={lang} feature="originals" /></div>}
