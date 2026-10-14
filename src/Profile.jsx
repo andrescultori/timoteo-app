@@ -6,6 +6,7 @@ import { usePlan, refreshPlan } from './plan.js';
 import { SubscribeBlock } from './ProInvite.jsx';
 import { billingEnabled, listPayments, verifyPayment, formatBRL } from './billing.js';
 import billing from './data/billing.json';
+import ConsentSummary from './ConsentSummary.jsx';
 import YourData from './YourData.jsx';
 
 const SEX = ['female', 'male', 'other'];
@@ -71,6 +72,7 @@ export default function Profile({ lang, t }) {
   return (
     <div className="page bookpage" role="region" aria-labelledby="pf-title">
       <PageHead t={t} id="pf-title" title={t.profile} sub={t.profileSub} />
+      <div className="pg-stack">
       <div className="pg-card" style={{ '--c': 'var(--s-paulo)' }}>
         <div className="body">
           {(!enabled || status === 'out' || status === 'off') && (
@@ -117,31 +119,40 @@ export default function Profile({ lang, t }) {
               <p className="tl-warn">{user?.email}</p>
             </form>
           )}
-          {status === 'in' && form && <YourData t={t} lang={lang} />}
-          {status === 'in' && billingEnabled && (
-            <section className="profile-pay" aria-labelledby="pf-pay">
-              <h3 id="pf-pay">{t.payTitle}</h3>
-              {livePlan.plan === 'essencial' && <SubscribeBlock t={t} lang={lang} />}
-              {livePlan.plan === 'pro' && livePlan.expiresAt && <SubscribeBlock t={t} lang={lang} renew />}
-              <p className="tl-warn">{t.refundPolicy.replace('{n}', billing.refundDays)}{billing.refundContact.trim() ? ` ${t.refundContact.replace('{c}', billing.refundContact.trim())}` : ''}</p>
-              <h4>{t.payHistory}</h4>
-              {payments === null && <p className="soon">{t.loading}</p>}
-              {payments && payments.length === 0 && <p className="tl-warn">{t.payNone}</p>}
-              {payments && payments.length > 0 && (
-                <ul className="pay-list">
-                  {payments.map((p) => (
-                    <li key={p.id}>
-                      <span>{new Date(p.created_at).toLocaleDateString(lang === 'pt' ? 'pt-BR' : 'en-US')}</span>
-                      <span>{formatBRL(p.amount_cents / 100, lang)} <small>({p.months === 1 ? `${t.proPeriod_mensal}, ` : p.months === 12 ? `${t.proPeriod_anual}, ` : ''}{t[`payKind_${p.price_kind}`]})</small></span>
-                      <b>{t[`payStatus_${p.status}`] ?? p.status}</b>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <button type="button" className="ghost" disabled={checking} onClick={checkPayment}>{t.payCheck}</button>
-            </section>
-          )}
         </div>
+      </div>
+
+      {status === 'in' && form && (
+        <div className="pg-card">
+          <div className="body">
+            {status === 'in' && billingEnabled && (
+              <section className="profile-pay" aria-labelledby="pf-pay">
+                <h3 id="pf-pay">{t.payTitle}</h3>
+                {livePlan.plan === 'essencial' && <SubscribeBlock t={t} lang={lang} />}
+                {livePlan.plan === 'pro' && livePlan.expiresAt && <SubscribeBlock t={t} lang={lang} renew />}
+                <p className="tl-warn">{t.refundPolicy.replace('{n}', billing.refundDays)}{billing.refundContact.trim() ? ` ${t.refundContact.replace('{c}', billing.refundContact.trim())}` : ''}</p>
+                <h4>{t.payHistory}</h4>
+                {payments === null && <p className="soon">{t.loading}</p>}
+                {payments && payments.length === 0 && <p className="tl-warn">{t.payNone}</p>}
+                {payments && payments.length > 0 && (
+                  <ul className="pay-list">
+                    {payments.map((p) => (
+                      <li key={p.id}>
+                        <span>{new Date(p.created_at).toLocaleDateString(lang === 'pt' ? 'pt-BR' : 'en-US')}</span>
+                        <span>{formatBRL(p.amount_cents / 100, lang)} <small>({p.months === 1 ? `${t.proPeriod_mensal}, ` : p.months === 12 ? `${t.proPeriod_anual}, ` : ''}{t[`payKind_${p.price_kind}`]})</small></span>
+                        <b>{t[`payStatus_${p.status}`] ?? p.status}</b>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <button type="button" className="ghost" disabled={checking} onClick={checkPayment}>{t.payCheck}</button>
+              </section>
+            )}
+            <ConsentSummary t={t} lang={lang} bare />
+            <YourData t={t} lang={lang} />
+          </div>
+        </div>
+      )}
       </div>
     </div>
   );

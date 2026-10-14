@@ -7,9 +7,7 @@ import { VERSIONS, loadBook } from './data/bible.js';
 import { SIZES, SPACINGS, WIDTHS, FONTS, READ_THEMES, SITE_THEMES, READ_COLORS, readColors, resolvePrefs } from './readingPrefs.js';
 import { useResolvedSite } from './siteTheme.js';
 import { readStyle } from './readStyle.js';
-import { hrefs } from './route.js';
 import OfflineCard from './OfflineCard.jsx';
-import ConsentSummary from './ConsentSummary.jsx';
 
 // Grupo de opções excludentes (botões com aria-pressed, 44px)
 function Options({ label, items, value, onPick }) {
@@ -114,52 +112,44 @@ export default function SettingsPage({ t, lang, settings, canAcademic, onChange,
     );
   }
 
+  // uma coluna: Aparência, Uso offline, Estudo (admin) e Onde os ajustes ficam
   return (
     <div className="page bookpage" style={{ '--c': 'var(--muted)' }}>
       <BackButton t={t} />
       <h1 id="cfg-title">{t.settings}</h1>
 
-      <div className="bk-cols cfg-cols">
-        <section className="card cfg-card cfg-appearance" aria-labelledby="cfg-look">
+      <div className="cfg-single">
+        <section className="card" aria-labelledby="cfg-look">
           <h2 id="cfg-look">{t.cfgAppearance}</h2>
           <Options label={t.cfgSiteTheme} value={p.siteTheme} onPick={(v) => setPrefs({ siteTheme: v })}
             items={SITE_THEMES.map((k) => [k, { light: t.cfgLight, dark: t.cfgDark, auto: t.cfgAuto }[k]])} />
           <p className="cfg-help">{t.cfgSiteThemeHelp}</p>
         </section>
-        <div className="bk-main cfg-side">
-          <section className="card small" aria-labelledby="cfg-readlink">
-            <h2 id="cfg-readlink">{t.cfgRead}</h2>
-            <p className="cfg-help">{t.cfgReadLinkHelp}</p>
-            <a className="ghost primary" href={hrefs.readingSettings}>{t.cfgReadOpen}</a>
+
+        <OfflineCard t={t} lang={lang} />
+
+        {canAcademic && (
+          <section className="card small" aria-labelledby="cfg-study">
+            <h2 id="cfg-study">{t.settingsStudy}</h2>
+            <label className="cfg-row">
+              <input type="checkbox" checked={settings.showScholarly} onChange={(e) => onChange({ ...settings, showScholarly: e.target.checked })} />
+              <span>
+                <b>{t.settingsScholarly}</b>
+                <small>{t.settingsScholarlyHelp}</small>
+              </span>
+            </label>
           </section>
+        )}
 
-          <section className="card small" aria-labelledby="cfg-where">
-            <h2 id="cfg-where">{t.cfgWhere}</h2>
-            {synced ? <p className="cfg-where ok"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>{t.cfgSaved}</p> : (
-              <div className="cfg-where">
-                <p>{enabled && signedIn ? t.cfgLocalConsent : t.cfgLocal}</p>
-                {enabled && !signedIn && <button type="button" className="ghost primary" onClick={signInWithGoogle}>{t.signIn}</button>}
-              </div>
-            )}
-          </section>
-
-          <ConsentSummary t={t} lang={lang} />
-
-          <OfflineCard t={t} lang={lang} />
-
-          {canAcademic && (
-            <section className="card small" aria-labelledby="cfg-study">
-              <h2 id="cfg-study">{t.settingsStudy}</h2>
-              <label className="cfg-row">
-                <input type="checkbox" checked={settings.showScholarly} onChange={(e) => onChange({ ...settings, showScholarly: e.target.checked })} />
-                <span>
-                  <b>{t.settingsScholarly}</b>
-                  <small>{t.settingsScholarlyHelp}</small>
-                </span>
-              </label>
-            </section>
+        <section className="card small" aria-labelledby="cfg-where">
+          <h2 id="cfg-where">{t.cfgWhere}</h2>
+          {synced ? <p className="cfg-where ok"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>{t.cfgSaved}</p> : (
+            <div className="cfg-where">
+              <p>{enabled && signedIn ? t.cfgLocalConsent : t.cfgLocal}</p>
+              {enabled && !signedIn && <button type="button" className="ghost primary" onClick={signInWithGoogle}>{t.signIn}</button>}
+            </div>
           )}
-        </div>
+        </section>
       </div>
     </div>
   );

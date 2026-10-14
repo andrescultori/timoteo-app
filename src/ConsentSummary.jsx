@@ -8,7 +8,7 @@ const LINKS = { 'Termos de Uso': hrefs.terms, 'Política de Privacidade': hrefs.
 
 // Consentimentos registrados na conta (Fase 7), só leitura: as três caixas como foram aceitas no cadastro. Os textos são os de src/legal/consent.js.
 // A caixa 3 (novidades) pode ser mudada em "Seu perfil"; as outras só se desfazem excluindo a conta.
-export default function ConsentSummary({ t, lang }) {
+export default function ConsentSummary({ t, lang, bare = false }) {
   const { signedIn, consent, legal } = useSession();
   if (!signedIn || consent !== 'ok' || !legal) return null;
   const when = legal.terms_accepted_at ? new Date(legal.terms_accepted_at).toLocaleDateString(lang === 'pt' ? 'pt-BR' : 'en-US') : null;
@@ -19,8 +19,8 @@ export default function ConsentSummary({ t, lang }) {
     </li>
   );
   return (
-    <section className="card small cfg-consents" aria-labelledby="cfg-cons">
-      <h2 id="cfg-cons">{t.cfgConsentTitle}</h2>
+    <section className={bare ? 'profile-consents' : 'card small cfg-consents'} aria-labelledby="cfg-cons">
+      {bare ? <h3 id="cfg-cons">{t.cfgConsentTitle}</h3> : <h2 id="cfg-cons">{t.cfgConsentTitle}</h2>}
       {lang !== 'pt' && <p className="legal-note" role="note">{t.legalPtOnly}</p>}
       <ul className="off-list">
         {row('c1', true, CONSENT.box1)}
