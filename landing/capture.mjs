@@ -14,13 +14,16 @@ const shots = {
   personagens: { hash: '#person/boaz' }, // mostra o bloco Família (pai, mãe citada e filhos, com referências) e o link para a árvore
 };
 fs.mkdirSync(out, { recursive: true });
-const b = await chromium.launch();
-const ctx = await b.newContext({ viewport: { width: 1280, height: 800 }, locale: 'pt-BR' });
+const b = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
+const ctx = await b.newContext({ viewport: { width: 1280, height: 800 }, locale: 'pt-BR', serviceWorkers: 'block' }); // sem service worker: o aviso do PWA não sai na captura
 await ctx.addInitScript(() => { try { localStorage.setItem('lang', 'pt'); localStorage.setItem('showScholarly', '0'); } catch {} });
 const pg = await ctx.newPage();
 const conv = await ctx.newPage();
 await conv.setContent('<canvas id="c"></canvas>');
+// ONLY=ficha,mapa refaz só essas capturas (as que não precisam do plano Pro podem sair de um build normal)
+const only = process.env.ONLY?.split(',');
 for (const [name, { hash, click, scroll }] of Object.entries(shots)) {
+  if (only && !only.includes(name)) continue;
   await pg.goto(`${base}/${hash}`);
   await pg.waitForTimeout(1200);
   if (click) { await pg.getByRole('button', { name: click }).first().click(); await pg.waitForTimeout(400); }

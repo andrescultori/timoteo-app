@@ -16,11 +16,11 @@
     { "key": "versions", "icon": "text", "label": "versões do texto bíblico, de licença clara" }
   ],
   "what": {
-    "title": "Tudo o que você consulta ao estudar um livro, junto",
+    "title": "Tudo o que você consulta ao estudar um livro, integrado em um só app.",
     "lead": "Hoje o texto está em um lugar, o mapa em outro, a cronologia em outro. Aqui as peças se ligam: um clique leva de uma à outra.",
     "features": [
-      { "img": "ficha", "alt": "Ficha de estudo do Evangelho de João: dados do livro e, ao lado, versículo-chave, personagens e esboço", "title": "Ficha de estudo", "text": "Autor, data, lugar, destinatários, versículo-chave, tema, contexto histórico, esboço e conexões de cada livro." },
-      { "img": "mapa", "alt": "Mapa dos lugares citados no livro de Êxodo, com a lista de lugares ao lado", "title": "Mapa dos lugares", "text": "Os lugares citados em cada livro, desenhados em mapa, com a localização debatida marcada como incerta." },
+      { "img": "ficha", "alt": "Visão geral e ficha de estudo do Evangelho de João: dados do livro e, ao lado, versículo-chave, personagens e esboço", "title": "Ficha de estudo", "text": "Autor, data, lugar, destinatários, versículo-chave, tema, contexto histórico, esboço e conexões de cada livro." },
+      { "img": "mapa", "alt": "Mapa dos lugares citados no Evangelho de João, com a lista de lugares ao lado", "title": "Mapa dos lugares", "text": "Os lugares citados em cada livro, desenhados em mapa, com a localização debatida marcada como incerta." },
       { "img": "linha-do-tempo", "alt": "Linha do tempo com os períodos da história bíblica e a lista de eventos", "title": "Linha do tempo", "text": "Períodos e eventos com as datas e a base de cada uma. Onde a cronologia é debatida, as duas leituras aparecem." },
       { "img": "personagens", "alt": "Página de Boaz, personagem bíblico: resumo com referências e o bloco Família, com pai, mãe e filhos, e o link para a árvore genealógica", "title": "Personagens e genealogia", "text": "Quem é cada pessoa, onde aparece e a que eventos e lugares se liga. A árvore de Adão a Jesus, com referência em cada ligação." }
     ]
