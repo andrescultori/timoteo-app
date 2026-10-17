@@ -1,11 +1,13 @@
 import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import PageHead from './PageHead.jsx';
 import ProInvite from './ProInvite.jsx';
+import { NoteEditor } from './NoteText.jsx';
+import { setAddTarget, readerSpot } from './addTarget.js';
 import { BOOKS, SECTIONS, bySlug } from './data/books.js';
 import people from './data/people-index.json'; // só id e nome (público); o conteúdo Pro de personagem não é carregado aqui
 import { usePageTitle } from './pageTitle.js';
 import { usePlan } from './plan.js';
-import { useUserData, getMark, getStudy, saveStudy, deleteStudy } from './userdata.js';
+import { useUserData, getPosition, getMark, getStudy, saveStudy, deleteStudy } from './userdata.js';
 import { favKey } from './favKeys.js';
 import { go, hrefs } from './route.js';
 import { pick } from './timelineUtil.js';
@@ -38,9 +40,9 @@ function useAutosave(initial, commit, delay = 600) {
   return [value, change, flush];
 }
 
-function NoteField({ initial, onCommit, label, placeholder, max = LIMITS.noteMax }) {
+function NoteField({ initial, onCommit, label, placeholder, t, max = LIMITS.noteMax }) {
   const [v, change, flush] = useAutosave(initial ?? '', onCommit);
-  return <textarea className="st-note" aria-label={label} placeholder={placeholder} value={v} maxLength={max} rows={3} onChange={(e) => change(e.target.value)} onBlur={flush} />;
+  return <NoteEditor value={v} onChange={change} onBlur={flush} label={label} placeholder={placeholder} max={max} t={t} />;
 }
 
 function Item({ study, index, d, lab, last, t, lang, texts, version, can }) {
@@ -74,8 +76,23 @@ function Item({ study, index, d, lab, last, t, lang, texts, version, can }) {
               : verses.map((v) => { const m = getMark(d.slug, d.chapter, v.n); return <p key={v.n}><sup>{v.n}</sup> {v.text == null ? <em>{t.studyTextMissing}</em> : <span className="vs" data-cat={m?.cat ?? undefined} style={{ '--r-fg': 'var(--fg)' }}>{v.text}</span>}{m?.note && <span className="st-marknote"> ({t.studyMarkNote}: {m.note})</span>}</p>; })}
         </div>
       )}
-      {noteOpen && <NoteField initial={item.note} label={fill(t.studyNoteOf, { name })} placeholder={ask} onCommit={(v) => edit(study.id, (s) => setItemNote(s, index, v))} />}
+      {noteOpen && <NoteField t={t} initial={item.note} label={fill(t.studyNoteOf, { name })} placeholder={ask} onCommit={(v) => edit(study.id, (s) => setItemNote(s, index, v))} />}
     </li>
+  );
+}
+
+// Eventos da linha do tempo (só quando o plano permite: pede o conteúdo Pro)
+function EventPicker({ value, onChange, t, lang }) {
+  const { ready } = useContent('timeline');
+  const events = ready ? [...(getTimeline()?.events ?? [])].sort((a, b) => pick(a.title, lang).localeCompare(pick(b.title, lang), lang)) : [];
+  if (!ready) return <p className="soon">{t.ctxLoading}</p>;
+  return (
+    <label>{t.studyEvent}
+      <select value={value} onChange={(e) => onChange(e.target.value)}>
+        <option value="">—</option>
+        {events.map((e) => <option key={e.id} value={e.id}>{pick(e.title, lang)}</option>)}
+      </select>
+    </label>
   );
 }
 
@@ -87,6 +104,7 @@ function AddItem({ study, t, lang, can, onDone }) {
   const [v1, setV1] = useState('1');
   const [v2, setV2] = useState('');
   const [pid, setPid] = useState('');
+  const [eid, setEid] = useState('');
   const [places, setPlaces] = useState(null); // null = carregando | [] sem mapa | 'locked'
   const [place, setPlace] = useState('');
   const [err, setErr] = useState(null);
@@ -117,12 +135,19 @@ function AddItem({ study, t, lang, can, onDone }) {
     } else if (kind === 'place') {
       if (!place) { setErr('studyErrPick'); return; }
       k = favKey.place(slug, place);
-    } else k = blockKey(newNoteId());
+    } else if (kind === 'event') {
+      if (!eid) { setErr('studyErrPick'); return; }
+      k = favKey.event(eid);
+    } else if (kind === 'chapter') {
+      const c = Number(chapter);
+      if (!Number.isInteger(c) || c < 1 || c > book.chapters) { setErr('studyErrInvalid'); return; }
+      k = favKey.chapter(slug, c);
+    } else k = favKey.book(slug);
     const r = addItem(study, k);
     if (r.error) { setErr(r.error === 'full' ? 'studyErrFull' : r.error === 'duplicate' ? 'studyErrDup' : 'studyErrInvalid'); return; }
     saveStudy(r.study);
     setErr(null);
-    onDone(kind === 'note');
+    onDone();
   };
   const bookSelect = (
     <label>{t.studyBook}
@@ -138,7 +163,9 @@ function AddItem({ study, t, lang, can, onDone }) {
           <option value="passage">{t.studyAddPassage}</option>
           <option value="person">{t.studyAddPerson}</option>
           <option value="place">{t.studyAddPlace}</option>
-          <option value="note">{t.studyAddNote}</option>
+          <option value="event">{t.studyAddEvent}</option>
+          <option value="chapter">{t.studyAddChapter}</option>
+          <option value="book">{t.studyAddBook}</option>
         </select>
       </label>
       {kind === 'passage' && (
@@ -149,6 +176,17 @@ function AddItem({ study, t, lang, can, onDone }) {
           <label>{t.studyVerseTo}<input type="number" inputMode="numeric" min={1} max={176} value={v2} onChange={(e) => setV2(e.target.value)} /></label>
         </div>
       )}
+      {kind === 'passage' && (
+        <p><button type="button" className="ghost" onClick={() => { const sp = readerSpot(study, describeItem, getPosition()); setAddTarget(study.id); go(hrefs.book(sp.slug, 'read', String(sp.chapter))); }}>{t.studyGoText}</button></p>
+      )}
+      {kind === 'chapter' && (
+        <div className="st-row">
+          {bookSelect}
+          <label>{t.studyChapter}<input type="number" inputMode="numeric" min={1} max={book.chapters} value={chapter} onChange={(e) => setChapter(e.target.value)} /></label>
+        </div>
+      )}
+      {kind === 'book' && <div className="st-row">{bookSelect}</div>}
+      {kind === 'event' && (can('timeline') ? <EventPicker value={eid} onChange={setEid} t={t} lang={lang} /> : <p className="soon">{t.studyEventLocked}</p>)}
       {kind === 'person' && (
         <label>{t.studyPerson}
           <select value={pid} onChange={(e) => setPid(e.target.value)}>
@@ -281,7 +319,7 @@ export default function StudyPage({ lang, t, id }) {
   const study = ud.studies.find((s) => s.id === id) ?? null;
   const plan = usePlan();
   const q = useStudyQuota();
-  const [adding, setAdding] = useState(false);
+  const [adding, setAdding] = useState(null); // null | 'top' | 'bottom': onde o formulário de item está aberto
   const [confirming, setConfirming] = useState(false);
   const [printing, setPrinting] = useState(false);
   const [invite, setInvite] = useState(false);
@@ -301,6 +339,15 @@ export default function StudyPage({ lang, t, id }) {
       </div>
     );
   }
+  const full = study.items.length >= LIMITS.itemsMax;
+  const addNote = () => { const r = addItem(study, blockKey(newNoteId())); if (r.study) saveStudy(r.study); };
+  const addBar = (where) => (
+    <div className="st-addbar">
+      <button type="button" className="ghost" aria-expanded={adding === where} onClick={() => setAdding(adding === where ? null : where)} disabled={full}>{t.studyAdd}</button>
+      <button type="button" className="ghost" onClick={addNote} disabled={full}>{t.studyAddNoteBtn}</button>
+    </div>
+  );
+  const addForm = (where) => adding === where && <AddItem study={study} t={t} lang={lang} can={plan.can} onDone={() => setAdding(null)} />;
   const vName = VERSIONS.find((v) => v.id === version)?.label ?? version;
   return (
     <div className="page bookpage" role="region" aria-labelledby="st-title">
@@ -318,6 +365,8 @@ export default function StudyPage({ lang, t, id }) {
             <label className="st-title-field">{t.studyTitleLabel}
               <input type="text" value={title} maxLength={LIMITS.titleMax} onChange={(e) => changeTitle(e.target.value)} onBlur={flushTitle} />
             </label>
+            {addBar('top')}
+            {addForm('top')}
             {study.items.length === 0 && <p className="soon">{t.studyEmpty}</p>}
             <ol className="st-items" aria-label={t.studyItemsList}>
               {study.items.map((it, i) => {
@@ -326,8 +375,8 @@ export default function StudyPage({ lang, t, id }) {
               })}
             </ol>
             {study.items.some((it) => describeItem(it.k).kind === 'passage') && <p className="st-meta">{fill(t.studyVersion, { v: vName })}</p>}
-            {adding ? <AddItem study={study} t={t} lang={lang} can={plan.can} onDone={() => setAdding(false)} />
-              : <p><button type="button" className="ghost" onClick={() => setAdding(true)} disabled={study.items.length >= LIMITS.itemsMax}>{t.studyAdd}</button></p>}
+            {addBar('bottom')}
+            {addForm('bottom')}
             <div className="st-danger">
               {confirming ? (
                 <div role="alertdialog" aria-label={t.studyDelete}>

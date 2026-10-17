@@ -9,6 +9,7 @@ import { pickVersion, useBookTexts } from './verseText.js';
 import { pick } from './timelineUtil.js';
 import { EventName, labelOf, peopleById } from './studyLabels.jsx';
 import { tplLabel } from './studiesUi.jsx';
+import NoteText from './NoteText.jsx';
 
 const LIGHT = MARK_COLORS.light;
 // Tokens do tema claro, fixos: a folha não segue o tema do site nem o da leitura
@@ -50,7 +51,7 @@ export default function StudyPrint({ study, t, lang, can, onClose }) {
       return (
         <section key={it.k} className="sp-item">
           <h3>{d.free ? t.studyNoteFree : tplLabel(t, study.template, d.id)}</h3>
-          {it.note ? <p className="sp-note">{it.note}</p> : ask && <p className="sp-ask">{ask}</p>}
+          {it.note ? <NoteText className="sp-note" text={it.note} /> : ask && <p className="sp-ask">{ask}</p>}
         </section>
       );
     }
@@ -70,7 +71,7 @@ export default function StudyPrint({ study, t, lang, can, onClose }) {
             })}
             {data === 'erro' && <p><em>{t.studyTextOffline}</em></p>}
           </div>
-          {it.note && <p className="sp-note">{it.note}</p>}
+          {it.note && <NoteText className="sp-note" text={it.note} />}
         </section>
       );
     }
@@ -80,7 +81,7 @@ export default function StudyPrint({ study, t, lang, can, onClose }) {
       <section key={it.k} className="sp-item">
         <h3><span className="sp-kind">{kindKey ? t[kindKey] : ''}</span> {d.kind === 'event' ? (can('timeline') ? <EventName id={d.id} t={t} lang={lang} /> : t.studyEventName) : lab ? lab.text : it.k}</h3>
         {books.length > 0 && <p className="sp-refs">{books.join(' · ')}</p>}
-        {it.note && <p className="sp-note">{it.note}</p>}
+        {it.note && <NoteText className="sp-note" text={it.note} />}
       </section>
     );
   });

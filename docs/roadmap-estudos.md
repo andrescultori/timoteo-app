@@ -85,6 +85,11 @@ Também na migration (ou em uma 2ª): atualizar `delete_account_data` para apaga
 - PR 1 (banco e dados), PR 2 (leitor e Favoritos > Versículos) e PR 3 (Meus Estudos) **mesclados**. PR 4 (PDF do Pro, matriz de planos, landing) em revisão. Faltam: teste logado no Supabase real e o texto legal (ver `docs/checklist-lancamento.md`).
 - Fora do lançamento: "Adicionar ao estudo" direto do lugar do mapa e do evento da linha do tempo (usa-se "Adicionar item"), copiar como texto, compartilhar estudo, reordenar por arrastar, tela cheia.
 
+## ETAPA 5 (melhorias, depois do lançamento do PR 4)
+- **PR A (sem migration)**: "Adicionar item" separado de "Adicionar nota" (botões no topo e no fim da lista); "Ir ao texto" (leitor com a faixa "Adicionando a: <estudo>", a barra de seleção adiciona direto e volta ao estudo; estado em `sessionStorage`); tocar no texto do versículo seleciona; notas de item com formatação simples (`src/richText.js`: `# `, `## `, `**negrito**`, `*itálico*`, `++sublinhado++`; editor com barra e pré-visualização; também na folha de PDF).
+- **PR B (migration `20261021000000_estudos_inc.sql`)**: interruptor "Incluir o conteúdo aqui" (`inc`) nos itens e no Contexto, com o conteúdo no estudo e no PDF; limite de nota de item para 5000 só em `study_items_valid`.
+- Fora: originais no estudo (etapa 6), seções com título editável, modelo do usuário, modo ver/editar, seleção por arrasto, marcação em todas as versões, busca textual completa.
+
 ## Passo a passo (hoje: sáb 17/10; lançamento: sáb 31/10)
 | Quando | Etapa | Quem |
 |---|---|---|

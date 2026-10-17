@@ -33,7 +33,7 @@ if (pro) {
   await pg.goto(`${pro}/#studies`); await pg.waitForSelector('.st-tpl');
   await pg.getByRole('button', { name: /Aula de EBD/ }).click(); await pg.waitForSelector('.st-items');
   await pg.locator('.st-item textarea').first().fill('Entender o novo nascimento');
-  await pg.getByRole('button', { name: 'Adicionar item' }).click();
+  await pg.getByRole('button', { name: 'Adicionar item' }).first().click();
   await pg.locator('.st-add select').nth(1).selectOption('joh');
   const n = pg.locator('.st-add input[type=number]');
   await n.nth(0).fill('3'); await n.nth(1).fill('16'); await n.nth(2).fill('21');

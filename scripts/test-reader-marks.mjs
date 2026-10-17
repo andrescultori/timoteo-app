@@ -4,6 +4,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { toggleVerse, selectRange, sortedVerses, versesLabel, refLabel, commonCat, nextCat, withNote } from '../src/verseSelect.js';
 import { parseHash, hrefs } from '../src/routeCore.js';
+import { tapIgnored } from '../src/verseSelect.js';
+import { getAddTarget, setAddTarget, clearAddTarget, readerSpot } from '../src/addTarget.js';
+import { describeItem } from '../src/studiesCore.js';
 import { readStyle } from '../src/readStyle.js';
 import { MARK_COLORS, markColors } from '../src/readingPrefs.js';
 
@@ -106,6 +109,35 @@ eq(Object.keys(readStyle({ theme: 'light', size: 21, spacing: 1.7, width: 660, f
 eq(P('#studies'), { kind: 'studies', id: null }, 'rota: #studies');
 eq(P('#studies/10000000-1000-4000-8000-100000000000'), { kind: 'studies', id: '10000000-1000-4000-8000-100000000000' }, 'rota: #studies/<id>');
 eq([hrefs.studies(), hrefs.studies('abc')], ['#studies', '#studies/abc'], 'hrefs.studies');
+
+// toque no texto do versículo: quando é ignorado
+ok(!tapIgnored({}), 'toque no texto: seleciona por padrão');
+ok(tapIgnored({ hasSelection: true }), 'toque no texto: há texto selecionado (copiar) → ignora');
+ok(tapIgnored({ interactive: true }), 'toque no texto: link, botão, número ou diálogo → ignora');
+ok(tapIgnored({ originals: true }), 'toque no texto: modo originais → ignora');
+ok(tapIgnored({ canSelect: false }), 'toque no texto: sem permissão de marcar → ignora');
+
+// estudo de destino ("Ir ao texto"): sessionStorage com try/catch
+{
+  const mem = new Map();
+  globalThis.sessionStorage = { getItem: (k) => mem.get(k) ?? null, setItem: (k, v) => mem.set(k, String(v)), removeItem: (k) => mem.delete(k) };
+  const id = '10000000-1000-4000-8000-100000000000';
+  eq(getAddTarget(), null, 'destino: começa vazio');
+  let notified = 0; // o hook assina; aqui só conferimos a leitura
+  setAddTarget(id); eq(getAddTarget(), id, 'destino: gravado');
+  mem.set('studyAddTarget', 'lixo'); eq(getAddTarget(), null, 'destino: valor inválido vale como vazio');
+  setAddTarget(id.toUpperCase()); eq(getAddTarget(), id, 'destino: id em maiúsculas normaliza');
+  clearAddTarget(); eq(getAddTarget(), null, 'destino: limpo');
+  globalThis.sessionStorage = { getItem() { throw new Error('bloqueado'); }, setItem() { throw new Error('bloqueado'); }, removeItem() { throw new Error('bloqueado'); } };
+  setAddTarget(id); eq(getAddTarget(), null, 'destino: sessionStorage bloqueado não quebra (vale vazio)');
+  clearAddTarget();
+  delete globalThis.sessionStorage;
+  void notified;
+  const st = { template: null, items: [{ k: 'block:a' }, { k: 'person:davi' }, { k: 'ref:joh:3:16' }, { k: 'chapter:gen:1' }] };
+  eq(readerSpot(st, describeItem, { slug: 'psa', chapter: 23 }), { slug: 'joh', chapter: 3 }, 'Ir ao texto: texto-base do estudo (1º item de passagem)');
+  eq(readerSpot({ template: null, items: [{ k: 'person:davi' }] }, describeItem, { slug: 'psa', chapter: 23 }), { slug: 'psa', chapter: 23 }, 'Ir ao texto: sem texto-base, última posição de leitura');
+  eq(readerSpot({ template: null, items: [] }, describeItem, null), { slug: 'gen', chapter: 1 }, 'Ir ao texto: sem nada, Gênesis 1');
+}
 
 console.log(failed ? `\n${failed} teste(s) falharam, ${passed} passaram.` : `OK: ${passed} testes do leitor com marcações passaram.`);
 process.exit(failed ? 1 : 0);

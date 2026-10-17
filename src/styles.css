@@ -979,3 +979,30 @@ a.ghost[aria-disabled='true'] { opacity: 0.4; pointer-events: none; }
   .sp-bar { display: none; }
   .sp-sheet { width: auto; margin: 0; padding: 0; box-shadow: none; }
 }
+
+/* Faixa "Adicionando a: <estudo>" no leitor (só aparece vindo de "Ir ao texto") */
+.add-banner { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: 0 0 12px; padding: 8px 12px; border: 1.5px solid var(--accent); border-radius: var(--radius-ctl); background: var(--panel-2); }
+.add-banner > span:first-child { flex: 1 1 200px; min-width: 0; overflow-wrap: anywhere; }
+.add-banner-hint { flex: 1 1 100%; color: var(--muted); font-size: 14.5px; order: 3; }
+.add-banner .ghost { min-height: 44px; margin-left: auto; text-decoration: none; }
+
+/* Notas formatadas (richText.js) e editor */
+.rt h4, .rt h5 { margin: 8px 0 2px; font-family: var(--f-display); }
+.rt h4 { font-size: 1.15rem; } .rt h5 { font-size: 1rem; }
+.rt p { margin: 0 0 6px; overflow-wrap: anywhere; }
+.rt u { text-underline-offset: 2px; }
+.rt-editor { display: grid; gap: 6px; margin-top: 8px; }
+.rt-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+.rt-tools, .rt-modes { display: flex; flex-wrap: wrap; gap: 4px; }
+.rt-btn, .rt-modes button { min-width: 44px; min-height: 44px; border: 1.5px solid var(--line-strong); border-radius: var(--radius-ctl); background: var(--panel); color: var(--fg); font: 700 15px var(--f-body); cursor: pointer; padding: 0 10px; }
+.rt-btn.rt-i { font-style: italic; } .rt-btn.rt-u { text-decoration: underline; }
+.rt-btn:disabled { opacity: 0.4; cursor: default; }
+.rt-modes button[aria-selected='true'] { background: var(--accent-fill, var(--accent)); border-color: var(--accent-fill, var(--accent)); color: var(--on-accent); }
+.rt-preview { min-height: 88px; padding: 8px 12px; border: 1.5px dashed var(--line-strong); border-radius: var(--radius-ctl); background: var(--panel); }
+.rt-editor .st-note { margin-top: 0; }
+.rt-count { margin: 0; text-align: right; }
+.sp-note.rt { white-space: normal; }
+.sp-note h4, .sp-note h5 { color: #1b1f1c; }
+.sp-note h4 { font-size: 12pt; } .sp-note h5 { font-size: 11pt; }
+.sp-note p:last-child { margin-bottom: 0; }
+.st-addbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
