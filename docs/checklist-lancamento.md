@@ -18,6 +18,9 @@ Pendências do André e do projeto, em ordem aproximada. `[x]` feito, `[ ]` aber
 - [ ] **Textos legais:** revisão jurídica dos Termos e da Política; publicar `LEGAL_VERSION` com data; prazo fiscal (contador); CPF no texto ou não; versão EN. A Política precisa de linha sobre o armazenamento offline do PWA (a listar quando chegar lá).
 - [ ] **Ligar `VITE_BILLING_ENABLED` em produção** só depois dos itens acima (Fase 8 e textos legais).
 
+## Estudos (marcações e Meus Estudos; ver `docs/roadmap-estudos.md`)
+- [ ] Aprovar o roteiro e as decisões; **go/no-go em 26/10**; avisar o advogado (anotações e estudos entram na Política).
+
 ## Portfólio (decidido em 15/10/2026)
 - [ ] Repositório público separado, só com um recorte sem o conteúdo Pro (landing, camada de dados e testes) e mockup com telas de exemplo. Fazer depois de o repositório principal virar privado.
 
