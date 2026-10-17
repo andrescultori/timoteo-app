@@ -44,7 +44,7 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   ok((await pg.locator('.st-item').first().locator('.st-item-head b').innerText()) !== first, `${label}: descer muda a ordem`);
   ok(await pg.getByRole('button', { name: /^Subir o item/ }).first().isDisabled(), `${label}: o primeiro não sobe`);
   // adicionar passagem
-  await pg.getByRole('button', { name: 'Adicionar item' }).click();
+  await pg.getByRole('button', { name: 'Adicionar item' }).first().click();
   await pg.locator('.st-add select').first().selectOption('passage');
   await pg.locator('.st-add select').nth(1).selectOption('joh');
   const nums = pg.locator('.st-add input[type=number]');
@@ -92,13 +92,49 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   ok(await pg.locator('.st-passage').count() === 2, 'leitor: o estudo tem as duas passagens');
   // offline: edita sem rede
   await ctx.setOffline(true);
-  await pg.getByRole('button', { name: 'Adicionar item' }).click();
-  await pg.locator('.st-add select').first().selectOption('note');
-  await pg.getByRole('button', { name: 'Adicionar', exact: true }).click();
+  await pg.getByRole('button', { name: 'Adicionar nota' }).first().click();
   ok(await pg.locator('.st-item').count() === 3, 'offline: nota adicionada');
   await ctx.setOffline(false);
   await ctx.close();
 }
+{ // PR A: notas formatadas e "Ir ao texto"
+  const [ctx, pg] = await fresh({ viewport: { width: 1280, height: 900 } }, '#studies', '.st-tpl');
+  await pg.getByRole('button', { name: '+ Novo estudo' }).click(); await pg.locator('.st-form input').fill('Teste PR A'); await pg.getByRole('button', { name: 'Criar estudo' }).click();
+  await pg.waitForSelector('.st-addbar');
+  ok(await pg.locator('.st-addbar').count() === 2, 'dois conjuntos de botões (cabeçalho e rodapé da lista)');
+  ok(await pg.getByRole('button', { name: 'Adicionar nota' }).count() === 2 && await pg.getByRole('button', { name: 'Adicionar item' }).count() === 2, 'botões "Adicionar item" e "Adicionar nota" distintos');
+  await pg.getByRole('button', { name: 'Adicionar nota' }).first().click();
+  const ta = pg.locator('.rt-editor textarea');
+  await ta.fill('# Título\nolá mundo\n<b>cru</b>');
+  await ta.evaluate((e) => { e.focus(); e.setSelectionRange(13, 18); });
+  await pg.getByRole('button', { name: /^Negrito/ }).click();
+  ok((await ta.inputValue()).includes('olá **mundo**'), 'botão N aplica negrito à seleção');
+  await ta.evaluate((e) => { e.focus(); e.setSelectionRange(e.value.length, e.value.length); });
+  const before = (await ta.inputValue()).length;
+  await pg.keyboard.press('Control+i');
+  ok((await ta.inputValue()).length === before + 2, 'Ctrl+I insere o par de itálico');
+  ok(await pg.getByRole('button', { name: 'Título 1' }).evaluate((e) => e.getBoundingClientRect().height >= 44), 'botões da barra com 44px');
+  await pg.getByRole('tab', { name: 'Pré-visualizar' }).click();
+  ok(await pg.locator('.rt-preview h4').count() === 1 && await pg.locator('.rt-preview strong').count() >= 1, 'pré-visualização: título e negrito');
+  ok(await pg.locator('.rt-preview b').count() === 0 && (await pg.locator('.rt-preview').innerText()).includes('<b>cru</b>'), 'HTML cru aparece como texto');
+  await pg.waitForTimeout(900);
+  // "Ir ao texto"
+  await pg.getByRole('button', { name: 'Adicionar item' }).first().click();
+  await pg.getByRole('button', { name: 'Ir ao texto' }).click();
+  await pg.waitForSelector('.add-banner');
+  ok((await pg.locator('.add-banner').innerText()).includes('Teste PR A'), 'faixa "Adicionando a: Teste PR A"');
+  const box = await pg.locator('#vs-3').boundingBox();
+  await pg.locator('#vs-3').click({ position: { x: Math.min(100, box.width - 6), y: 10 } });
+  await pg.locator('#vs-4 .vnum').click();
+  await pg.getByRole('button', { name: 'Adicionar ao estudo' }).last().click();
+  await pg.waitForSelector('.st-items');
+  ok(await pg.locator('.st-passage').count() === 1 && (await pg.locator('.st-passage').innerText()).includes('1.3-4'), 'a barra adicionou direto ao estudo e voltou a ele, sem perguntar');
+  ok(await pg.evaluate(() => sessionStorage.getItem('studyAddTarget')) === null, 'o destino foi limpo');
+  await pg.goto(`${url}/#gen/read/1`); await pg.waitForSelector('.vnum');
+  ok(await pg.locator('.add-banner').count() === 0, 'sem destino, o leitor não tem a faixa');
+  await ctx.close();
+}
+
 await b.close();
 if (failed) { console.error(`\n${failed} verificação(ões) falharam.`); process.exit(1); }
 console.log('\nOK: Meus Estudos no navegador.');

@@ -1440,6 +1440,27 @@ const driftSec = async (user, months) => Number((await q(
     eq(row.template, 'sermao', 'o modelo chega');
     await U.disconnectAccount();
   }
+  // 13) nota de estudo com formatação (# título, **negrito**, *itálico*, ++sublinhado++): sobe e volta igual; o limite de 2000 conta a marcação
+  {
+    store.clear();
+    const U = await load();
+    const C = await import('../src/studiesCore.js');
+    const R = await import('../src/richText.js');
+    const sv = server();
+    await U.connectAccount(sv.client, 'u-1');
+    const note = '# Ideia central\n**Deus** amou o *mundo*, ++sem exceção++.\n<b>texto cru</b>';
+    let st = C.newStudy({ id: sid(80), title: 'Com formatação', template: 'passagem', now: iso(80) });
+    st = C.setItemNote(st, 0, note, iso(81)).study;
+    U.saveStudy(st);
+    await wait(SEND);
+    const row = sv.db.studies.find((r) => r.id === sid(80));
+    eq(row.items[0].note, note, 'a nota formatada sobe exatamente como foi escrita');
+    eq(R.plainText(row.items[0].note).includes('<b>texto cru</b>'), true, 'HTML cru continua texto');
+    const big = '**' + 'a'.repeat(1990) + '**'; // 1994 caracteres com marcação: cabe; a 2001 não
+    eq(C.setItemNote(st, 0, big, iso(82)).study.items[0].note.length, 1994, 'nota de 1994 caracteres com marcação cabe');
+    eq(C.setItemNote(st, 0, big + 'xxxxxxxxxx', iso(83)).study.items[0].note.length, 2000, 'a marcação conta no limite de 2000');
+    await U.disconnectAccount();
+  }
   delete globalThis.localStorage;
 }
 

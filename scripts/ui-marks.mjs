@@ -99,6 +99,41 @@ const fresh = async (opts, hash, wait = '.vnum') => {
     await ctx.close();
   }
 }
+for (const [label, opts, tap] of [['computador', { viewport: { width: 1280, height: 900 } }, false], ['iPhone', { ...devices['iPhone 13 Pro'] }, true]]) { // toque no TEXTO do versículo
+  const [ctx, pg] = await fresh(opts, '#joh/read/3');
+  const act = (loc, o) => (tap ? loc.tap(o) : loc.click(o));
+  // ponto dentro do TEXTO do versículo (o retângulo do span se estende por várias linhas e pegaria o vizinho)
+  const textPoint = async (n) => { await pg.locator(`#vs-${n}`).evaluate((e) => e.scrollIntoView({ block: 'center' })); return pg.evaluate((n) => { const el = document.querySelector(`#vs-${n}`); const tn = [...el.childNodes].filter((c) => c.nodeType === 3).sort((a, b) => b.length - a.length)[0]; const r = document.createRange(); r.setStart(tn, 3); r.setEnd(tn, 6); const q = r.getClientRects()[0]; return { x: q.x + q.width / 2, y: q.y + q.height / 2 }; }, n); };
+  const tapText = async (n) => { const p = await textPoint(n); if (tap) await pg.touchscreen.tap(p.x, p.y); else await pg.mouse.click(p.x, p.y); };
+  await tapText(16);
+  ok(await pg.locator('#vs-16.sel').count() === 1, `${label}: tocar no texto seleciona o versículo`);
+  await tapText(16);
+  ok(await pg.locator('#vs-16.sel').count() === 0, `${label}: tocar de novo desmarca`);
+  await act(pg.locator('#vs-17 .vnum'));
+  ok(await pg.locator('#vs-17.sel').count() === 1, `${label}: o número continua funcionando (uma vez só)`);
+  await act(pg.locator('#vs-17 .vnum'));
+  ok(await pg.locator('#vs-17.sel').count() === 0, `${label}: número desmarca`);
+  // seleção longa para copiar não seleciona o versículo
+  if (!tap) {
+    await pg.evaluate(() => { const el = document.querySelector('#vs-18'); const r = document.createRange(); const tn = [...el.childNodes].filter((c) => c.nodeType === 3).sort((a, b) => b.length - a.length)[0]; r.setStart(tn, 2); r.setEnd(tn, 12); const sl = getSelection(); sl.removeAllRanges(); sl.addRange(r); });
+    { const p = await textPoint(18); await pg.mouse.click(p.x, p.y); }
+    ok(await pg.locator('#vs-18.sel').count() === 0, `${label}: com texto selecionado o toque é ignorado`);
+  }
+  // link/botão dentro do texto não seleciona: o lápis da nota
+  await pg.evaluate(() => getSelection().removeAllRanges());
+  await act(pg.locator('#vs-19 .vnum')); await pg.getByRole('button', { name: 'Anotar' }).click(); await pg.locator('dialog textarea').fill('x'); await pg.getByRole('button', { name: 'Salvar' }).click();
+  await pg.getByRole('button', { name: 'Limpar' }).click();
+  await act(pg.locator('#vs-19 .vnote'));
+  ok(await pg.locator('#vs-19.sel').count() === 0 && await pg.locator('dialog[open]').count() === 1, `${label}: o lápis abre a nota e não seleciona`);
+  await ctx.close();
+}
+{ // sem rolagem bloqueada e sem mudança em repouso
+  const [ctx, pg] = await fresh({ viewport: { width: 390, height: 700 } }, '#joh/read/3');
+  const y0 = await pg.evaluate(() => { scrollTo(0, 400); return scrollY; });
+  ok(y0 > 0, 'a rolagem continua livre');
+  await ctx.close();
+}
+
 await b.close();
 console.log(failed ? `\n${failed} verificação(ões) falharam.` : '\nTudo certo: marcação, nota, rota, teclado, Favoritos e Configurações.');
 process.exit(failed ? 1 : 0);

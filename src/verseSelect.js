@@ -39,3 +39,7 @@ export const nextCat = (marks, verses, catId) => (CATS.includes(catId) && common
 
 // Quantos selecionados têm nota (só informação para a barra)
 export const withNote = (marks, verses) => verses.filter((v) => marks.get(v)?.note).length;
+
+// Toque no TEXTO do versículo (não só no número): quando ele NÃO deve selecionar. Puro (testado em scripts/test-reader-marks.mjs).
+//   hasSelection: o usuário está selecionando texto (copiar); interactive: o alvo é link, botão, número ou dentro de um diálogo; originals: modo originais (só leitura).
+export const tapIgnored = ({ hasSelection = false, interactive = false, originals = false, canSelect = true } = {}) => hasSelection || interactive || originals || !canSelect;

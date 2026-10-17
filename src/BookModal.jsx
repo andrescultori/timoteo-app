@@ -5,16 +5,17 @@ import { VERSIONS, loadBook } from './data/bible.js';
 import { useSettings } from './settings.js';
 import BackButton from './BackButton.jsx';
 import FavButton from './FavButton.jsx';
-import { favKey, setPosition, peekResume, getVersionPref, setVersionPref, setPrefs, useUserData, markVerses, dismissMarksLimit } from './userdata.js';
+import { favKey, saveStudy, setPosition, peekResume, getVersionPref, setVersionPref, setPrefs, useUserData, markVerses, dismissMarksLimit } from './userdata.js';
 import { AddToStudy, AddToStudyButton } from './studiesUi.jsx';
-import { refKeysFor } from './studiesCore.js';
+import { refKeysFor, addKeys } from './studiesCore.js';
 import { MarkBar, NoteDialog, PencilIcon, useCategories } from './marksUi.jsx';
-import { toggleVerse, selectRange, sortedVerses, refLabel, nextCat } from './verseSelect.js';
+import { toggleVerse, selectRange, sortedVerses, refLabel, nextCat, tapIgnored } from './verseSelect.js';
+import { useAddTarget, clearAddTarget } from './addTarget.js';
 import { LIMITS as MARK_LIMITS } from './marksCore.js';
 import { usePlan } from './plan.js';
 import ProInvite from './ProInvite.jsx';
 import { useLinkIndex, Rich } from './linkify.jsx';
-import { hrefs, sync } from './route.js';
+import { hrefs, sync, go } from './route.js';
 import { sectionsAt } from './outline.js';
 import { loadPeopleChapters, peopleInChapterFrom, bookHasChapters } from './peopleChapters.js';
 import { resolvePrefs } from './readingPrefs.js';
@@ -334,6 +335,22 @@ function Reader({ book, lang, t, info, keyChapter, initialChapter, initialVerse 
     setSel((prev) => (e.shiftKey ? selectRange(prev, anchor.current, n, existing) : toggleVerse(prev, n)));
     anchor.current = n;
   };
+  // Toque no texto do versículo (sem mudar nada em repouso): ignora seleção de texto, links, botões, o número (que tem o seu próprio toque) e diálogos
+  const onText = (e, n) => {
+    const interactive = !!e.target.closest?.('a, button, [role=button], dialog, input, textarea, select');
+    const hasSelection = typeof window !== 'undefined' && !!window.getSelection && window.getSelection().toString().length > 0;
+    if (tapIgnored({ hasSelection, interactive, originals: showOrig && !!orig.data, canSelect })) return;
+    onNum(e, n);
+  };
+  // "Adicionando a: <estudo>" (vindo de "Ir ao texto"): a barra adiciona direto a esse estudo e volta a ele
+  const targetId = useAddTarget();
+  const target = targetId ? ud.studies.find((x) => x.id === targetId) ?? null : null;
+  const [bannerMsg, setBannerMsg] = useState(null);
+  const addToTarget = () => {
+    const r = addKeys(target, refKeysFor(book.slug, chapter, selected));
+    if (r.added > 0) { saveStudy(r.study); clearAddTarget(); go(hrefs.studies(target.id)); return; }
+    setBannerMsg(r.full ? t.addFull.replace('{s}', target.title) : t.addDup.replace('{s}', target.title));
+  };
   const applyCat = (catId) => markVerses(book.slug, chapter, selected, { cat: nextCat(marksMap, selected, catId) });
 
   const choose = (id) => {
@@ -347,6 +364,13 @@ function Reader({ book, lang, t, info, keyChapter, initialChapter, initialVerse 
   return (
     <div className="bk-cols reader">
       <div className={`bk-main reader-card${canSelect && sel.size ? ' has-bar' : ''}`} ref={top}>
+        {target && (
+          <div className="add-banner" role="region" aria-label={t.addBannerTo}>
+            <span><b>{t.addBannerTo}</b> {target.title}</span>
+            <span className="add-banner-hint">{bannerMsg ?? t.addBannerHint}</span>
+            <a className="ghost" href={hrefs.studies(target.id)} onClick={clearAddTarget}>{t.addBannerBack}</a>
+          </div>
+        )}
         <div className="reader-bar">
           <span className="pair">
             <label htmlFor="chap">{t.chapter}</label>
@@ -389,7 +413,7 @@ function Reader({ book, lang, t, info, keyChapter, initialChapter, initialVerse 
                 const n = i + 1;
                 const m = marksMap.get(n);
                 return (
-                  <span key={i} id={`vs-${n}`} data-cat={m?.cat ?? undefined} className={sel.has(n) ? 'vs sel' : 'vs'}>
+                  <span key={i} id={`vs-${n}`} data-cat={m?.cat ?? undefined} className={sel.has(n) ? 'vs sel' : 'vs'} onClick={(e) => onText(e, n)}>
                     {/* o próprio <sup> é o botão (role=button): um <button> viraria elemento inline atômico e mudaria as quebras de linha do texto */}
                     <sup className="vnum" role="button" tabIndex={0} aria-pressed={sel.has(n)} aria-label={t.verseSelect.replace('{n}', n)} onClick={(e) => onNum(e, n)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNum(e, n); } }}>{n}</sup>
                     {m?.note && <button type="button" className="vnote" aria-label={t.verseNote.replace('{n}', n)} onClick={() => setNoteFor(n)}><PencilIcon /></button>}
@@ -436,7 +460,7 @@ function Reader({ book, lang, t, info, keyChapter, initialChapter, initialVerse 
       {canSelect && selected.length > 0 && (
         <MarkBar t={t} cats={cats} label={refLabel(book.name[lang], chapter, selected)} count={selected.length} marks={marksMap} verses={selected}
           onCat={applyCat} onClear={() => { setSel(new Set()); anchor.current = null; }} onNote={() => setNoteFor(selected[0])}
-          limitHit={ud.marksLimitHit} onDismissLimit={dismissMarksLimit} n={MARK_LIMITS.marksMax} canAddStudy onAddStudy={() => setAddStudy(true)} />
+          limitHit={ud.marksLimitHit} onDismissLimit={dismissMarksLimit} n={MARK_LIMITS.marksMax} canAddStudy onAddStudy={() => (target ? addToTarget() : setAddStudy(true))} />
       )}
       {addStudy && selected.length > 0 && (
         <AddToStudy t={t} lang={lang} keys={refKeysFor(book.slug, chapter, selected)} suggest={refLabel(book.name[lang], chapter, selected)} onClose={() => setAddStudy(false)} />
