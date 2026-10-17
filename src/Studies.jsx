@@ -41,30 +41,31 @@ function StudyList({ lang, t }) {
             <p className="fav-device" role="note"><b>{t.studiesDevice}.</b> {t.studiesDeviceHelp} {enabled && <button type="button" className="ghost" onClick={signInWithGoogle}>{t.signInGoogle}</button>}</p>
           )}
           <StudiesLimitNotice t={t} ud={ud} q={q} />
-          {!q.loading && (
-            <div className="st-quota">
-              {q.pro ? <b>{count === 1 ? t.studiesCount1 : fill(t.studiesCountN, { n: count })}</b> : (
-                <>
-                  <b>{fill(t.studiesQuota, { n: Math.min(count, q.essencialMax), max: q.essencialMax })}</b>
-                  <div className="st-bar" role="progressbar" aria-valuemin={0} aria-valuemax={q.essencialMax} aria-valuenow={Math.min(count, q.essencialMax)} aria-label={fill(t.studiesQuota, { n: Math.min(count, q.essencialMax), max: q.essencialMax })}>
-                    <i style={{ width: `${Math.min(100, (count / q.essencialMax) * 100)}%` }} />
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-
-          {blocked ? <StudyLimitInvite t={t} lang={lang} q={q} /> : !creating ? (
-            <p><button type="button" className="ghost st-new" onClick={() => setCreating(true)}>{t.studiesNew}</button></p>
-          ) : (
-            <form className="st-form" onSubmit={submit}>
-              <label>{t.studiesNewLabel}<input type="text" autoFocus value={title} maxLength={120} onChange={(e) => setTitle(e.target.value)} /></label>
-              <div className="mark-actions">
-                <button type="submit" className="ghost st-new">{t.studiesCreate}</button>
-                <button type="button" className="ghost" onClick={() => setCreating(false)}>{t.studiesCancel}</button>
+          <div className="st-panel">
+            {!q.loading && (
+              <div className="st-quota">
+                {q.pro ? <b>{count === 1 ? t.studiesCount1 : fill(t.studiesCountN, { n: count })}</b> : (
+                  <>
+                    <b>{fill(t.studiesQuota, { n: Math.min(count, q.essencialMax), max: q.essencialMax })}</b>
+                    <div className="st-bar" role="progressbar" aria-valuemin={0} aria-valuemax={q.essencialMax} aria-valuenow={Math.min(count, q.essencialMax)} aria-label={fill(t.studiesQuota, { n: Math.min(count, q.essencialMax), max: q.essencialMax })}>
+                      <i style={{ width: `${Math.min(100, (count / q.essencialMax) * 100)}%` }} />
+                    </div>
+                  </>
+                )}
               </div>
-            </form>
-          )}
+            )}
+            {blocked ? <StudyLimitInvite t={t} lang={lang} q={q} /> : !creating ? (
+              <button type="button" className="st-new st-primary" onClick={() => setCreating(true)}>+ {t.studiesNew}</button>
+            ) : (
+              <form className="st-form" onSubmit={submit}>
+                <label>{t.studiesNewLabel}<input type="text" autoFocus value={title} maxLength={120} onChange={(e) => setTitle(e.target.value)} /></label>
+                <div className="mark-actions">
+                  <button type="submit" className="st-new st-primary">{t.studiesCreate}</button>
+                  <button type="button" className="ghost" onClick={() => setCreating(false)}>{t.studiesCancel}</button>
+                </div>
+              </form>
+            )}
+          </div>
           {error && blocked === false && <p className="mark-limit" role="alert">{t.studiesLimitMax.replace('{n}', q.max)}</p>}
 
           {count === 0 && <p className="soon">{t.studiesEmpty}</p>}
@@ -86,10 +87,10 @@ function StudyList({ lang, t }) {
 
           {!blocked && (
             <section className="st-templates" aria-labelledby="st-tpl">
-              <h3 className="pp-group" id="st-tpl">{t.studiesFromTemplate}</h3>
+              <h3 className="st-h" id="st-tpl">{t.studiesFromTemplate}</h3>
               <ul className="st-tpl-list">
                 {Object.keys(TEMPLATES).map((k) => (
-                  <li key={k}><button type="button" className="ghost" onClick={() => fromTemplate(k)}>{t[`tplName_${k}`]}</button></li>
+                  <li key={k}><button type="button" className="st-tpl" onClick={() => fromTemplate(k)}><b>{t[`tplName_${k}`]}</b><span>{t[`tplDesc_${k}`]}</span></button></li>
                 ))}
               </ul>
             </section>

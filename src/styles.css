@@ -933,3 +933,17 @@ a.ghost[aria-disabled='true'] { opacity: 0.4; pointer-events: none; }
   .st-layout { grid-template-columns: minmax(0, 1fr); }
   .st-actions { margin-left: 0; }
 }
+
+/* Meus Estudos: acabamento conforme docs/design/estudos */
+.st-panel { display: grid; gap: 12px; padding: 16px; border: 1px solid var(--line); border-radius: var(--radius-panel); background: var(--panel); margin-bottom: 16px; }
+.st-panel .st-quota, .st-panel .st-form { margin: 0; }
+.st-primary { min-height: 48px; border: 0; border-radius: var(--radius-ctl); background: var(--accent-fill, var(--accent)); color: var(--on-accent); font: 700 1rem var(--f-body); cursor: pointer; padding: 0 20px; }
+.st-card b { font: 700 1.25rem var(--f-display); }
+.st-card .fv-chip { justify-self: start; border-color: transparent; background: var(--panel-2); color: var(--accent); font-weight: 600; }
+.st-h { margin: 18px 0 8px; font: 700 0.9rem var(--f-body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.st-tpl-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.st-tpl { display: grid; gap: 4px; align-content: start; text-align: left; min-height: 88px; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius-ctl); background: var(--panel); color: var(--fg); font: inherit; cursor: pointer; }
+.st-tpl:hover { border-color: var(--line-strong); }
+.st-tpl span { color: var(--muted); font-size: 15px; }
+.st-verses .vs { border-radius: 3px; }
+.st-marknote { color: var(--muted); font-size: 0.9em; }

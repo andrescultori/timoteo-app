@@ -4,7 +4,7 @@ import { BOOKS, SECTIONS, bySlug } from './data/books.js';
 import people from './data/people-index.json'; // só id e nome (público); o conteúdo Pro de personagem não é carregado aqui
 import { usePageTitle } from './pageTitle.js';
 import { usePlan } from './plan.js';
-import { useUserData, getStudy, saveStudy, deleteStudy } from './userdata.js';
+import { useUserData, getMark, getStudy, saveStudy, deleteStudy } from './userdata.js';
 import { favKey } from './favKeys.js';
 import { go, hrefs } from './route.js';
 import { pick } from './timelineUtil.js';
@@ -87,7 +87,7 @@ function Item({ study, index, d, lab, last, t, lang, texts, version, can }) {
         <div className="st-verses" lang={lang}>
           {loadState === undefined ? <p className="soon">{t.studyTextLoading}</p>
             : loadState === 'erro' ? <p className="soon">{t.studyTextOffline}</p>
-              : verses.map((v) => <p key={v.n}><sup>{v.n}</sup> {v.text ?? <em>{t.studyTextMissing}</em>}</p>)}
+              : verses.map((v) => { const m = getMark(d.slug, d.chapter, v.n); return <p key={v.n}><sup>{v.n}</sup> {v.text == null ? <em>{t.studyTextMissing}</em> : <span className="vs" data-cat={m?.cat ?? undefined} style={{ '--r-fg': 'var(--fg)' }}>{v.text}</span>}{m?.note && <span className="st-marknote"> ({t.studyMarkNote}: {m.note})</span>}</p>; })}
         </div>
       )}
       {noteOpen && <NoteField initial={item.note} label={fill(t.studyNoteOf, { name })} placeholder={ask} onCommit={(v) => edit(study.id, (s) => setItemNote(s, index, v))} />}
