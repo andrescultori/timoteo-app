@@ -6,6 +6,7 @@ import { Inline } from './legal/markdown.jsx';
 import { LEGAL_VERSION } from './legal/version.js';
 import billing from './data/billing.json';
 import { go, hrefs } from './route.js';
+import { fetchAll } from './pagedSelect.js';
 
 const day = (d, lang) => new Date(d).toLocaleDateString(lang === 'pt' ? 'pt-BR' : 'en-US');
 
@@ -21,7 +22,7 @@ export default function YourData({ t, lang }) {
     try {
       const c = await getClient();
       const one = async (q) => { const { data, error } = await q; if (error) throw error; return data; };
-      const [profile, entitlement, favorites, position, prefs, waitlist, payments] = await Promise.all([
+      const [profile, entitlement, favorites, position, prefs, waitlist, payments, marks, categories, studies] = await Promise.all([
         one(c.from('profiles').select('*').eq('id', user.id).maybeSingle()),
         one(c.from('entitlements').select('*').eq('user_id', user.id).maybeSingle()),
         one(c.from('favorites').select('key,created_at').eq('user_id', user.id)),
@@ -29,13 +30,17 @@ export default function YourData({ t, lang }) {
         one(c.from('reading_prefs').select('prefs,updated_at').eq('user_id', user.id).maybeSingle()).catch(() => null), // tabela pode não existir ainda
         one(c.from('waitlist').select('feature,created_at').eq('user_id', user.id)),
         one(c.from('payments').select('id,plan,amount_cents,price_kind,status,created_at,approved_at,months_granted').eq('user_id', user.id)),
+        // preparação de estudos: as tabelas podem não existir ainda (migration 20261020000000); as marcações vêm em páginas (limite de 1000 por consulta)
+        fetchAll(c, 'verse_marks', 'book,chapter,verse,cat,note,updated_at', ['book', 'chapter', 'verse'], { user_id: user.id }).catch(() => null),
+        one(c.from('study_settings').select('categories,updated_at').eq('user_id', user.id).maybeSingle()).catch(() => null),
+        fetchAll(c, 'studies', 'id,title,template,items,updated_at', ['id'], { user_id: user.id }).catch(() => null),
       ]);
       const now = new Date();
       const out = {
         _sobre: t.dataExportNote.replace('{d}', now.toISOString()),
         exportado_em: now.toISOString(),
         conta: { id: user.id, email: user.email },
-        perfil: profile, plano: entitlement, favoritos: favorites, posicao_de_leitura: position, ajustes_de_leitura: prefs, avise_me: waitlist, pagamentos: payments,
+        perfil: profile, plano: entitlement, favoritos: favorites, posicao_de_leitura: position, ajustes_de_leitura: prefs, marcacoes_de_versiculos: marks, categorias_de_estudo: categories, estudos: studies, avise_me: waitlist, pagamentos: payments,
       };
       const url = URL.createObjectURL(new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' }));
       const a = document.createElement('a');

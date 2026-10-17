@@ -247,7 +247,12 @@
       "premium": true
     }
   ],
+  "limits": {
+    "marksMax": 10000,
+    "studiesMax": 200
+  },
   "essencial": {
+    "studyLimit": 5,
     "characters": [
       "adao",
       "eva",

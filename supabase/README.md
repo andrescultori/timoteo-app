@@ -233,3 +233,25 @@ As chaves legadas (`anon` e `service_role`, JWT) não podem mais ser giradas e d
 5. Teste no site: login, abrir um conteúdo Pro, e (com a cobrança ligada em teste) abrir o checkout.
 6. **Desative as chaves legadas:** em API Keys → aba "Legacy anon, service_role API keys" → desativar. Rode o e2e de novo. Se algo quebrar, dá para reativar.
 7. Apague a variável antiga do ambiente da nuvem.
+
+# Preparação de estudos (migration `20261020000000_estudos_marcacoes.sql`)
+
+## O que há
+- `verse_marks` (marcação e nota por versículo), `study_settings` (categorias: id c1..c6 e nome) e `studies` (estudos, itens em jsonb). RLS "só o dono"; o `anon` não acessa nada.
+- `app_limits`: limites ajustáveis sem nova migration (`verse_marks_max` 10000, `studies_essencial_max` 5, `studies_max` 200). O app não lê nem grava; só o SQL Editor.
+- `is_pro_active(uuid)`: a mesma regra de `can_read_pro()` (admin, ou Pro/Premium vigente), por id. `can_read_pro()` não foi alterada.
+- Gatilhos de limite: marcações (por usuário) e estudos (Essencial 5, teto 200). **Só a criação conta**: quem cai de Pro para Essencial continua lendo, editando e apagando. Os gatilhos também limitam `updated_at` a `now()`.
+- `delete_account_data` ganhou as três tabelas (corpo igual ao de `20261015000000_fase6_admin.sql`).
+
+## Aplicar
+1. Abra o arquivo no branch/PR, leia e cole no SQL Editor do Supabase (ou `supabase db push`). Não depende de nenhuma outra coisa nova.
+2. Conferir: `select key, value from public.app_limits;` deve listar os 3 limites.
+3. Mudar um limite (sem migration): `update public.app_limits set value = 7 where key = 'studies_essencial_max';` (e o mesmo número em `src/data/plans.json`, senão o `npm run check` reclama).
+4. Sem aplicar a migration o app continua funcionando: marcações, categorias e estudos ficam só no aparelho e nada mais é afetado.
+
+## Como o app se comporta com a conta
+- No login, a união é por tipo e isolada: uma falha em um (por exemplo a tabela ainda não existir) não derruba favoritos, posição, ajustes nem os outros tipos.
+- Depois da primeira sincronização de um tipo com a conta, **a conta é a fonte**: o que foi apagado em outro aparelho não volta; só sobem as operações pendentes (feitas offline). Na primeira vez (dados do modo local) o que só existe no aparelho sobe e, havendo as duas versões, a mais recente vence.
+- Se o banco recusar por limite (código `23514`, dica `marks_limit`, `studies_plan` ou `studies_max`), a fila não trava: a recusada fica só no aparelho e o app é avisado.
+- O PostgREST devolve no máximo 1000 linhas por consulta: as leituras de marcações e estudos (login e "Baixar meus dados") são paginadas.
+

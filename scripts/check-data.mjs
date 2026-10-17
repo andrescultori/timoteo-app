@@ -353,6 +353,57 @@ for (const ver of VERSIONS) {
   read('src/data/people.json').people.forEach((p) => roundtrip(favKey.person(p.id), { type: 'person', id: p.id }, 'people'));
 }
 
+// Preparação de estudos (migration 20261020000000_estudos_marcacoes.sql): chaves de item válidas para o banco e o cliente, limites iguais nos três
+// lugares (SQL, plans.json e os módulos puros) e textos dos modelos presentes nos dois idiomas. Os testes de comportamento estão em scripts/test-estudos.mjs.
+{
+  const { favKey, parseFavKey } = await import(new URL('../src/favKeys.js', import.meta.url).href);
+  const study = await import(new URL('../src/studiesCore.js', import.meta.url).href);
+  const marks = await import(new URL('../src/marksCore.js', import.meta.url).href);
+  const plansCfg = read('src/data/plans.json');
+  const sql = fs.readFileSync(path.join(root, 'supabase/migrations/20261020000000_estudos_marcacoes.sql'), 'utf8');
+  const item = (key, expected, where) => {
+    const k = parseFavKey(key);
+    if (!k || Object.entries(expected).some(([a, b]) => k[a] !== b)) err(`estudos: chave "${key}" não volta igual (${where})`);
+    if (!study.isItemKey(key)) err(`estudos: o banco recusaria a chave "${key}" (${where})`);
+  };
+  books.forEach((slug) => {
+    item(favKey.ref(slug, 1, 1, 2), { type: 'ref', slug, n: 1, v1: 1, v2: 2 }, slug);
+    item(favKey.ref(slug, 1, 1), { type: 'ref', slug, n: 1, v1: 1, v2: 1 }, slug);
+    item(favKey.verse(slug, chaptersOf(slug), 1), { type: 'verse', slug, n: chaptersOf(slug), v: 1 }, slug);
+    item(favKey.book(slug), { type: 'book', slug }, slug);
+    item(favKey.chapter(slug, chaptersOf(slug)), { type: 'chapter', slug, n: chaptersOf(slug) }, slug);
+    (read(`src/data/info/${slug}.json`).map?.places ?? []).forEach((p) => item(favKey.place(slug, p.name.pt), { type: 'place', slug, name: p.name.pt }, `${slug}.map`));
+    if (!marks.validBook(slug)) err(`estudos: o slug "${slug}" não cabe na restrição de livro do banco (3 caracteres [a-z0-9])`);
+  });
+  read('src/data/people.json').people.forEach((p) => item(favKey.person(p.id), { type: 'person', id: p.id }, 'people'));
+  read('src/data/timeline.json').events.forEach((e) => item(favKey.event(e.id), { type: 'event', id: e.id }, 'timeline'));
+  const maxChapters = Math.max(...books.map(chaptersOf));
+  if (maxChapters > 150) err(`estudos: há livro com ${maxChapters} capítulos e o banco aceita até 150 (verse_marks.chapter)`);
+  // o regex das chaves é o mesmo no SQL e no cliente (o "." do Postgres é o [\s\S] do JavaScript)
+  const sqlRe = /'(\^\(ref:[^']+\$)'/.exec(sql)?.[1];
+  const jsRe = study.ITEM_KEY_RE.source.replaceAll('[\\s\\S]', '.');
+  if (!sqlRe) err('estudos: não achei o regex das chaves em study_items_valid (SQL)');
+  else if (sqlRe !== jsRe) err(`estudos: o regex das chaves diverge entre o SQL e src/studiesCore.js\n   SQL: ${sqlRe}\n   JS:  ${jsRe}`);
+  // limites: SQL x plans.json x módulos puros
+  const lim = Object.fromEntries([...sql.matchAll(/\('([a-z_]+)', (\d+)\)/g)].map((m) => [m[1], Number(m[2])]));
+  const same = (a, b, what) => { if (a !== b) err(`estudos: limite divergente (${what}): ${a} x ${b}`); };
+  same(lim.verse_marks_max, plansCfg.limits.marksMax, 'marcações: SQL x plans.json');
+  same(lim.studies_max, plansCfg.limits.studiesMax, 'estudos (teto): SQL x plans.json');
+  same(lim.studies_essencial_max, plansCfg.essencial.studyLimit, 'estudos no Essencial: SQL x plans.json');
+  same(marks.LIMITS.marksMax, plansCfg.limits.marksMax, 'marcações: marksCore x plans.json');
+  same(study.LIMITS.studiesMax, plansCfg.limits.studiesMax, 'estudos (teto): studiesCore x plans.json');
+  same(study.LIMITS.essencialMax, plansCfg.essencial.studyLimit, 'estudos no Essencial: studiesCore x plans.json');
+  same(marks.LIMITS.noteMax, 2000, 'nota (marksCore)'); same(study.LIMITS.noteMax, 2000, 'nota de item (studiesCore)');
+  // textos dos modelos nos dois idiomas
+  const i18n = await import(new URL('../src/i18n.js', import.meta.url).href);
+  for (const lang of ['pt', 'en']) {
+    for (const [tpl, blocks] of Object.entries(study.TEMPLATES)) {
+      if (!i18n.T[lang][`tplName_${tpl}`]) err(`i18n.js (${lang}): falta tplName_${tpl}`);
+      for (const b of blocks) for (const pre of ['tplBlock_', 'tplAsk_']) if (!i18n.T[lang][`${pre}${tpl}_${b.replaceAll('-', '_')}`]) err(`i18n.js (${lang}): falta ${pre}${tpl}_${b.replaceAll('-', '_')}`);
+    }
+  }
+}
+
 // Planos (src/data/plans.json): ids de personagens e slugs existem; a matriz ✅/❌ concorda com as listas e com as regras de can()
 {
   const cfg = read('src/data/plans.json');

@@ -188,3 +188,17 @@ Posição acadêmica separada = toda propriedade `scholarly` e todo item de list
 - **`local` (padrão do `npm run dev`):** tudo vem dos arquivos. Um build de produção `local` só com `ALLOW_LOCAL_PRO=1` (testes, regressão visual, capturas); **nunca publicar**.
 
 As fontes seguem onde estão (edite `src/data/*.json` e `public/interlinear/` como sempre). Depois de mudar qualquer conteúdo Pro, rode `node scripts/publish-pro.mjs` para atualizar o Storage. `scripts/check-dist.mjs` (automático depois do build) falha se algum trecho Pro aparecer no `dist/`. `src/data/content-flags.json` (gerado por `scripts/build-content-flags.mjs`, conferido pelo `check`) diz quais livros têm mapa e estrutura Pro, para as abas aparecerem ao Essencial (com o convite).
+
+## Preparação de estudos (marcações, categorias e Meus Estudos)
+Roteiro em `docs/roadmap-estudos.md`; banco em `supabase/migrations/20261020000000_estudos_marcacoes.sql`; lógica pura em `src/marksCore.js` e `src/studiesCore.js`. A numeração de capítulos e versículos é a da KJV (a do app).
+
+**Marcação** (`verse_marks`; localStorage `verseMarks`): `{ b: slug de 3 caracteres, c: capítulo 1..150, v: versículo 1..176, cat: 'c1'..'c6' | null, note: texto até 2000 | null, at: ISO }`. Só existe com categoria, nota ou as duas. A cor da categoria vem dos tokens `--mk-1..6` do app, não do banco. Máximo de 10000 por usuário.
+
+**Categorias** (`study_settings`; localStorage `studyCategories` = `{ c: [{ id, name }], at }`): até 6, `id` de `c1` a `c6`, `name` de 1 a 30 caracteres. O que o usuário não renomeou fica com o nome de partida (`DEFAULT_CATEGORY_NAMES` em `marksCore.js`: Missões, Salvação, Oração, Promessa, Obediência, Para memorizar).
+
+**Estudo** (`studies`; localStorage `studies`): `{ id (uuid gerado no aparelho), title 1..120, template: 'passagem' | 'personagem' | 'sermao' | 'ebd' | null, items: [{ k, note? }], at }`. Até 100 itens na ordem do array, nota de até 2000 caracteres. **Itens guardam referências, nunca o texto bíblico.** Chaves de item (`ITEM_KEY_RE`, a mesma expressão no SQL):
+- `ref:<slug>:<cap>:<v1>[-<v2>]` (passagem), `verse:<slug>:<cap>:<v>`, `chapter:<slug>:<n>`, `book:<slug>`;
+- `person:<id>`, `event:<id>` (linha do tempo), `place:<slug>:<nome em PT>` (lugar do mapa);
+- `block:<id>` (bloco de um modelo, com a nota do usuário; os títulos e as perguntas-guia ficam em `i18n.js`: `tplName_*`, `tplBlock_*`, `tplAsk_*`).
+
+Limites: Essencial 5 estudos (só a criação é limitada), teto técnico de 200. Eles estão na tabela `app_limits` do banco, em `src/data/plans.json` (`essencial.studyLimit`, `limits`) e nos módulos puros; o `npm run check` confere que os três dizem o mesmo.

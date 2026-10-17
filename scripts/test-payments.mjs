@@ -1089,5 +1089,311 @@ const driftSec = async (user, months) => Number((await q(
   eq((await q(`select count(*) as n from pg_policies where schemaname = 'storage' and tablename = 'objects'`))[0].n.toString(), '2', 'só as duas políticas de leitura existem em storage.objects');
 }
 
+// Sincronização da preparação de estudos (marcações, categorias e Meus Estudos em src/userdata.js), com um Supabase de mentira e um localStorage
+// de mentira: cada `import(...?x=N)` é um módulo novo, o que simula recarregar a página com o cache do aparelho.
+{
+  const store = new Map();
+  globalThis.localStorage = {
+    getItem: (k) => (store.has(k) ? store.get(k) : null), setItem: (k, v) => { store.set(k, String(v)); }, removeItem: (k) => { store.delete(k); },
+    key: (i) => [...store.keys()][i] ?? null, get length() { return store.size; },
+  };
+  let inst = 0;
+  const load = () => import(`../src/userdata.js?estudos=${inst += 1}`);
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const SEND = 1750; // um pouco mais que o atraso de envio em lote (1500 ms)
+  const iso = (n) => new Date(Date.UTC(2026, 9, 20, 12, 0, n)).toISOString();
+  const sid = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
+  const mrow = (b, c, v, cat, n, note = null) => ({ user_id: 'u-1', book: b, chapter: c, verse: v, cat, note, updated_at: iso(n) });
+  const srow = (n, title, at) => ({ id: sid(n), user_id: 'u-1', title, template: null, items: [], updated_at: iso(at) });
+
+  // servidor de mentira: tabelas em memória, páginas (range), upsert atômico, filtros do delete, falhas e limites injetáveis
+  const server = (init = {}) => {
+    const db = { favorites: [], verse_marks: [], studies: [], study_settings: null, reading_position: null, reading_prefs: null, ...init };
+    const log = [];
+    const ctl = { missing: new Set(), net: false, reject: null };
+    const keyOf = { verse_marks: (r) => `${r.user_id}|${r.book}|${r.chapter}|${r.verse}`, studies: (r) => r.id, favorites: (r) => `${r.user_id}|${r.key}` };
+    const single = (t) => (['study_settings', 'reading_position', 'reading_prefs'].includes(t) ? db[t] : undefined);
+    const missing = (t) => (ctl.missing.has(t) ? { data: null, error: { code: '42P01', message: 'relation does not exist' } } : null);
+    const client = {
+      from: (t) => ({
+        select: () => {
+          const f = [];
+          const rows = () => (single(t) !== undefined ? (db[t] ? [db[t]] : []) : db[t].filter((r) => f.every(([c, v]) => r[c] === v)));
+          const b = {
+            eq(c, v) { f.push([c, v]); return b; }, order() { return b; },
+            range: (a, z) => { log.push({ t, op: 'range', a, z }); return Promise.resolve(missing(t) ?? { data: rows().slice(a, z + 1), error: null }); },
+            maybeSingle: () => Promise.resolve(missing(t) ?? { data: single(t) ?? null, error: null }),
+            then: (ok, no) => Promise.resolve(missing(t) ?? { data: rows(), error: null }).then(ok, no),
+          };
+          return b;
+        },
+        upsert: (rows) => {
+          const list = Array.isArray(rows) ? rows : [rows];
+          log.push({ t, op: 'upsert', rows: list });
+          if (ctl.net) return Promise.resolve({ error: { message: 'network' } });
+          if (missing(t)) return Promise.resolve({ error: { code: '42P01' } });
+          if (single(t) !== undefined) { db[t] = list[0]; return Promise.resolve({ error: null }); }
+          // como o Postgres: o gatilho roda linha a linha e a instrução inteira é desfeita se uma for recusada
+          const copy = db[t].map((x) => ({ ...x }));
+          for (const r of list) {
+            const hint = ctl.reject ? ctl.reject(t, r, { ...db, [t]: copy }) : null;
+            if (hint) return Promise.resolve({ error: { code: '23514', message: 'limite', hint } });
+            const i = copy.findIndex((x) => keyOf[t](x) === keyOf[t](r));
+            if (i >= 0) copy[i] = r; else copy.push(r);
+          }
+          db[t] = copy;
+          return Promise.resolve({ error: null });
+        },
+        delete: () => {
+          const f = []; const inn = [];
+          const b = {
+            eq(c, v) { f.push([c, v]); return b; }, in(c, l) { inn.push([c, l]); return b; },
+            then: (ok, no) => {
+              log.push({ t, op: 'delete', f, inn });
+              if (ctl.net) return Promise.resolve({ error: { message: 'network' } }).then(ok, no);
+              db[t] = db[t].filter((r) => !(f.every(([c, v]) => r[c] === v) && inn.every(([c, l]) => l.includes(r[c]))));
+              return Promise.resolve({ error: null }).then(ok, no);
+            },
+          };
+          return b;
+        },
+      }),
+    };
+    return { db, log, ctl, client, ups: (t) => log.filter((x) => x.t === t && x.op === 'upsert'), dels: (t) => log.filter((x) => x.t === t && x.op === 'delete') };
+  };
+  const vkeys = (U) => U.getMarks().map((m) => `${m.b}:${m.c}:${m.v}`);
+
+  // 1) sem conta: tudo só no aparelho
+  {
+    const U = await load();
+    eq(U.markVerses('joh', 3, [16, 17], { cat: 'c1' }), { changed: 2, limit: false }, 'sem conta: marca dois versículos');
+    eq(vkeys(U), ['joh:3:16', 'joh:3:17'], 'sem conta: ficam na lista');
+    eq([...U.marksOfChapter('joh', 3).keys()], [16, 17], 'índice do capítulo');
+    eq(U.getMark('joh', 3, 16).cat, 'c1', 'getMark');
+    U.markVerses('joh', 3, [16], { note: 'minha nota' });
+    eq([U.getMark('joh', 3, 16).cat, U.getMark('joh', 3, 16).note], ['c1', 'minha nota'], 'a nota não apaga a categoria (a chave ausente mantém)');
+    U.markVerses('joh', 3, [16], { cat: 'c3' });
+    eq([U.getMark('joh', 3, 16).cat, U.getMark('joh', 3, 16).note], ['c3', 'minha nota'], 'trocar a categoria mantém a nota');
+    U.markVerses('joh', 3, [16], { cat: null });
+    eq([U.getMark('joh', 3, 16).cat, U.getMark('joh', 3, 16).note], [null, 'minha nota'], 'tirar a categoria mantém a nota');
+    U.clearMarks('joh', 3, [16, 17]);
+    eq(vkeys(U), [], 'limpar remove as marcações');
+    eq(U.markVerses('joh', 3, [0, 300], { cat: 'c1' }).changed, 0, 'versículo inválido é ignorado');
+    eq(U.markVerses('joh', 3, [5], { cat: 'c9' }).changed, 0, 'categoria inválida sem nota não marca');
+    U.markVerses('gen', 1, [1], { cat: 'c2' });
+    eq(JSON.parse(localStorage.getItem('verseMarks')).length, 1, 'a marcação é gravada no localStorage');
+    eq(localStorage.getItem('markQueue'), null, 'sem conta não há fila de envio');
+    U.setCategories([{ id: 'c2', name: ' Fé ' }, { id: 'c9', name: 'x' }]);
+    eq(U.getCategories('pt').map((c) => c.name), ['Missões', 'Fé', 'Oração', 'Promessa', 'Obediência', 'Para memorizar'], 'categoria renomeada');
+    eq(JSON.parse(localStorage.getItem('studyCategories')).c, [{ id: 'c2', name: 'Fé' }], 'categorias guardam só id e nome');
+    U.resetCategories();
+    eq(U.getCategories('en')[1].name, 'Salvation', 'redefinir volta aos nomes de partida');
+    eq(U.saveStudy({ id: sid(1), title: 'Estudo A', items: [{ k: 'book:gen' }], at: iso(1) }).ok, true, 'cria estudo');
+    eq(U.saveStudy({ id: 'x', title: 'x', at: iso(1) }), { ok: false, error: 'invalid' }, 'estudo inválido');
+    eq(U.listStudies().map((x) => x.title), ['Estudo A'], 'lista de estudos');
+    eq(U.getStudy(sid(1)).items.length, 1, 'getStudy');
+    eq(U.deleteStudy(sid(2)), false, 'apagar o que não existe');
+    eq(U.deleteStudy(sid(1)), true, 'apaga estudo');
+    eq(U.listStudies(), [], 'lista vazia');
+    eq(localStorage.getItem('studyQueue'), null, 'sem conta não há fila de estudos');
+    // o limite do aparelho: 10000 marcações
+    let r = null;
+    for (let c = 1; c <= 57 && !r?.limit; c += 1) r = U.markVerses(c <= 50 ? 'psa' : 'exo', c <= 50 ? c : c - 50, Array.from({ length: 176 }, (_, i) => i + 1), { cat: 'c1' });
+    eq([U.getMarks().length, U.getState().marksLimitHit], [10000, true], 'o aparelho chega a 10000 marcações e avisa');
+    U.dismissMarksLimit();
+    eq(U.getState().marksLimitHit, false, 'aviso de limite pode ser dispensado');
+    U.markVerses('psa', 1, [1], { cat: 'c2' });
+    eq(U.getMarks().length, 10000, 'remarcar um versículo existente funciona no limite');
+    U.clearMarks('psa', 1, [1]);
+    eq(U.markVerses('rev', 1, [1], { cat: 'c1' }).changed, 1, 'apagar libera uma vaga');
+    for (const k of ['verseMarks', 'studyCategories', 'studies']) localStorage.removeItem(k);
+  }
+
+  // 2) primeiro login: união (o que só existe aqui sobe; o que só existe na conta aparece; o mais recente vence), com paginação
+  {
+    store.clear();
+    const U = await load();
+    U.markVerses('joh', 3, [16], { cat: 'c1' });
+    U.markVerses('gen', 1, [1], { cat: 'c2' });
+    U.setCategories([{ id: 'c1', name: 'Missão' }]);
+    U.saveStudy({ id: sid(1), title: 'Local', items: [], at: iso(1) });
+    const big = Array.from({ length: 2300 }, (_, i) => mrow('psa', Math.floor(i / 176) + 1, (i % 176) + 1, 'c4', 1000 + (i % 50)));
+    const sv = server({ verse_marks: [...big, mrow('rom', 8, 28, 'c5', 5)], studies: [srow(2, 'Da conta', 3)] });
+    await U.connectAccount(sv.client, 'u-1');
+    eq(sv.log.filter((x) => x.t === 'verse_marks' && x.op === 'range').length, 3, 'paginação: 2301 marcações em 3 consultas de até 1000');
+    eq(U.getMarks().length, 2301 + 2, 'a lista local tem as da conta (todas, além das 1000 da 1ª página) e as do aparelho');
+    eq(sv.db.verse_marks.some((r) => r.book === 'joh' && r.cat === 'c1'), true, 'a marcação do aparelho subiu para a conta');
+    eq(sv.ups('verse_marks').every((x) => x.rows.length <= 500), true, 'o envio é em lotes de até 500');
+    eq(U.listStudies().map((x) => x.title).sort(), ['Da conta', 'Local'], 'estudos: união');
+    eq(sv.db.studies.map((r) => r.title).sort(), ['Da conta', 'Local'], 'o estudo do aparelho subiu');
+    eq(sv.db.study_settings.categories, [{ id: 'c1', name: 'Missão' }], 'as categorias do aparelho subiram (a conta estava sem)');
+    eq([localStorage.getItem('marksAccount'), localStorage.getItem('studiesAccount'), localStorage.getItem('catsAccount')], ['u-1', 'u-1', 'u-1'], 'cada tipo marca a conta com que foi sincronizado');
+
+    // com conta: marcar sobe em lote, com atraso; apagar sobe agrupado
+    sv.log.length = 0;
+    U.markVerses('act', 2, [1, 2, 3], { cat: 'c6' });
+    U.markVerses('act', 2, [4], { cat: 'c6', note: 'n' });
+    U.markVerses('act', 2, [1], { cat: 'c5' }); // regrava o 1 antes do envio: só a última vale
+    eq(sv.ups('verse_marks').length, 0, 'o envio espera o atraso em lote');
+    await wait(SEND);
+    eq(sv.ups('verse_marks').length, 1, 'vários toques viram um único envio');
+    eq(sv.ups('verse_marks')[0].rows.map((r) => `${r.verse}:${r.cat}`).sort(), ['1:c5', '2:c6', '3:c6', '4:c6'], 'o lote tem a última versão de cada versículo');
+    eq(sv.db.verse_marks.find((r) => r.book === 'act' && r.verse === 4).note, 'n', 'a nota sobe');
+    eq(JSON.parse(localStorage.getItem('markQueue')), [], 'a fila esvazia depois do envio');
+    sv.log.length = 0;
+    U.clearMarks('act', 2, [1, 2]);
+    U.clearMarks('gen', 1, [1]);
+    await wait(SEND);
+    eq(sv.dels('verse_marks').map((d) => [d.f.filter(([c]) => c === 'book' || c === 'chapter').map(([, v]) => v).join(':'), d.inn[0][1].join(',')]).sort(), [['act:2', '1,2'], ['gen:1', '1']], 'apagar vai agrupado por livro e capítulo');
+    eq(sv.db.verse_marks.some((r) => r.book === 'act' && [1, 2].includes(r.verse)), false, 'as apagadas saíram da conta');
+    U.setCategories([{ id: 'c1', name: 'Missão' }, { id: 'c3', name: 'Intercessão' }]);
+    U.setCategories([{ id: 'c1', name: 'Missão' }, { id: 'c3', name: 'Intercessão!' }]);
+    await wait(SEND);
+    eq(sv.ups('study_settings').length, 1, 'categorias: cliques seguidos viram um envio');
+    eq(sv.db.study_settings.categories.map((c) => c.name), ['Missão', 'Intercessão!'], 'categorias na conta');
+    sv.log.length = 0;
+    const s = U.saveStudy({ id: sid(5), title: 'Novo', items: [{ k: 'person:davi', note: 'x' }], at: iso(50) });
+    eq(s.ok, true, 'cria estudo com conta');
+    U.saveStudy({ id: sid(5), title: 'Novo (editado)', items: [{ k: 'person:davi', note: 'x' }], at: iso(51) });
+    U.deleteStudy(sid(1));
+    await wait(SEND);
+    eq(sv.ups('studies').length, 1, 'estudos: edições seguidas viram um envio');
+    eq(sv.db.studies.find((r) => r.id === sid(5)).title, 'Novo (editado)', 'a versão mais nova do estudo sobe');
+    eq(sv.db.studies.some((r) => r.id === sid(1)), false, 'a exclusão sobe');
+    eq(sv.db.favorites.length, 0, 'as marcações e os estudos não mexem nos favoritos');
+    U.toggleFav('book:gen');
+    await wait(50);
+    eq(sv.db.favorites.map((r) => r.key), ['book:gen'], 'favoritos continuam sincronizando como antes');
+    U.toggleFav('book:gen');
+    await wait(50);
+
+    // 3) recarregar a página (cache do aparelho de uma conta já sincronizada): o apagado em outro aparelho NÃO ressuscita
+    sv.db.verse_marks = sv.db.verse_marks.filter((r) => !(r.book === 'joh')); // outro aparelho apagou joh:3:16
+    sv.db.studies = sv.db.studies.filter((r) => r.id !== sid(5)); // e o estudo novo
+    sv.log.length = 0;
+    const U2 = await load();
+    eq(vkeys(U2).includes('joh:3:16'), true, 'depois de recarregar, o cache ainda tem a marcação');
+    await U2.connectAccount(sv.client, 'u-1');
+    eq(vkeys(U2).includes('joh:3:16'), false, 'conta sincronizada: a marcação apagada em outro aparelho não volta');
+    eq(sv.db.verse_marks.some((r) => r.book === 'joh'), false, 'e não sobe de novo');
+    eq(U2.listStudies().some((x) => x.id === sid(5)), false, 'o estudo apagado em outro aparelho não volta');
+    eq(sv.ups('studies').length + sv.ups('verse_marks').length, 0, 'nada sobe quando não há operação pendente');
+
+    // 4) operação pendente (rede fora) sobrevive ao recarregamento e sobe no login seguinte
+    sv.ctl.net = true;
+    U2.markVerses('mat', 5, [3], { cat: 'c2', note: 'bem-aventurados' });
+    U2.saveStudy({ id: sid(7), title: 'Offline', items: [], at: iso(70) });
+    await wait(SEND);
+    eq(JSON.parse(localStorage.getItem('markQueue')).length, 1, 'rede fora: a marcação fica na fila');
+    const tries = sv.ups('verse_marks').length + sv.ups('studies').length;
+    await wait(SEND + 200);
+    eq(sv.ups('verse_marks').length + sv.ups('studies').length, tries, 'rede fora: não há laço de novas tentativas (espera um gatilho: volta da rede, aba oculta ou nova ação)');
+    eq(Object.keys(JSON.parse(localStorage.getItem('studyQueue'))), [sid(7)], 'rede fora: o estudo fica na fila');
+    eq(sv.db.verse_marks.some((r) => r.book === 'mat'), false, 'nada chegou à conta');
+    sv.ctl.net = false;
+    sv.log.length = 0;
+    const U3 = await load();
+    eq(vkeys(U3).includes('mat:5:3'), true, 'depois de recarregar, a marcação offline está no aparelho');
+    await U3.connectAccount(sv.client, 'u-1');
+    await wait(50);
+    eq(sv.db.verse_marks.some((r) => r.book === 'mat' && r.note === 'bem-aventurados'), true, 'a marcação pendente subiu no login');
+    eq(sv.db.studies.some((r) => r.id === sid(7)), true, 'o estudo pendente subiu no login');
+    eq([JSON.parse(localStorage.getItem('markQueue')), JSON.parse(localStorage.getItem('studyQueue'))], [[], {}], 'as filas esvaziaram');
+
+    // 5) conta mais nova que a operação pendente: a pendente perde ("o mais recente vence")
+    sv.ctl.net = true;
+    U3.markVerses('luk', 1, [1], { cat: 'c1' });
+    await wait(SEND);
+    sv.ctl.net = false;
+    sv.db.verse_marks.push(mrow('luk', 1, 1, 'c6', 4000)); // outro aparelho marcou depois (data bem à frente)
+    const U4 = await load();
+    await U4.connectAccount(sv.client, 'u-1');
+    await wait(50);
+    eq(U4.getMark('luk', 1, 1).cat, 'c6', 'a edição mais nova da conta vence a pendente mais velha');
+    eq(sv.db.verse_marks.find((r) => r.book === 'luk').cat, 'c6', 'e a conta continua com a dela');
+
+    // 6) logout: o cache da conta é limpo (nada passa de uma pessoa para outra)
+    await U4.disconnectAccount();
+    eq([U4.getMarks().length, U4.listStudies().length, U4.getCategories('pt').filter((c) => c.custom).length], [0, 0, 0], 'logout: estado limpo');
+    for (const k of ['verseMarks', 'studyCategories', 'studies', 'markQueue', 'studyQueue', 'marksAccount', 'studiesAccount', 'catsAccount']) eq(localStorage.getItem(k), null, `logout: ${k} removido do aparelho`);
+  }
+
+  // 7) outra conta no mesmo aparelho: o cache da anterior é descartado, não sobe para a nova
+  {
+    store.clear();
+    const U = await load();
+    const a = server();
+    await U.connectAccount(a.client, 'u-A');
+    U.markVerses('joh', 1, [1], { cat: 'c1' });
+    await wait(SEND);
+    eq(a.db.verse_marks.length, 1, 'conta A: a marcação subiu');
+    const U2 = await load(); // recarrega com o cache da conta A e entra a conta B
+    const b = server();
+    await U2.connectAccount(b.client, 'u-B');
+    eq([U2.getMarks().length, b.db.verse_marks.length], [0, 0], 'conta B não herda nem recebe as marcações da conta A');
+    await U2.disconnectAccount();
+  }
+
+  // 8) limites do banco (23514): as boas passam, a recusada fica só no aparelho, a fila não trava
+  {
+    store.clear();
+    const U = await load();
+    const sv = server();
+    sv.ctl.reject = (t, r, db) => (t === 'verse_marks' && r.verse === 99 ? 'marks_limit' : t === 'studies' && !db.studies.some((x) => x.id === r.id) && db.studies.length >= 5 ? 'studies_plan' : null);
+    await U.connectAccount(sv.client, 'u-1');
+    U.markVerses('gen', 1, [97, 98, 99, 100], { cat: 'c1' });
+    await wait(SEND);
+    eq(sv.db.verse_marks.map((r) => r.verse).sort((x, y) => x - y), [97, 98, 100], 'o banco recusou só o versículo 99; os outros subiram');
+    eq(JSON.parse(localStorage.getItem('markQueue')), [], 'a fila não trava com a recusa do banco');
+    eq(U.getState().marksLimitHit, true, 'o app é avisado do limite');
+    eq(U.getMark('gen', 1, 99) !== null, true, 'a marcação recusada continua no aparelho');
+    for (let i = 1; i <= 6; i += 1) U.saveStudy({ id: sid(20 + i), title: `E${i}`, items: [], at: iso(100 + i) });
+    await wait(SEND);
+    eq(sv.db.studies.length, 5, 'o banco aceitou 5 estudos');
+    eq(U.getState().studiesLimit, 'plan', 'o app é avisado do limite do plano');
+    eq(U.listStudies().length, 6, 'o 6º continua só no aparelho');
+    eq(Object.keys(JSON.parse(localStorage.getItem('studyQueue'))), [], 'a fila de estudos não trava');
+    U.dismissStudiesLimit();
+    eq(U.getState().studiesLimit, null, 'o aviso pode ser dispensado');
+    // o teto técnico é identificado pela dica
+    sv.ctl.reject = (t) => (t === 'studies' ? 'studies_max' : null);
+    U.saveStudy({ id: sid(40), title: 'Teto', items: [], at: iso(200) });
+    await wait(SEND);
+    eq(U.getState().studiesLimit, 'max', 'o aviso de teto técnico é diferente do de plano');
+    await U.disconnectAccount();
+  }
+
+  // 9) tabelas ainda não criadas (migration não aplicada): fica tudo no aparelho e o resto continua funcionando
+  {
+    store.clear();
+    const U = await load();
+    const sv = server({ reading_prefs: { prefs: { size: 23 }, updated_at: iso(9000) }, favorites: [{ user_id: 'u-1', key: 'book:rom', created_at: iso(1) }] });
+    sv.ctl.missing = new Set(['verse_marks', 'study_settings', 'studies']);
+    await U.connectAccount(sv.client, 'u-1');
+    eq(U.getPrefs(), { size: 23 }, 'sem as tabelas novas: os ajustes de leitura continuam sincronizando');
+    eq(U.listFavs().map((f) => f.key), ['book:rom'], 'sem as tabelas novas: os favoritos continuam sincronizando');
+    U.markVerses('joh', 3, [16], { cat: 'c1' });
+    U.saveStudy({ id: sid(1), title: 'Só aqui', items: [], at: iso(1) });
+    U.setCategories([{ id: 'c1', name: 'x' }]);
+    await wait(SEND);
+    eq(sv.log.filter((x) => ['verse_marks', 'studies', 'study_settings'].includes(x.t) && x.op === 'upsert').length, 0, 'sem as tabelas: nada é enviado');
+    eq([U.getMarks().length, U.listStudies().length, U.getCategories('pt')[0].name], [1, 1, 'x'], 'sem as tabelas: tudo vale no aparelho');
+    eq(localStorage.getItem('marksAccount'), null, 'sem as tabelas: o tipo não é marcado como sincronizado (a união completa roda quando a migration for aplicada)');
+    await U.disconnectAccount();
+  }
+
+  // 10) o cliente do teste antigo (sem order/range) também não derruba nada: o bloco de marcações é isolado
+  {
+    store.clear();
+    const U = await load();
+    const old = { from: (t) => ({ select: () => Object.assign(Promise.resolve({ data: t === 'favorites' ? [] : null, error: null }), { maybeSingle: () => Promise.resolve({ data: null, error: null }) }), upsert: () => Promise.resolve({ error: null }) }) };
+    await U.connectAccount(old, 'u-1');
+    U.markVerses('joh', 3, [16], { cat: 'c1' });
+    eq(U.getMarks().length, 1, 'cliente sem order/range: o bloco novo falha sozinho e o app segue');
+    await U.disconnectAccount();
+  }
+  delete globalThis.localStorage;
+}
+
 console.log(failed ? `\n${failed} teste(s) falharam, ${passed} passaram.` : `OK: ${passed} testes de cobrança passaram.`);
 process.exit(failed ? 1 : 0);

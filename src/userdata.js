@@ -1,6 +1,9 @@
 import { useSyncExternalStore } from 'react';
 export { favKey, parseFavKey, FAV_TYPES } from './favKeys.js';
 import { cleanPrefs } from './readingPrefs.js';
+import { LIMITS as MARK_LIMITS, markKey, chapterKey, cleanMark, cleanMarks, indexMarks, compactOps, opKey, applyOps, mergeMarks, toRow, fromRow, chunk, groupRemovals, cleanCategories, categoryList, pickNewer } from './marksCore.js';
+import { fetchAll } from './pagedSelect.js';
+import { LIMITS as STUDY_LIMITS, cleanStudy, cleanStudies, cleanStudyQueue, mergeStudies, toStudyRow, fromStudyRow } from './studiesCore.js';
 
 // Dados do usuário: favoritos, posição de leitura e ajustes de leitura. A API que os componentes usam (isFav, toggleFav, listFavs, getPosition,
 // setPosition, subscribe, useUserData) é a mesma com ou sem conta.
@@ -11,9 +14,15 @@ import { cleanPrefs } from './readingPrefs.js';
 // 'readingPrefs' = { v: ajustes, at } (só o que difere do padrão; ver readingPrefs.js),
 // 'favNoticeShown' = '1', 'continueDismissed' = o `at` da posição dispensada, 'syncQueue' = operações ainda não enviadas,
 // 'syncAccount' = id da conta cujos dados estão no cache.
+// Preparação de estudos: 'verseMarks' = [{ b, c, v, cat, note, at }], 'studyCategories' = { c: [{ id, name }], at }, 'studies' = [estudo],
+// filas 'markQueue' e 'studyQueue' (próprias, não a 'syncQueue'), e 'marksAccount', 'studiesAccount', 'catsAccount' = conta com a qual cada
+// tipo já foi sincronizado (o cache é um espelho dela; ver mergeMarks e mergeStudies).
 // Se o localStorage falhar (modo privado), tudo continua funcionando na sessão, sem salvar.
 
-const K = { favs: 'favorites', pos: 'readingPosition', notice: 'favNoticeShown', dismissed: 'continueDismissed', queue: 'syncQueue', acc: 'syncAccount', prefs: 'readingPrefs' };
+const K = {
+  favs: 'favorites', pos: 'readingPosition', notice: 'favNoticeShown', dismissed: 'continueDismissed', queue: 'syncQueue', acc: 'syncAccount', prefs: 'readingPrefs',
+  marks: 'verseMarks', cats: 'studyCategories', studies: 'studies', markQ: 'markQueue', studyQ: 'studyQueue', marksAcc: 'marksAccount', studiesAcc: 'studiesAccount', catsAcc: 'catsAccount',
+};
 
 const local = {
   get(k) { try { return localStorage.getItem(k); } catch { return null; } },
@@ -38,7 +47,15 @@ function load() {
   const rp = parse(backend.get(K.prefs));
   const prefs = cleanPrefs(rp?.v);
   const prefsAt = rp && isStr(rp.at) ? rp.at : null;
-  return { favs, keys: new Set(favs.map((f) => f.key)), position, prefs, prefsAt, noticeShown: backend.get(K.notice) === '1', dismissedAt: backend.get(K.dismissed), noticePending: false };
+  const marks = cleanMarks(parse(backend.get(K.marks)));
+  const cp = parse(backend.get(K.cats));
+  const categories = cleanCategories(cp?.c);
+  const categoriesAt = cp && isStr(cp.at) ? cp.at : null;
+  const studies = cleanStudies(parse(backend.get(K.studies)));
+  return {
+    favs, keys: new Set(favs.map((f) => f.key)), position, prefs, prefsAt, noticeShown: backend.get(K.notice) === '1', dismissedAt: backend.get(K.dismissed), noticePending: false,
+    marks, marksIdx: indexMarks(marks), categories, categoriesAt, studies, marksLimitHit: false, studiesLimit: null,
+  };
 }
 
 let state = { ...load(), account: null };
@@ -196,14 +213,222 @@ function schedulePrefs() {
   prefsDirty = true;
   if (!prefsTimer) prefsTimer = setTimeout(sendPrefs, PREFS_DELAY_MS);
 }
+
+// =====================================================================================================================
+// Preparação de estudos: marcações de versículos, categorias e Meus Estudos. Mesmo padrão dos favoritos e dos ajustes (cache local, fila de
+// envio, união no login); a lógica pura está em marksCore.js e studiesCore.js. Cada tipo tem a própria flag `ready`: se a migration
+// 20261020000000 ainda não foi aplicada, os dados ficam só no aparelho e favoritos, posição e ajustes não são afetados.
+// Visitante sem conta: tudo só no aparelho (Essencial). Com conta: o cache é espelho da conta e o envio é em lote, com atraso.
+// =====================================================================================================================
+
+const LIMIT_CODE = '23514'; // check_violation: os gatilhos de limite do banco recusam com este código (hint: marks_limit | studies_plan | studies_max)
+const BATCH_DELAY_MS = 1500;
+const EMPTY_MARKS = new Map();
+const sig = (o) => `${o.op}|${o.b ? opKey(o) : ''}|${o.at}`;
+
+let markQueue = compactOps(parse(backend.get(K.markQ)));
+let studyQueue = cleanStudyQueue(parse(backend.get(K.studyQ)));
+const saveMarkQueue = () => backend.set(K.markQ, JSON.stringify(markQueue));
+const saveStudyQueue = () => backend.set(K.studyQ, JSON.stringify(studyQueue));
+let marksReady = false;
+let studiesReady = false;
+let catsReady = false;
+let marksTimer = null;
+let studiesTimer = null;
+let catsTimer = null;
+let marksSending = null;
+let studiesSending = null;
+let catsDirty = false;
+
+// Grava linhas (upsert). Se o banco recusar por limite (23514), regrava uma a uma para saber QUAIS foram recusadas, sem perder as boas.
+// Devolve { error, rejected, hint }: error = falha de rede ou outra (nada a descartar, tenta de novo depois).
+async function upsertSafe(client, table, rows, onConflict) {
+  const one = async (batch) => (await client.from(table).upsert(batch, { onConflict })).error;
+  const err = await one(rows);
+  if (!err) return { error: null, rejected: [], hint: null };
+  if (err.code !== LIMIT_CODE) return { error: err, rejected: [], hint: null };
+  if (rows.length === 1) return { error: null, rejected: rows, hint: err.hint ?? null };
+  const rejected = [];
+  let hint = null;
+  for (const r of rows) {
+    const e = await one([r]);
+    if (!e) continue;
+    if (e.code !== LIMIT_CODE) return { error: e, rejected, hint };
+    rejected.push(r);
+    hint = e.hint ?? hint;
+  }
+  return { error: null, rejected, hint };
+}
+const studyLimitFrom = (hint) => (hint === 'studies_max' ? 'max' : 'plan');
+
+// ---- marcações ----
+export const getMarks = () => state.marks;
+export const marksOfChapter = (slug, n) => state.marksIdx.get(chapterKey(slug, n)) ?? EMPTY_MARKS; // Map versículo → marcação
+export const getMark = (slug, n, v) => marksOfChapter(slug, n).get(v) ?? null;
+export const dismissMarksLimit = () => commit({ marksLimitHit: false });
+
+// Marca, remarca ou limpa versículos de um capítulo. `patch`: { cat, note }; a chave presente (mesmo null) vale, a ausente mantém o que já havia.
+// Sem categoria e sem nota a marcação some. Devolve { changed, limit }: limit = o aparelho já tem o máximo de marcações.
+export function markVerses(slug, chapter, verses, patch = {}) {
+  const at = new Date().toISOString();
+  const cur = new Map(state.marks.map((m) => [markKey(m.b, m.c, m.v), m]));
+  const ops = [];
+  let limit = false;
+  for (const v of new Set(verses)) {
+    const k = markKey(slug, chapter, v);
+    const old = cur.get(k);
+    const next = cleanMark({ b: slug, c: chapter, v, cat: 'cat' in patch ? patch.cat : old?.cat, note: 'note' in patch ? patch.note : old?.note, at });
+    if (!next) {
+      if (old) { cur.delete(k); ops.push({ op: 'del', b: slug, c: chapter, v, at }); }
+      continue;
+    }
+    if (!old && cur.size >= MARK_LIMITS.marksMax) { limit = true; continue; }
+    cur.set(k, next);
+    ops.push({ op: 'set', ...next });
+  }
+  if (ops.length) {
+    const marks = cleanMarks([...cur.values()]);
+    backend.set(K.marks, JSON.stringify(marks));
+    commit({ marks, marksIdx: indexMarks(marks), ...(limit ? { marksLimitHit: true } : {}) });
+    if (state.account) { markQueue = compactOps([...markQueue, ...ops]); saveMarkQueue(); scheduleMarks(); }
+  } else if (limit) commit({ marksLimitHit: true });
+  return { changed: ops.length, limit };
+}
+export const clearMarks = (slug, chapter, verses) => markVerses(slug, chapter, verses, { cat: null, note: null });
+
+async function sendMarks() {
+  clearTimeout(marksTimer);
+  marksTimer = null;
+  if (!account || !marksReady || !markQueue.length) return undefined;
+  if (marksSending) return marksSending;
+  marksSending = (async () => {
+    const { client, userId } = account;
+    const batch = markQueue;
+    let limit = false;
+    try {
+      for (const part of chunk(batch.filter((o) => o.op === 'set'), 200)) {
+        const r = await upsertSafe(client, 'verse_marks', part.map((o) => toRow(o, userId)), 'user_id,book,chapter,verse');
+        if (r.error) throw r.error;
+        if (r.rejected.length) limit = true;
+      }
+      for (const g of groupRemovals(batch.filter((o) => o.op === 'del').map(opKey))) {
+        const { error } = await client.from('verse_marks').delete().eq('user_id', userId).eq('book', g.b).eq('chapter', g.c).in('verse', g.verses);
+        if (error) throw error;
+      }
+      const done = new Set(batch.map(sig));
+      markQueue = markQueue.filter((o) => !done.has(sig(o)));
+      saveMarkQueue();
+      if (limit) commit({ marksLimitHit: true }); // o banco recusou algumas (limite): ficam só no aparelho
+      return true;
+    } catch { return false; /* rede ou erro: a fila fica e o próximo gatilho (nova marcação, aba oculta, volta da rede, próximo carregamento) tenta de novo */ }
+  })().then((sent) => { marksSending = null; if (sent && markQueue.length && marksReady && account) scheduleMarks(); }); // sem laço de tentativas: só reagenda o que chegou durante o envio
+  return marksSending;
+}
+function scheduleMarks() {
+  if (!account || !marksReady || marksTimer) return;
+  marksTimer = setTimeout(sendMarks, BATCH_DELAY_MS);
+}
+
+// ---- categorias (nome editável, até 6; ids c1..c6; a cor vem do app) ----
+export const getCategories = (lang) => categoryList(state.categories, lang); // as 6, com o nome do usuário ou o de partida
+export function setCategories(list) {
+  const categories = cleanCategories(list);
+  const at = new Date().toISOString();
+  backend.set(K.cats, JSON.stringify({ c: categories, at }));
+  commit({ categories, categoriesAt: at });
+  scheduleCats();
+}
+export const resetCategories = () => setCategories([]);
+async function sendCats() {
+  clearTimeout(catsTimer);
+  catsTimer = null;
+  if (!account || !catsReady || !catsDirty || !state.categoriesAt) return;
+  catsDirty = false;
+  try {
+    const { error } = await account.client.from('study_settings').upsert({ user_id: account.userId, categories: state.categories, updated_at: state.categoriesAt });
+    if (error) throw error;
+  } catch { catsDirty = true; }
+}
+function scheduleCats() {
+  if (!account || !catsReady) return;
+  catsDirty = true;
+  if (!catsTimer) catsTimer = setTimeout(sendCats, BATCH_DELAY_MS);
+}
+
+// ---- Meus Estudos ----
+export const listStudies = () => state.studies;
+export const getStudy = (id) => state.studies.find((s) => s.id === id) ?? null;
+export const newStudyId = () => (globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, (c) => (c ^ (Math.random() * 16) >> (c / 4)).toString(16)));
+export const dismissStudiesLimit = () => commit({ studiesLimit: null });
+
+// Cria ou atualiza um estudo (as funções de studiesCore.js devolvem o estudo já com a data nova). O limite do PLANO é do banco (gatilho
+// studies_guard) e da interface (studyQuota); aqui só o teto técnico, para o aparelho não crescer sem fim.
+export function saveStudy(raw) {
+  const study = cleanStudy(raw);
+  if (!study) return { ok: false, error: 'invalid' };
+  const exists = state.studies.some((x) => x.id === study.id);
+  if (!exists && state.studies.length >= STUDY_LIMITS.studiesMax) return { ok: false, error: 'max' };
+  const studies = cleanStudies([study, ...state.studies.filter((x) => x.id !== study.id)]);
+  backend.set(K.studies, JSON.stringify(studies));
+  commit({ studies });
+  if (state.account) { studyQueue = { ...studyQueue, [study.id]: { op: 'upsert', at: study.at } }; saveStudyQueue(); scheduleStudies(); }
+  return { ok: true, study };
+}
+export function deleteStudy(id) {
+  if (!state.studies.some((x) => x.id === id)) return false;
+  const studies = state.studies.filter((x) => x.id !== id);
+  backend.set(K.studies, JSON.stringify(studies));
+  commit({ studies });
+  if (state.account) { studyQueue = { ...studyQueue, [id]: { op: 'delete', at: new Date().toISOString() } }; saveStudyQueue(); scheduleStudies(); }
+  return true;
+}
+
+async function sendStudies() {
+  clearTimeout(studiesTimer);
+  studiesTimer = null;
+  if (!account || !studiesReady || !Object.keys(studyQueue).length) return undefined;
+  if (studiesSending) return studiesSending;
+  studiesSending = (async () => {
+    const { client, userId } = account;
+    const snap = studyQueue;
+    let limit = null;
+    try {
+      const sets = Object.entries(snap).filter(([, o]) => o.op === 'upsert').map(([id]) => state.studies.find((x) => x.id === id)).filter(Boolean);
+      for (const part of chunk(sets, 20)) {
+        const r = await upsertSafe(client, 'studies', part.map((x) => toStudyRow(x, userId)), 'id');
+        if (r.error) throw r.error;
+        if (r.rejected.length) limit = studyLimitFrom(r.hint);
+      }
+      const dels = Object.entries(snap).filter(([, o]) => o.op === 'delete').map(([id]) => id);
+      if (dels.length) {
+        const { error } = await client.from('studies').delete().eq('user_id', userId).in('id', dels);
+        if (error) throw error;
+      }
+      const next = { ...studyQueue };
+      for (const [id, o] of Object.entries(snap)) if (next[id] && next[id].op === o.op && next[id].at === o.at) delete next[id];
+      studyQueue = next;
+      saveStudyQueue();
+      if (limit) commit({ studiesLimit: limit }); // recusado pelo plano: o estudo fica só no aparelho
+      return true;
+    } catch { return false; /* igual às marcações: a fila fica e o próximo gatilho tenta de novo */ }
+  })().then((sent) => { studiesSending = null; if (sent && Object.keys(studyQueue).length && studiesReady && account) scheduleStudies(); });
+  return studiesSending;
+}
+function scheduleStudies() {
+  if (!account || !studiesReady || studiesTimer) return;
+  studiesTimer = setTimeout(sendStudies, BATCH_DELAY_MS);
+}
+
 if (typeof document !== 'undefined') {
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') { sendPosition(); sendPrefs(); flush(); } });
-  window.addEventListener('online', () => { flush(); if (posDirty) schedulePosition(); if (prefsDirty) schedulePrefs(); });
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') { sendPosition(); sendPrefs(); flush(); sendMarks(); sendStudies(); sendCats(); } });
+  window.addEventListener('online', () => { flush(); if (posDirty) schedulePosition(); if (prefsDirty) schedulePrefs(); scheduleMarks(); scheduleStudies(); if (catsDirty) scheduleCats(); });
 }
 
 function clearCache() {
-  [K.favs, K.pos, K.queue, K.acc, K.dismissed, K.prefs].forEach(backend.remove);
+  [K.favs, K.pos, K.queue, K.acc, K.dismissed, K.prefs, K.marks, K.cats, K.studies, K.markQ, K.studyQ, K.marksAcc, K.studiesAcc, K.catsAcc].forEach(backend.remove);
   queue = [];
+  markQueue = [];
+  studyQueue = {};
   clearTimeout(posTimer);
   posTimer = null;
   posDirty = false;
@@ -211,7 +436,20 @@ function clearCache() {
   prefsTimer = null;
   prefsDirty = false;
   prefsReady = false;
-  commit({ favs: [], keys: new Set(), position: null, dismissedAt: null, noticePending: false, prefs: {}, prefsAt: null });
+  clearTimeout(marksTimer);
+  marksTimer = null;
+  clearTimeout(studiesTimer);
+  studiesTimer = null;
+  clearTimeout(catsTimer);
+  catsTimer = null;
+  catsDirty = false;
+  marksReady = false;
+  studiesReady = false;
+  catsReady = false;
+  commit({
+    favs: [], keys: new Set(), position: null, dismissedAt: null, noticePending: false, prefs: {}, prefsAt: null,
+    marks: [], marksIdx: new Map(), categories: [], categoriesAt: null, studies: [], marksLimitHit: false, studiesLimit: null,
+  });
 }
 
 const older = (a, b) => (a < b ? a : b);
@@ -270,10 +508,82 @@ export function connectAccount(client, userId) {
         else if (prefsAt && (!remoteAt || prefsAt > remoteAt)) prefsDirty = true; // o do aparelho é mais novo: sobe para a conta
       } catch { prefsReady = false; }
 
+      // ---- preparação de estudos: cada tipo em seu try, isolado (uma falha, como a tabela ainda não existir, não derruba o resto) ----
+      // `synced`: o cache já foi sincronizado com ESTA conta antes. Então a conta é a fonte: só sobem as operações pendentes, e o que foi apagado
+      // em outro aparelho não ressuscita. Sem isso (primeira união, dados do modo local) o que só existe aqui sobe.
+      let marks = state.marks;
+      let marksLimitHit = false;
+      let studiesLimit = null;
+      try {
+        const synced = backend.get(K.marksAcc) === userId;
+        const rows = await fetchAll(client, 'verse_marks', 'book,chapter,verse,cat,note,updated_at', ['book', 'chapter', 'verse']);
+        const snap = markQueue;
+        const m = mergeMarks({ local: state.marks, remote: rows.map(fromRow).filter(Boolean), queue: snap, synced });
+        let limit = false;
+        for (const part of chunk(m.upload, 500)) {
+          const r = await upsertSafe(client, 'verse_marks', part.map((x) => toRow(x, userId)), 'user_id,book,chapter,verse');
+          if (r.error) throw r.error;
+          if (r.rejected.length) limit = true;
+        }
+        for (const g of groupRemovals(m.remove)) {
+          const { error } = await client.from('verse_marks').delete().eq('user_id', userId).eq('book', g.b).eq('chapter', g.c).in('verse', g.verses);
+          if (error) throw error;
+        }
+        const done = new Set(snap.map(sig));
+        markQueue = markQueue.filter((o) => !done.has(sig(o))); // as feitas durante a espera ficam e valem sobre o resultado
+        saveMarkQueue();
+        marks = cleanMarks([...applyOps(new Map(m.marks.map((x) => [markKey(x.b, x.c, x.v), x])), markQueue).values()]);
+        backend.set(K.marks, JSON.stringify(marks));
+        backend.set(K.marksAcc, userId);
+        marksReady = true;
+        marksLimitHit = limit;
+      } catch { marksReady = false; }
+
+      let categories = state.categories;
+      let categoriesAt = state.categoriesAt;
+      try {
+        const { data, error } = await client.from('study_settings').select('categories,updated_at').maybeSingle();
+        if (error) throw error;
+        const pick = pickNewer(state.categoriesAt ? { value: state.categories, at: state.categoriesAt } : null, data ? { value: cleanCategories(data.categories), at: new Date(data.updated_at).toISOString() } : null);
+        catsReady = true;
+        if (pick.down) { categories = pick.value; categoriesAt = pick.at; backend.set(K.cats, JSON.stringify({ c: categories, at: categoriesAt })); } else if (pick.up) catsDirty = true; // a do aparelho é mais nova: sobe
+        backend.set(K.catsAcc, userId);
+      } catch { catsReady = false; }
+
+      let studies = state.studies;
+      try {
+        const synced = backend.get(K.studiesAcc) === userId;
+        const rows = await fetchAll(client, 'studies', 'id,title,template,items,updated_at', ['id']);
+        const snap = studyQueue;
+        const m = mergeStudies({ local: state.studies, remote: rows.map(fromStudyRow).filter(Boolean), queue: snap, synced });
+        let limit = null;
+        for (const part of chunk(m.upload, 20)) {
+          const r = await upsertSafe(client, 'studies', part.map((x) => toStudyRow(x, userId)), 'id');
+          if (r.error) throw r.error;
+          if (r.rejected.length) limit = studyLimitFrom(r.hint);
+        }
+        if (m.remove.length) {
+          const { error } = await client.from('studies').delete().eq('user_id', userId).in('id', m.remove);
+          if (error) throw error;
+        }
+        const next = { ...studyQueue };
+        for (const [id, o] of Object.entries(snap)) if (next[id] && next[id].op === o.op && next[id].at === o.at) delete next[id];
+        studyQueue = next;
+        saveStudyQueue();
+        studies = m.studies;
+        backend.set(K.studies, JSON.stringify(studies));
+        backend.set(K.studiesAcc, userId);
+        studiesReady = true;
+        studiesLimit = limit;
+      } catch { studiesReady = false; }
+
       backend.set(K.acc, userId);
-      commit({ ...saveFavs(favs), position, prefs, prefsAt });
+      commit({ ...saveFavs(favs), position, prefs, prefsAt, marks, marksIdx: indexMarks(marks), categories, categoriesAt, studies, ...(marksLimitHit ? { marksLimitHit } : {}), ...(studiesLimit ? { studiesLimit } : {}) });
       if (prefsDirty) sendPrefs();
       if (posDirty) sendPosition();
+      if (catsDirty) sendCats();
+      sendMarks();
+      sendStudies();
       flush();
     } catch {
       // Sem rede ou erro: segue com o cache e tenta de novo no próximo carregamento (a união ainda não foi feita)
@@ -286,11 +596,14 @@ export function connectAccount(client, userId) {
 // Logout: envia o que falta e limpa o cache da conta neste aparelho, para os dados não passarem de uma pessoa para outra.
 export async function disconnectAccount({ flush: send = false } = {}) {
   if (send && account) {
-    await Promise.race([Promise.all([flush(), sendPosition(), sendPrefs()]), new Promise((r) => setTimeout(r, 4000))]).catch(() => {});
+    await Promise.race([Promise.all([flush(), sendPosition(), sendPrefs(), sendMarks(), sendStudies(), sendCats()]), new Promise((r) => setTimeout(r, 4000))]).catch(() => {});
   }
   const wasConnected = !!account || !!backend.get(K.acc); // sem conta ligada (modo local, ainda sem o aceite dos Termos), os favoritos são só do aparelho: não apagar
   account = null;
   prefsReady = false;
+  marksReady = false;
+  studiesReady = false;
+  catsReady = false;
   connecting = null;
   commit({ account: null });
   if (wasConnected) clearCache();
