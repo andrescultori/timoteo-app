@@ -42,6 +42,7 @@ export default function Account({ t }) {
         <div className="acct-menu" role="menu">
           {pending && <button type="button" role="menuitem" onClick={() => { setOpen(false); openConsent(); }}>{t.consentPending}</button>}
           <a role="menuitem" href={hrefs.favorites} onClick={() => setOpen(false)}>{t.favorites}</a>
+          <a role="menuitem" href={hrefs.studies()} onClick={() => setOpen(false)}>{t.studiesTitle}</a>
           <a role="menuitem" href={hrefs.profile} onClick={() => setOpen(false)}>{t.profile}</a>
           <a role="menuitem" href={hrefs.settings} onClick={() => setOpen(false)}>{t.settings}</a>
           <a role="menuitem" href={hrefs.readingSettings} onClick={() => setOpen(false)}>{t.cfgRead}</a>

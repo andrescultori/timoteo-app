@@ -1413,6 +1413,33 @@ const driftSec = async (user, months) => Number((await q(
     eq([JSON.parse(localStorage.getItem('markQueue')), JSON.parse(localStorage.getItem('studyQueue'))], [[], {}], 'as filas esvaziam');
     await U.disconnectAccount();
   }
+  // 12) estudo de modelo criado e editado SEM rede (blocos, nota, item do leitor, ordem): sobe inteiro, na ordem, quando a rede volta
+  {
+    store.clear();
+    const U = await load();
+    const C = await import('../src/studiesCore.js');
+    const sv = server();
+    await U.connectAccount(sv.client, 'u-1');
+    sv.ctl.net = true;
+    let st = C.newStudy({ id: sid(70), title: 'Sermão de domingo', template: 'sermao', now: iso(70) });
+    U.saveStudy(st);
+    st = C.setItemNote(st, 1, 'Deus amou o mundo', iso(71)).study; // bloco "ideia central"
+    st = C.addKeys(st, C.refKeysFor('joh', 3, [16, 17, 20]), iso(72)).study; // do leitor
+    st = C.moveItem(st, st.items.length - 1, -1, iso(73)).study;
+    U.saveStudy(st);
+    await wait(SEND);
+    eq(sv.db.studies.length, 0, 'estudo de modelo offline: nada chegou à conta');
+    eq(U.getStudy(sid(70)).items.length, 5 + 2, 'estudo de modelo offline: 5 blocos + 2 referências no aparelho');
+    sv.ctl.net = false;
+    U.saveStudy(C.renameStudy(U.getStudy(sid(70)), 'Sermão de domingo (final)', iso(74)).study);
+    await wait(SEND);
+    const row = sv.db.studies.find((r) => r.id === sid(70));
+    eq(row?.title, 'Sermão de domingo (final)', 'a versão mais nova do estudo de modelo subiu');
+    eq(row.items.map((i) => i.k), ['block:texto-base', 'block:ideia-central', 'block:pontos', 'block:ilustracao', 'block:apelo', 'ref:joh:3:20', 'ref:joh:3:16-17'], 'a ordem dos itens chega igual ao aparelho');
+    eq(row.items[1].note, 'Deus amou o mundo', 'a nota do bloco chega');
+    eq(row.template, 'sermao', 'o modelo chega');
+    await U.disconnectAccount();
+  }
   delete globalThis.localStorage;
 }
 

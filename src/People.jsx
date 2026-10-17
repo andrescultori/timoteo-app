@@ -5,6 +5,7 @@ import { psalms } from './data/psalms.json';
 import { pick, range, main } from './timelineUtil.js';
 import PageHead from './PageHead.jsx';
 import FavButton from './FavButton.jsx';
+import { AddToStudyButton } from './studiesUi.jsx';
 import { favKey } from './userdata.js';
 import { usePlan } from './plan.js';
 import ProInvite from './ProInvite.jsx';
@@ -71,6 +72,7 @@ function PeopleView({ lang, t, focusId, onOpenBook, onOpenTimeline, onOpenMap, o
     <div className="page bookpage" role="region" aria-labelledby="pp-title">
       <PageHead t={t} id="pp-title" title={person ? pick(person.name, lang) : t.people} sub={person ? t.people : t.peopleSub} actions={(
         <>
+          {person && gate === 'open' && <AddToStudyButton t={t} lang={lang} keys={[favKey.person(person.id)]} suggest={pick(person.name, lang)} />}
           {person && <FavButton favKey={favKey.person(person.id)} t={t} />}
           <a className="ghost" href={hrefs.timeline()}>{t.timeline}</a>
         </>

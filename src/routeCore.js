@@ -9,6 +9,7 @@ export function parseHash(hash, isBook) {
   if (a === 'timeline') return { kind: 'timeline', id: b || null };
   if (a === 'person') return { kind: 'person', id: b || null };
   if (a === 'favorites') return { kind: 'favorites', tab: b === 'verses' ? 'verses' : b === 'items' ? 'items' : null }; // null = a tela escolhe (Versículos se há marcações)
+  if (a === 'studies') return { kind: 'studies', id: b || null };
   if (a === 'settings') return { kind: 'settings', view: b === 'reading' ? 'reading' : 'main' };
   if (a === 'profile') return { kind: 'profile' };
   if (a === 'admin') return { kind: 'admin' };
@@ -30,6 +31,7 @@ export const hrefs = {
   person: (id) => (id ? `#person/${id}` : '#person'),
   favorites: '#favorites',
   favoritesVerses: '#favorites/verses',
+  studies: (id) => (id ? `#studies/${id}` : '#studies'),
   settings: '#settings',
   readingSettings: '#settings/reading',
   profile: '#profile',

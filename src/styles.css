@@ -889,3 +889,47 @@ a.ghost[aria-disabled='true'] { opacity: 0.4; pointer-events: none; }
   .pg-card { padding: 20px; }
   .pg-actions { margin-left: 0; flex-basis: 100%; }
 }
+
+/* ===== Meus Estudos (#studies) ===== */
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.st-quota { display: grid; gap: 8px; margin: 0 0 12px; }
+.st-bar { height: 10px; border-radius: var(--radius-pill); background: var(--panel-2); border: 1px solid var(--line-strong); overflow: hidden; max-width: 360px; }
+.st-bar i { display: block; height: 100%; background: var(--accent-fill, var(--accent)); }
+.st-form { display: grid; gap: 12px; margin: 0 0 12px; }
+.st-form label, .st-title-field { display: grid; gap: 4px; font-weight: 600; }
+.st-form input, .st-form select, .st-title-field input, .st-note { box-sizing: border-box; width: 100%; min-height: 44px; border: 1.5px solid var(--line-strong); border-radius: var(--radius-ctl); background: var(--panel); color: var(--fg); padding: 8px 12px; font: 16px var(--f-body); }
+.st-note { resize: vertical; min-height: 88px; margin-top: 8px; }
+.st-title-field input { font: 700 1.2rem var(--f-display); }
+.st-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; align-items: end; }
+.st-list, .st-tpl-list, .st-pick, .st-items, .st-chips { list-style: none; margin: 0; padding: 0; }
+.st-list { display: grid; gap: 10px; margin-bottom: 18px; }
+.st-card { display: grid; gap: 4px; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius-ctl); background: var(--panel); color: inherit; text-decoration: none; min-height: 44px; }
+.st-card:hover { border-color: var(--line-strong); }
+.st-meta { color: var(--muted); font-size: 14.5px; margin: 0; }
+.st-tpl-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.st-pick { display: grid; gap: 8px; margin-bottom: 12px; }
+.st-pick .ghost { width: 100%; justify-content: flex-start; text-align: left; min-height: 44px; }
+.st-layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 24px; align-items: start; }
+.st-items { display: grid; gap: 12px; margin-bottom: 14px; }
+.st-item { border: 1px solid var(--line); border-radius: var(--radius-ctl); padding: 12px 14px; background: var(--panel); }
+.st-item-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.st-actions { margin-left: auto; display: flex; flex-wrap: wrap; gap: 6px; }
+.st-actions .ghost { min-height: 44px; min-width: 44px; }
+.st-verses { margin: 8px 0 0; font-family: var(--f-read, var(--f-body)); }
+.st-verses p { margin: 0 0 6px; }
+.st-verses sup { color: var(--muted); font-size: 0.7em; margin-right: 2px; }
+.st-aside { min-width: 0; }
+.st-ctx { border: 1px solid var(--line); border-radius: var(--radius-ctl); padding: 12px 14px; background: var(--panel-2); }
+.st-ctx > summary { cursor: pointer; font-weight: 700; min-height: 44px; display: flex; align-items: center; }
+.st-ctx h3 { margin: 4px 0; font-size: 1.1rem; }
+.st-ctx h4 { margin: 12px 0 4px; font-size: 0.95rem; color: var(--muted); }
+.st-ctx ul { margin: 0; padding-left: 18px; }
+.st-chips { display: flex; flex-wrap: wrap; gap: 6px 10px; padding: 0 !important; }
+.st-dl { display: grid; gap: 2px; margin: 8px 0; }
+.st-dl dt { font-weight: 600; margin-top: 6px; }
+.st-dl dd { margin: 0; }
+.st-danger { margin-top: 24px; padding-top: 12px; border-top: 1px solid var(--line); }
+@media (max-width: 959px) {
+  .st-layout { grid-template-columns: minmax(0, 1fr); }
+  .st-actions { margin-left: 0; }
+}

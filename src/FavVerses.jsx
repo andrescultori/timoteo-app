@@ -1,34 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { BOOKS, bySlug } from './data/books.js';
-import { VERSIONS, loadBook } from './data/bible.js';
-import { useUserData, markVerses, getVersionPref } from './userdata.js';
+import { pickVersion, useBookTexts } from './verseText.js';
+import { useUserData, markVerses } from './userdata.js';
 import { hrefs } from './route.js';
 import { refLabel } from './verseSelect.js';
 import { CatDot, NoteDialog, CategoryDialog, useCategories, PencilIcon } from './marksUi.jsx';
 
 const STEP = 100; // renderiza por blocos: acima de ~100 marcações aparece "Mostrar mais"
 const order = (m) => BOOKS.findIndex((b) => b.slug === m.b);
-
-// Versão do texto na lista: a preferida do idioma (a mesma do leitor) ou a primeira disponível
-function pickVersion(lang) {
-  const inLang = VERSIONS.filter((v) => v.available && v.lang === lang);
-  return (inLang.find((v) => v.id === getVersionPref(lang)) ?? inLang[0] ?? VERSIONS[0]).id;
-}
-
-// Texto dos livros que aparecem na lista (carregado sob demanda, um por livro). slug → dados | 'erro'
-function useBookTexts(slugs, version) {
-  const [texts, setTexts] = useState({});
-  const need = slugs.filter((s) => !(`${version}/${s}` in texts)).join(',');
-  useEffect(() => {
-    let alive = true;
-    need.split(',').filter(Boolean).forEach((slug) => {
-      const key = `${version}/${slug}`;
-      loadBook(version, bySlug[slug].n).then((d) => alive && setTexts((x) => ({ ...x, [key]: d }))).catch(() => alive && setTexts((x) => ({ ...x, [key]: 'erro' })));
-    });
-    return () => { alive = false; };
-  }, [need, version]);
-  return texts;
-}
 
 // Aba "Versículos" de #favorites: marcações agrupadas pelo filtro de categoria (Todas + 6), com texto, nota e ações.
 export default function FavVerses({ t, lang }) {

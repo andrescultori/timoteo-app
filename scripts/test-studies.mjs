@@ -1,7 +1,7 @@
 // Testes de src/studiesCore.js (Meus Estudos): modelos, itens, cotas e união no login. Funções puras.
 import {
   LIMITS, TEMPLATES, ITEM_KEY_RE, isItemKey, blockKey, cleanItem, cleanStudy, cleanStudies, newStudy, addItem, removeItem, moveItem, setItemNote, renameStudy,
-  studyQuota, mergeStudies, toStudyRow, fromStudyRow, cleanStudyQueue,
+  studyQuota, addKeys, refKeysFor, newNoteId, isBlockOfTemplate, describeItem, passageVerses, relativeTime, mergeStudies, toStudyRow, fromStudyRow, cleanStudyQueue,
 } from '../src/studiesCore.js';
 import { T as I18N } from '../src/i18n.js';
 
@@ -157,6 +157,65 @@ const ids = (r) => r.studies.map((s) => s.id).sort();
   eq(fromStudyRow(null), null, 'fromStudyRow(null)');
   eq(cleanStudyQueue({ [ID(1)]: { op: 'upsert', at: T(1) }, x: { op: 'upsert', at: T(1) }, [ID(2)]: { op: 'zap', at: T(1) }, [ID(3)]: { op: 'delete', at: 'x' } }), { [ID(1)]: { op: 'upsert', at: T(1) } }, 'fila de estudos: só o válido');
   eq(cleanStudyQueue([]), {}, 'fila de estudos: lista não vale');
+}
+
+// ---- Meus Estudos (PR 3): chaves do leitor, descrição de itens, reordenar, adicionar em lote, cota ----
+{
+  eq(refKeysFor('joh', 3, [16, 17, 20]), ['ref:joh:3:16-17', 'ref:joh:3:20'], 'refKeysFor: contíguos viram intervalo');
+  eq(refKeysFor('joh', 3, [16]), ['ref:joh:3:16'], 'refKeysFor: um versículo');
+  ok(refKeysFor('joh', 3, [1, 2, 5]).every(isItemKey), 'refKeysFor: só chaves válidas');
+  for (const n of [0, 1, 123456789012, Date.now()]) { const id = newNoteId(n, 1295); ok(isItemKey(blockKey(id)) && id.length <= 30, `newNoteId válido (${id})`); }
+  ok(newNoteId(1, 1) !== newNoteId(2, 1), 'newNoteId: tempos diferentes, ids diferentes');
+  ok(isBlockOfTemplate('ebd', 'objetivo') && !isBlockOfTemplate('ebd', 'quem') && !isBlockOfTemplate(null, 'quem'), 'isBlockOfTemplate');
+  eq(describeItem('block:quem', 'personagem'), { kind: 'block', id: 'quem', free: false }, 'describeItem: bloco do modelo');
+  eq(describeItem('block:nota-abc', 'personagem'), { kind: 'block', id: 'nota-abc', free: true }, 'describeItem: nota livre');
+  eq(describeItem('ref:joh:3:16-17'), { kind: 'passage', slug: 'joh', chapter: 3, v1: 16, v2: 17 }, 'describeItem: passagem');
+  eq(describeItem('verse:psa:23:1'), { kind: 'passage', slug: 'psa', chapter: 23, v1: 1, v2: 1 }, 'describeItem: versículo');
+  eq(describeItem('chapter:gen:1'), { kind: 'chapter', slug: 'gen', chapter: 1 }, 'describeItem: capítulo');
+  eq(describeItem('book:gen'), { kind: 'book', slug: 'gen' }, 'describeItem: livro');
+  eq(describeItem('person:davi'), { kind: 'person', id: 'davi' }, 'describeItem: personagem');
+  eq(describeItem('event:x'), { kind: 'event', id: 'x' }, 'describeItem: evento');
+  eq(describeItem('place:gen:Belém'), { kind: 'place', slug: 'gen', name: 'Belém' }, 'describeItem: lugar');
+  eq(describeItem('lixo').kind, 'unknown', 'describeItem: desconhecido');
+  const book = [[null, 'a'], ['b1', 'b2', 'b3']];
+  eq(passageVerses(book, 2, 2, 3), [{ n: 2, text: 'b2' }, { n: 3, text: 'b3' }], 'passageVerses: intervalo');
+  eq(passageVerses(book, 1, 1, 2), [{ n: 1, text: null }, { n: 2, text: 'a' }], 'passageVerses: versículo ausente = null');
+  eq(passageVerses(book, 2, 3, 99), [{ n: 3, text: 'b3' }], 'passageVerses: corta no fim do capítulo');
+  eq(passageVerses(book, 9, 1, 1), [], 'passageVerses: capítulo inexistente');
+  eq(passageVerses(null, 1, 1, 1), [], 'passageVerses: sem dados');
+  const now = Date.parse('2026-10-20T12:00:00Z');
+  eq(relativeTime('2026-10-20T11:59:50Z', now, 'pt'), 'agora há pouco', 'relativeTime: segundos');
+  ok(/5 minutos/.test(relativeTime('2026-10-20T11:55:00Z', now, 'pt')), 'relativeTime: minutos (pt)');
+  ok(/3 hours ago/.test(relativeTime('2026-10-20T09:00:00Z', now, 'en')), 'relativeTime: horas (en)');
+  eq(relativeTime('lixo', now, 'pt'), '', 'relativeTime: data inválida');
+
+  // reordenar / adicionar / remover num estudo de modelo
+  let st = newStudy({ id: ID(50), title: 'Sermão', template: 'sermao', now: T(1) });
+  eq(st.items.map((i) => i.k.slice(6)), TEMPLATES.sermao, 'modelo entra com os blocos na ordem');
+  st = moveItem(st, 0, 1, T(2)).study;
+  eq(st.items.slice(0, 2).map((i) => i.k.slice(6)), ['ideia-central', 'texto-base'], 'moveItem desce o primeiro');
+  st = moveItem(st, 1, -1, T(3)).study;
+  eq(st.items[0].k, 'block:texto-base', 'moveItem sobe de volta');
+  eq(moveItem(st, 0, -1).error, 'invalid', 'moveItem: primeiro não sobe');
+  eq(moveItem(st, st.items.length - 1, 1).error, 'invalid', 'moveItem: último não desce');
+  const r = addKeys(st, ['ref:joh:3:16-17', 'ref:joh:3:16-17', 'lixo', 'book:joh'], T(4));
+  eq([r.added, r.skipped, r.full], [2, 2, false], 'addKeys: repetida e inválida são puladas');
+  eq(r.study.items.slice(-2).map((i) => i.k), ['ref:joh:3:16-17', 'book:joh'], 'addKeys: entram no fim, na ordem');
+  eq(r.study.at, T(4), 'addKeys: data do estudo');
+  let big = newStudy({ id: ID(51), title: 'Cheio', now: T(1) });
+  for (let i = 1; i <= LIMITS.itemsMax; i += 1) big = addItem(big, `ref:gen:1:${i}`).study;
+  eq(big.items.length, 100, 'estudo cheio tem 100 itens');
+  const rf = addKeys(big, ['ref:gen:2:1', 'ref:gen:2:2']);
+  eq([rf.added, rf.full, rf.study.items.length], [0, true, 100], 'addKeys: estudo cheio não passa de 100');
+  const rm = removeItem(r.study, 0, T(5));
+  eq(rm.study.items.length, r.study.items.length - 1, 'removeItem tira um');
+  eq(setItemNote(r.study, 0, 'x'.repeat(2500), T(6)).study.items[0].note.length, LIMITS.noteMax, 'nota cortada em 2000');
+  // cota: Essencial 5, Pro sem limite de plano, teto técnico 200
+  eq(studyQuota({ count: 4, pro: false }), { ok: true, reason: null }, 'cota: 4 no Essencial pode criar');
+  eq(studyQuota({ count: 5, pro: false }), { ok: false, reason: 'plan' }, 'cota: 5 no Essencial bloqueia');
+  eq(studyQuota({ count: 50, pro: true }), { ok: true, reason: null }, 'cota: Pro com 50 pode criar');
+  eq(studyQuota({ count: 200, pro: true }), { ok: false, reason: 'max' }, 'cota: 200 bloqueia até no Pro');
+  eq(studyQuota({ count: 7, pro: false }).reason, 'plan', 'cota: quem caiu para o Essencial com 7 não cria, mas continua vendo');
 }
 
 console.log(failed ? `\n${failed} teste(s) falharam, ${passed} passaram.` : `OK: ${passed} testes de estudos passaram.`);

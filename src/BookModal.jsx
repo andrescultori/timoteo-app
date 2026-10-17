@@ -6,6 +6,8 @@ import { useSettings } from './settings.js';
 import BackButton from './BackButton.jsx';
 import FavButton from './FavButton.jsx';
 import { favKey, setPosition, peekResume, getVersionPref, setVersionPref, setPrefs, useUserData, markVerses, dismissMarksLimit } from './userdata.js';
+import { AddToStudy, AddToStudyButton } from './studiesUi.jsx';
+import { refKeysFor } from './studiesCore.js';
 import { MarkBar, NoteDialog, PencilIcon, useCategories } from './marksUi.jsx';
 import { toggleVerse, selectRange, sortedVerses, refLabel, nextCat } from './verseSelect.js';
 import { LIMITS as MARK_LIMITS } from './marksCore.js';
@@ -207,6 +209,7 @@ function Sheet({ book, lang, t, info, error, keyChapter, facts }) {
       <dl className="facts">
         {facts.map(([k, v]) => (<div key={k}><dt>{k}</dt><dd>{v}</dd></div>))}
       </dl>
+      <p><AddToStudyButton t={t} lang={lang} keys={[favKey.book(book.slug)]} suggest={book.name[lang]} /></p>
     </section>
   );
   const alone = (msg) => <div className="bk-main">{overview}<p className="soon">{msg}</p></div>;
@@ -277,6 +280,7 @@ function Reader({ book, lang, t, info, keyChapter, initialChapter, initialVerse 
   const [sel, setSel] = useState(() => (initialVerse ? new Set([initialVerse]) : new Set())); // versículos selecionados (toque no número)
   const anchor = useRef(initialVerse ?? null);
   const [noteFor, setNoteFor] = useState(null); // versículo cuja anotação está aberta
+  const [addStudy, setAddStudy] = useState(false); // "Adicionar ao estudo" com os versículos selecionados
   // Originais em hebraico e grego (Pro): quem não tem o plano vê o botão, mas ele só abre o convite e nada é carregado
   const plan = usePlan();
   const canOriginals = !plan.loading && plan.can('originals');
@@ -432,7 +436,10 @@ function Reader({ book, lang, t, info, keyChapter, initialChapter, initialVerse 
       {canSelect && selected.length > 0 && (
         <MarkBar t={t} cats={cats} label={refLabel(book.name[lang], chapter, selected)} count={selected.length} marks={marksMap} verses={selected}
           onCat={applyCat} onClear={() => { setSel(new Set()); anchor.current = null; }} onNote={() => setNoteFor(selected[0])}
-          limitHit={ud.marksLimitHit} onDismissLimit={dismissMarksLimit} n={MARK_LIMITS.marksMax} />
+          limitHit={ud.marksLimitHit} onDismissLimit={dismissMarksLimit} n={MARK_LIMITS.marksMax} canAddStudy onAddStudy={() => setAddStudy(true)} />
+      )}
+      {addStudy && selected.length > 0 && (
+        <AddToStudy t={t} lang={lang} keys={refKeysFor(book.slug, chapter, selected)} suggest={refLabel(book.name[lang], chapter, selected)} onClose={() => setAddStudy(false)} />
       )}
       {noteFor !== null && (
         <NoteDialog key={noteFor} t={t} cats={cats} refText={refLabel(book.name[lang], chapter, [noteFor])} mark={marksMap.get(noteFor)} onClose={() => setNoteFor(null)}
