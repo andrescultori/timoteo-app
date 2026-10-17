@@ -14,7 +14,7 @@ export const tplLabel = (t, tpl, id) => t[`tplBlock_${tpl}_${id.replace(/-/g, '_
 export function useStudyQuota() {
   const { studies } = useUserData();
   const p = usePlan();
-  const pro = !p.loading && (p.isAdmin || p.plan === 'pro' || p.plan === 'premium');
+  const pro = p.can('studies', { count: Infinity }); // sem limite de plano (Pro, Premium e admin); o Essencial só cria enquanto count < limite
   const essencialMax = plans.essencial.studyLimit;
   const max = plans.limits.studiesMax;
   return { pro, loading: p.loading, count: studies.length, essencialMax, max, quota: studyQuota({ count: studies.length, pro, essencialMax, max }) };

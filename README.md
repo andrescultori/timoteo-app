@@ -47,6 +47,7 @@ Do Êxodo na linha do tempo, por exemplo, um clique leva ao mapa de Êxodo já n
 - **Salmos como tabela**: os 150 salmos coloridos por livro do Saltério, título ou gênero, com os salmos de título histórico ligados a Davi, aos personagens e à linha do tempo.
 - **Estrutura de Jó, Provérbios, Eclesiastes e Cantares**: os capítulos coloridos por parte (em Jó, por quem fala), a lista das partes e, em Eclesiastes e Cantares, as leituras lado a lado.
 - **Leitor de texto** em KJV, WEB e ASV (inglês), Bíblia Livre (português), com crédito e licença de cada uma.
+- **Marcação de versículos e Meus Estudos**: no leitor, seleção de versículos com seis categorias de nome editável e anotações; em Meus Estudos, roteiros de aula, sermão e estudo pessoal a partir de modelos, com versículos, personagens, lugares, notas e painel de contexto (Essencial: até 5 estudos). No plano Pro, exportação do estudo em PDF pela impressão do navegador. Ficam no aparelho; com login (Google) são sincronizados.
 - **Favoritos e continuar de onde parei**: coração em livros, capítulos, personagens e lugares do mapa, página "Meus favoritos" e cartão para retomar a leitura. Ficam no aparelho; com login opcional (Google) são sincronizados entre aparelhos. O app não exige cadastro.
 - Visual claro e limpo (fontes Bricolage Grotesque, Source Sans 3 e Literata, hospedadas no app); PT e EN.
 

@@ -19,7 +19,10 @@ Pendências do André e do projeto, em ordem aproximada. `[x]` feito, `[ ]` aber
 - [ ] **Ligar `VITE_BILLING_ENABLED` em produção** só depois dos itens acima (Fase 8 e textos legais).
 
 ## Estudos (marcações e Meus Estudos; ver `docs/roadmap-estudos.md`)
+- [x] ETAPA 1 (PR 1: banco, `userdata`, LGPD), ETAPA 2 (PR 2: marcar no leitor, Favoritos > Versículos), ETAPA 3 (PR 3: Meus Estudos, Contexto) e ETAPA 4 (PR 4: PDF do Pro, linhas `marks`/`studies`/`study-export` na matriz, FAQ da landing) feitas.
 - [ ] Aprovar o roteiro e as decisões; **go/no-go em 26/10**; avisar o advogado (anotações e estudos entram na Política).
+- [ ] **Teste logado no Supabase real** (nunca provado fora do ambiente de testes): marcar um versículo e ver em outro aparelho; criar o 6º estudo no Essencial (mensagem amigável, estudo fica no aparelho); estudo criado e editado em modo avião subindo depois; exportar PDF no Pro (celular e computador) e conferir o convite no Essencial.
+- [ ] **Publicar o texto legal** (PR #149, `LEGAL_VERSION` com data) junto com o lançamento de marcações e estudos: anotações e estudos entram na Política.
 
 ## Portfólio (decidido em 15/10/2026)
 - [ ] Repositório público separado, só com um recorte sem o conteúdo Pro (landing, camada de dados e testes) e mockup com telas de exemplo. Fazer depois de o repositório principal virar privado.

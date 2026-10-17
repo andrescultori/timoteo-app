@@ -217,6 +217,48 @@
       }
     },
     {
+      "id": "marks",
+      "label": {
+        "pt": "Marcar versículos e anotar",
+        "en": "Mark verses and take notes"
+      },
+      "essencial": true,
+      "pro": true,
+      "premium": true,
+      "note": {
+        "pt": "Seis categorias com nome editável, marcação e nota por versículo, no leitor. No aparelho sem cadastro; em todos os aparelhos com cadastro.",
+        "en": "Six categories with editable names, a mark and a note per verse, in the reader. On the device without an account; on every device with an account."
+      }
+    },
+    {
+      "id": "studies",
+      "label": {
+        "pt": "Meus Estudos (aulas, sermões, estudos pessoais)",
+        "en": "My Studies (lessons, sermons, personal studies)"
+      },
+      "essencial": "partial",
+      "pro": true,
+      "premium": true,
+      "note": {
+        "pt": "Modelos e itens por referência, com painel de contexto. Essencial: até 5 estudos; Pro: sem limite do plano.",
+        "en": "Templates and items by reference, with a context panel. Essencial: up to 5 studies; Pro: no plan limit."
+      }
+    },
+    {
+      "id": "study-export",
+      "label": {
+        "pt": "Exportar estudo em PDF",
+        "en": "Export a study as PDF"
+      },
+      "essencial": false,
+      "pro": true,
+      "premium": true,
+      "note": {
+        "pt": "Folha pronta para imprimir ou salvar como PDF, com o texto da versão em uso e as suas marcações.",
+        "en": "A sheet ready to print or save as PDF, with the text of the version in use and your marks."
+      }
+    },
+    {
       "id": "gamification",
       "label": {
         "pt": "Leitura gamificada (badges, progresso anual)",

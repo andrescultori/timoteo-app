@@ -30,6 +30,9 @@ Quando a promoção acaba, a landing (estática) é reconstruída por `.github/w
 | Linha do tempo | ❌ | ✅ | ✅ |
 | Genealogia | ❌ | ✅ (em expansão: fases 1 e 2 prontas; reis de Judá, dinastias do norte e sacerdotes por vir) | ✅ |
 | Favoritos (livros, capítulos, personagens, lugares) e "continuar de onde parei" | ✅ sem limite; no aparelho sem cadastro, em todos os aparelhos com cadastro | ✅ | ✅ |
+| Marcar versículos e anotar (6 categorias com nome editável, nota por versículo; linha `marks` em `plans.json`) | ✅ | ✅ | ✅ |
+| Meus Estudos (modelos, itens por referência, painel de contexto; linha `studies`) | ✅ **até 5 estudos** (`essencial.studyLimit`; só a criação é limitada) | ✅ sem limite de plano (teto técnico de 200) | ✅ |
+| Exportar estudo em PDF (folha de impressão do navegador, A4; linha `study-export`) | ❌ (convite ao Pro) | ✅ | ✅ |
 | Leitura gamificada (badges, progresso anual) | em breve | em breve (no Pro) | ✅ |
 | Links externos (BibleProject, concordância) | em breve | em breve (no Pro) | ✅ |
 | IA: 10 conteúdos por mês, em PDF | ❌ | ❌ | ✅ |

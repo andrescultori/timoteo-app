@@ -327,7 +327,7 @@ function Reader({ book, lang, t, info, keyChapter, initialChapter, initialVerse 
   useEffect(() => {
     if (initialVerse && verses && !scrolledTo.current) { scrolledTo.current = true; document.getElementById(`vs-${initialVerse}`)?.scrollIntoView({ block: 'center' }); }
   }, [verses]); // eslint-disable-line react-hooks/exhaustive-deps
-  const canSelect = !(showOrig && orig.data); // com os originais ligados as marcas aparecem, mas só para leitura
+  const canSelect = plan.can('marks') && !(showOrig && orig.data); // com os originais ligados as marcas aparecem, mas só para leitura
   const selected = sortedVerses(sel);
   const onNum = (e, n) => {
     const existing = (verses ?? []).map((v, i) => (v === null ? 0 : i + 1)).filter(Boolean);

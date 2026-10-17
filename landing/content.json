@@ -60,6 +60,9 @@
       { "ids": ["offline-bible"], "label": "Texto bíblico offline", "notes": { "essencial": "Baixe as versões que usa" } },
       { "ids": ["offline-pro"], "label": "Conteúdo Pro offline", "notes": { "pro": "Atualiza sozinho", "premium": "Atualiza sozinho" } },
       { "ids": ["originals"], "label": "Originais em hebraico e grego", "notes": { "pro": "Palavra a palavra, com Strong", "premium": "Palavra a palavra, com Strong" } },
+      { "ids": ["marks"], "label": "Marcar versículos e anotar", "notes": { "essencial": "Seis categorias com nome editável" } },
+      { "ids": ["studies"], "label": "Meus Estudos: aulas, sermões e estudos pessoais", "notes": { "essencial": "Até 5 estudos", "pro": "Sem limite do plano", "premium": "Sem limite do plano" } },
+      { "ids": ["study-export"], "label": "Exportar estudo em PDF", "notes": { "pro": "Pelo navegador, com o texto e as suas marcações", "premium": "Pelo navegador, com o texto e as suas marcações" } },
       { "ids": ["gamification", "links"], "label": "Leitura gamificada e mais", "notes": { "essencial": "Em breve", "pro": "Em breve" } },
       { "ids": ["timeline"], "label": "Linha do tempo", "notes": {} },
       { "ids": ["genealogy"], "label": "Genealogia", "notes": { "pro": "Em expansão", "premium": "Em expansão" } },
@@ -74,6 +77,7 @@
       { "q": "Como funciona o pagamento?", "a": "O pagamento é feito na página segura do Mercado Pago, com cartão ou Pix. Nenhum dado de cartão passa por aqui. Você escolhe o plano mensal (1 mês) ou o anual (12 meses) e paga uma vez, sem renovação automática. O anual pode ser parcelado em até 10 vezes no cartão (juros por conta de quem compra)." },
       { "q": "Posso pedir reembolso?", "a": "Sim, em até {refundDays} dias após o pagamento, sem perguntas. Ao reembolsar, os meses concedidos por aquele pagamento são retirados." },
       { "q": "O que acontece quando o Pro vence?", "a": "Sua conta volta ao plano Essencial e você mantém seu progresso e seus favoritos. Para recuperar o acesso completo, basta renovar antes ou depois do vencimento." },
+      { "q": "Posso preparar aulas e estudos no app?", "a": "Sim. Em Meus Estudos você monta o roteiro de uma aula, célula, sermão ou estudo pessoal a partir de modelos, com versículos, personagens, lugares e anotações, e marca versículos no leitor em seis categorias com o nome que quiser. O plano Essencial guarda até 5 estudos; no Pro não há esse limite, e você pode exportar o estudo em PDF. Sem cadastro, tudo fica no seu aparelho; com cadastro, vai para a sua conta." },
       { "q": "Quais versões da Bíblia estão disponíveis?", "a": "{versions}. O texto bíblico é livre em todos os planos." },
       { "q": "Para quem é o Timóteo App?", "a": "Para quem estuda a Bíblia sozinho, em grupo ou prepara aulas e mensagens, e quer o contexto de cada livro sem abrir várias fontes. O conteúdo segue a linha evangélica, com o cânon de 66 livros." }
     ]
