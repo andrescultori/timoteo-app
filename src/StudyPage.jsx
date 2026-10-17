@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import PageHead from './PageHead.jsx';
+import ProInvite from './ProInvite.jsx';
 import { BOOKS, SECTIONS, bySlug } from './data/books.js';
 import people from './data/people-index.json'; // só id e nome (público); o conteúdo Pro de personagem não é carregado aqui
 import { usePageTitle } from './pageTitle.js';
@@ -15,12 +16,13 @@ import { loadPeopleChapters } from './peopleChapters.js';
 import { useContent, getTimeline, loadInfo, useInfoContent, hasInfoFile, hasProMap } from './data/content.js';
 import { addItem, removeItem, moveItem, setItemNote, renameStudy, describeItem, newNoteId, blockKey, passageVerses, LIMITS } from './studiesCore.js';
 import { buildContext, baseOf } from './studyContext.js';
+import { EventName, labelOf, KIND_KEY } from './studyLabels.jsx';
 import { fill, tplLabel, StudiesLimitNotice, useStudyQuota } from './studiesUi.jsx';
 
-const peopleById = Object.fromEntries(people.map((p) => [p.id, p]));
-const KIND_KEY = { passage: 'studyKindPassage', chapter: 'studyKindChapter', book: 'studyKindBook', person: 'studyKindPerson', event: 'studyKindEvent', place: 'studyKindPlace' };
 
 // Aplica uma edição ao estudo MAIS RECENTE (não ao que a tela renderizou), para campos com atraso não pisarem uns nos outros
+const StudyPrint = lazy(() => import('./StudyPrint.jsx')); // só carrega ao exportar (Pro)
+
 const edit = (id, fn) => { const cur = getStudy(id); if (!cur) return null; const r = fn(cur); if (r.study) saveStudy(r.study); return r; };
 
 // Campo que grava depois de uma pausa na digitação e ao sair (nunca perde o último texto)
@@ -39,24 +41,6 @@ function useAutosave(initial, commit, delay = 600) {
 function NoteField({ initial, onCommit, label, placeholder, max = LIMITS.noteMax }) {
   const [v, change, flush] = useAutosave(initial ?? '', onCommit);
   return <textarea className="st-note" aria-label={label} placeholder={placeholder} value={v} maxLength={max} rows={3} onChange={(e) => change(e.target.value)} onBlur={flush} />;
-}
-
-function EventName({ id, t, lang }) {
-  useContent('timeline');
-  const ev = getTimeline()?.events?.find((e) => e.id === id);
-  return <>{ev ? pick(ev.title, lang) : t.studyEventName}</>;
-}
-
-// Rótulo e destino de um item (null = o destino não existe mais nos dados)
-function labelOf(d, t, lang, study) {
-  if (d.kind === 'block') return { text: d.free ? t.studyNoteFree : tplLabel(t, study.template, d.id) };
-  if (d.kind === 'passage') { const b = bySlug[d.slug]; if (!b) return null; const vs = []; for (let n = d.v1; n <= d.v2; n += 1) vs.push(n); return { text: refLabel(b.name[lang], d.chapter, vs), href: hrefs.book(d.slug, 'read', String(d.chapter), d.v1) }; }
-  if (d.kind === 'chapter') { const b = bySlug[d.slug]; return b && { text: `${b.name[lang]} ${d.chapter}`, href: hrefs.book(d.slug, 'read', String(d.chapter)) }; }
-  if (d.kind === 'book') { const b = bySlug[d.slug]; return b && { text: b.name[lang], href: hrefs.book(d.slug) }; }
-  if (d.kind === 'person') { const p = peopleById[d.id]; return p && { text: pick(p.name, lang), href: hrefs.person(d.id) }; }
-  if (d.kind === 'event') return { text: t.studyEventName, href: hrefs.timeline(d.id), event: true };
-  if (d.kind === 'place') { const b = bySlug[d.slug]; return b && { text: `${d.name} (${b.ab[lang]})`, href: hrefs.book(d.slug, 'map', d.name) }; }
-  return null;
 }
 
 function Item({ study, index, d, lab, last, t, lang, texts, version, can }) {
@@ -200,11 +184,13 @@ function AddItem({ study, t, lang, can, onDone }) {
 
 // Painel Contexto: o que o app já sabe do texto-base. Pro e acadêmico só chegam a quem o plano libera (ver studyContext.js).
 function ContextPanel({ study, t, lang, plan }) {
+  const wantsTimeline = plan.can('timeline') && study.items.some((i) => i.k.startsWith('event:')); // só quem tem evento no estudo precisa da linha do tempo aqui
+  const { ready: tlReady } = useContent(...(wantsTimeline ? ['timeline'] : []));
   const bases = useMemo(() => {
     const seen = new Set();
     const out = [];
     for (const it of study.items) {
-      const b = baseOf(it.k, plan.can('timeline') ? getTimeline() : null);
+      const b = baseOf(it.k, wantsTimeline && tlReady ? getTimeline() : null);
       if (!b || !bySlug[b.slug]) continue;
       const id = `${b.slug}:${b.chapter ?? ''}`;
       if (seen.has(id)) continue;
@@ -212,7 +198,7 @@ function ContextPanel({ study, t, lang, plan }) {
       out.push({ id, ...b });
     }
     return out;
-  }, [study.items, plan]);
+  }, [study.items, plan, wantsTimeline, tlReady]);
   const [sel, setSel] = useState(0);
   const base = bases[Math.min(sel, bases.length - 1)];
   const [wide, setWide] = useState(() => typeof matchMedia === 'function' && matchMedia('(min-width: 960px)').matches);
@@ -297,6 +283,10 @@ export default function StudyPage({ lang, t, id }) {
   const q = useStudyQuota();
   const [adding, setAdding] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [printing, setPrinting] = useState(false);
+  const [invite, setInvite] = useState(false);
+  const exportBtn = useRef(null);
+  const canExport = plan.can('study-export');
   usePageTitle([study?.title ?? t.studiesTitle, t.studiesTitle], t.title);
   const version = pickVersion(lang);
   const slugs = useMemo(() => [...new Set((study?.items ?? []).map((i) => describeItem(i.k, study.template)).filter((d) => d.kind === 'passage' && bySlug[d.slug]).map((d) => d.slug))], [study]);
@@ -317,13 +307,14 @@ export default function StudyPage({ lang, t, id }) {
       <PageHead t={t} id="st-title" title={study.title} sub={study.template ? t[`tplName_${study.template}`] : t.tplBlank} actions={(
         <>
           <a className="ghost" href={hrefs.studies()}>{t.studyBack}</a>
-          <button type="button" className="ghost" disabled title={t.studyExportSoon}>{t.studyExport} <span className="pro-tag">{t.proTag}</span><span className="sr-only"> ({t.studyExportSoon})</span></button>
+          <button type="button" className="ghost" ref={exportBtn} aria-label={t.studyExportAria} aria-expanded={!canExport ? invite : undefined} onClick={() => (canExport ? setPrinting(true) : setInvite(!invite))}>{t.studyExport}{!canExport && <span className="pro-tag">{t.proTag}</span>}</button>
         </>
       )} />
       <div className="pg-card" style={{ '--c': 'var(--s-evangelhos)' }}>
         <div className="body st-layout">
           <div className="st-main">
             <StudiesLimitNotice t={t} ud={ud} q={q} />
+            {invite && !canExport && <ProInvite t={t} lang={lang} />}
             <label className="st-title-field">{t.studyTitleLabel}
               <input type="text" value={title} maxLength={LIMITS.titleMax} onChange={(e) => changeTitle(e.target.value)} onBlur={flushTitle} />
             </label>
@@ -352,6 +343,11 @@ export default function StudyPage({ lang, t, id }) {
           </aside>
         </div>
       </div>
+      {printing && canExport && (
+        <Suspense fallback={null}>
+          <StudyPrint study={study} t={t} lang={lang} can={plan.can} onClose={() => { setPrinting(false); setTimeout(() => exportBtn.current?.focus(), 0); }} />
+        </Suspense>
+      )}
     </div>
   );
 }

@@ -93,5 +93,17 @@ eq(baseOf('event:nao-existe', timeline), null, 'baseOf: evento desconhecido');
   ok(typeof en.ficha.theme === 'string' && en.ficha.theme !== c.ficha, 'idioma EN');
 }
 
+// ---- linhas novas da matriz: marks, studies, study-export ----
+{
+  const lim = plans.essencial.studyLimit;
+  ok(rawCan('marks', { plan: 'essencial' }) && rawCan('marks', { plan: 'pro' }), 'can(marks): todos os planos');
+  ok(rawCan('studies', { plan: 'essencial', count: lim - 1 }), `can(studies): Essencial cria o ${lim}º`);
+  ok(!rawCan('studies', { plan: 'essencial', count: lim }), `can(studies): Essencial não cria o ${lim + 1}º`);
+  ok(!rawCan('studies', { plan: 'essencial', count: 99 }), 'can(studies): Essencial com mais que o limite (caiu de plano) não cria');
+  ok(rawCan('studies', { plan: 'pro', count: 150 }) && rawCan('studies', { plan: 'premium', count: 150 }), 'can(studies): Pro e Premium sem limite de plano');
+  ok(rawCan('studies', { plan: 'essencial', count: 99, isAdmin: true }), 'can(studies): admin pode');
+  ok(!rawCan('study-export', { plan: 'essencial' }) && rawCan('study-export', { plan: 'pro' }) && rawCan('study-export', { plan: 'premium' }) && rawCan('study-export', { plan: 'essencial', isAdmin: true }), 'can(study-export): só Pro, Premium e admin');
+}
+
 console.log(failed ? `\n${failed} teste(s) falharam, ${passed} passaram.` : `OK: ${passed} testes do contexto de estudos passaram.`);
 process.exit(failed ? 1 : 0);

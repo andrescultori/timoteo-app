@@ -47,6 +47,7 @@ From the Exodus on the timeline, for example, one click opens the Exodus map alr
 - **Psalms as a table**: the 150 psalms colored by book of the Psalter, title or genre, with the psalms that have a historical title linked to David, the people and the timeline.
 - **Structure of Job, Proverbs, Ecclesiastes and Song of Songs**: chapters colored by part (in Job, by speaker), the list of parts and, in Ecclesiastes and Song of Songs, the readings side by side.
 - **A text reader** in KJV, WEB and ASV (English), Bíblia Livre (Portuguese), with the credit and license of each.
+- **Verse marks and My Studies**: in the reader, verse selection with six categories (editable names) and notes; in My Studies, lesson, sermon and personal-study outlines from templates, with verses, people, places, notes and a context panel (Essencial: up to 5 studies). On the Pro plan, export a study as PDF through the browser's print dialog. Kept on the device; with a Google sign-in they sync.
 - **Favorites and continue where you left off**: a heart on books, chapters, people and map places, a "My favorites" page and a card to resume reading. Kept on the device; with an optional Google sign-in they sync across devices. The app does not require an account.
 - A clean, light look (Bricolage Grotesque, Source Sans 3 and Literata, self-hosted); PT and EN.
 

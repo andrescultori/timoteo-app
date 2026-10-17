@@ -81,6 +81,10 @@ Também na migration (ou em uma 2ª): atualizar `delete_account_data` para apaga
 - Tokens `--mk-1..6` no claro e no escuro (o `check` exige o par e confere o contraste do texto sobre a cor); vale também nos temas Sépia e Escuro da leitura.
 - `plans.json` + `planRules.js` (`can('studies', {count})`, `can('study-export')`), `landing/content.json` se entrar na landing.
 
+## Status (17/10/2026)
+- PR 1 (banco e dados), PR 2 (leitor e Favoritos > Versículos) e PR 3 (Meus Estudos) **mesclados**. PR 4 (PDF do Pro, matriz de planos, landing) em revisão. Faltam: teste logado no Supabase real e o texto legal (ver `docs/checklist-lancamento.md`).
+- Fora do lançamento: "Adicionar ao estudo" direto do lugar do mapa e do evento da linha do tempo (usa-se "Adicionar item"), copiar como texto, compartilhar estudo, reordenar por arrastar, tela cheia.
+
 ## Passo a passo (hoje: sáb 17/10; lançamento: sáb 31/10)
 | Quando | Etapa | Quem |
 |---|---|---|

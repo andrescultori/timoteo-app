@@ -450,13 +450,13 @@ for (const ver of VERSIONS) {
   const mapNo = books.find((s) => !ess.mapBooks.includes(s) && read(`src/data/info/${s}.json`).map);
   const strNo = cfg.pro.structureBooks[0];
   const perNo = [...personIds].find((id) => !ess.characters.includes(id));
-  const subject = { map: [ess.mapBooks[0], mapNo], structure: [ess.structureBooks[0], strNo], person: [ess.characters[0], perNo] };
+  const subject = { map: [ess.mapBooks[0], mapNo], structure: [ess.structureBooks[0], strNo], person: [ess.characters[0], perNo], studies: [0, ess.studyLimit] };
   for (const [feature, rowId] of Object.entries(FEATURE_ROW)) {
     const row = cfg.features.find((f) => f.id === rowId);
     if (!row) continue;
     for (const pl of PLAN_ORDER) {
       const cell = row[pl];
-      const key = feature === 'map' ? 'slug' : feature === 'structure' ? 'slug' : 'id';
+      const key = feature === 'map' ? 'slug' : feature === 'structure' ? 'slug' : feature === 'studies' ? 'count' : 'id';
       const [yes, no] = subject[feature] ?? [null, null];
       const gotYes = can(feature, { plan: pl, [key]: yes });
       const gotNo = subject[feature] ? can(feature, { plan: pl, [key]: no }) : gotYes;
@@ -468,7 +468,7 @@ for (const ver of VERSIONS) {
   }
   if (row_partial_without_list(cfg)) err(`${w}: linha "partial" sem lista no Essencial`);
   function row_partial_without_list(c) {
-    const need = { maps: c.essencial.mapBooks, structure: c.essencial.structureBooks, characters: c.essencial.characters };
+    const need = { maps: c.essencial.mapBooks, structure: c.essencial.structureBooks, characters: c.essencial.characters, studies: c.essencial.studyLimit > 0 ? [c.essencial.studyLimit] : [] };
     return c.features.some((f) => f.essencial === 'partial' && !(need[f.id]?.length));
   }
 }

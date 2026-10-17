@@ -14,6 +14,9 @@ export const FEATURE_ROW = {
   family: 'genealogy',
   academic: 'academic',
   originals: 'originals',
+  marks: 'marks',
+  studies: 'studies',
+  'study-export': 'study-export',
 };
 
 export const PLAN_ORDER = ['essencial', 'pro', 'premium'];
@@ -26,7 +29,7 @@ export function effectivePlan(plan, expiresAt, now = Date.now()) {
   return Number.isFinite(t) && t > now ? plan : 'essencial';
 }
 
-// can(feature, ctx): ctx = { plan, isAdmin, slug?, id? }. `slug` para mapa e estrutura (livro), `id` para personagem.
+// can(feature, ctx): ctx = { plan, isAdmin, slug?, id?, count? }. `slug` para mapa e estrutura (livro), `id` para personagem, `count` (estudos que a pessoa já tem) para `studies`.
 export function createCan(config) {
   const rows = Object.fromEntries(config.features.map((f) => [f.id, f]));
   const ess = config.essencial;
@@ -34,6 +37,7 @@ export function createCan(config) {
     map: (ctx) => ess.mapBooks.includes(ctx.slug),
     structure: (ctx) => ess.structureBooks.includes(ctx.slug),
     person: (ctx) => ess.characters.includes(ctx.id),
+    studies: (ctx) => (ctx.count ?? 0) < ess.studyLimit, // pode CRIAR mais um estudo? (o limite do plano só vale para criar)
   };
   return function can(feature, ctx = {}) {
     if (ctx.isAdmin) return true; // o administrador vê tudo, inclusive a posição acadêmica
