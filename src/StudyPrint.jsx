@@ -48,9 +48,9 @@ export default function StudyPrint({ study, t, lang, can, onClose }) {
     if (d.kind === 'block') {
       const ask = !d.free ? t[`tplAsk_${study.template}_${d.id.replace(/-/g, '_')}`] : null;
       return (
-        <section key={it.k} className="ps-item">
+        <section key={it.k} className="sp-item">
           <h3>{d.free ? t.studyNoteFree : tplLabel(t, study.template, d.id)}</h3>
-          {it.note ? <p className="ps-note">{it.note}</p> : ask && <p className="ps-ask">{ask}</p>}
+          {it.note ? <p className="sp-note">{it.note}</p> : ask && <p className="sp-ask">{ask}</p>}
         </section>
       );
     }
@@ -58,54 +58,54 @@ export default function StudyPrint({ study, t, lang, can, onClose }) {
       const data = texts[`${version}/${d.slug}`];
       const verses = Array.isArray(data) ? passageVerses(data, d.chapter, d.v1, d.v2) : [];
       return (
-        <section key={it.k} className="ps-item">
-          <h3>{lab ? lab.text : it.k} <span className="ps-ver">{ver?.label}</span></h3>
-          <div className="ps-verses">
+        <section key={it.k} className="sp-item">
+          <h3>{lab ? lab.text : it.k} <span className="sp-ver">{ver?.label}</span></h3>
+          <div className="sp-verses">
             {verses.map((v) => {
               const m = getMark(d.slug, d.chapter, v.n);
               if (m?.cat) used.add(m.cat);
               return (
-                <p key={v.n}><sup>{v.n}</sup> {v.text == null ? <em>{t.studyTextMissing}</em> : <span className="vs" data-cat={m?.cat ?? undefined}>{v.text}</span>}{m?.note && <span className="ps-mnote"> [{m.note}]</span>}</p>
+                <p key={v.n}><sup>{v.n}</sup> {v.text == null ? <em>{t.studyTextMissing}</em> : <span className="vs" data-cat={m?.cat ?? undefined}>{v.text}</span>}{m?.note && <span className="sp-mnote"> [{m.note}]</span>}</p>
               );
             })}
             {data === 'erro' && <p><em>{t.studyTextOffline}</em></p>}
           </div>
-          {it.note && <p className="ps-note">{it.note}</p>}
+          {it.note && <p className="sp-note">{it.note}</p>}
         </section>
       );
     }
     const kindKey = { chapter: 'studyKindChapter', book: 'studyKindBook', person: 'studyKindPerson', event: 'studyKindEvent', place: 'studyKindPlace' }[d.kind];
     const books = d.kind === 'person' ? (peopleById[d.id]?.books ?? []).map((s) => bySlug[s]?.ab[lang]).filter(Boolean) : [];
     return (
-      <section key={it.k} className="ps-item">
-        <h3><span className="ps-kind">{kindKey ? t[kindKey] : ''}</span> {d.kind === 'event' ? (can('timeline') ? <EventName id={d.id} t={t} lang={lang} /> : t.studyEventName) : lab ? lab.text : it.k}</h3>
-        {books.length > 0 && <p className="ps-refs">{books.join(' · ')}</p>}
-        {it.note && <p className="ps-note">{it.note}</p>}
+      <section key={it.k} className="sp-item">
+        <h3><span className="sp-kind">{kindKey ? t[kindKey] : ''}</span> {d.kind === 'event' ? (can('timeline') ? <EventName id={d.id} t={t} lang={lang} /> : t.studyEventName) : lab ? lab.text : it.k}</h3>
+        {books.length > 0 && <p className="sp-refs">{books.join(' · ')}</p>}
+        {it.note && <p className="sp-note">{it.note}</p>}
       </section>
     );
   });
   const legend = cats.filter((c) => used.has(c.id));
 
   return createPortal(
-    <div className="ps-root" style={SHEET_VARS} role="dialog" aria-modal="true" aria-label={t.studyPrintTitle}>
-      <div className="ps-bar">
+    <div className="sp-root" style={SHEET_VARS} role="dialog" aria-modal="true" aria-label={t.studyPrintTitle}>
+      <div className="sp-bar">
         <button type="button" className="ghost primary" ref={printBtn} disabled={!ready} onClick={() => window.print()}>{ready ? t.studyPrintGo : t.studyTextLoading}</button>
         <button type="button" className="ghost" onClick={onClose}>{t.addClose}</button>
         <p>{failed ? t.studyPrintOffline : t.studyPrintHelp}</p>
       </div>
-      <article className="ps-sheet" lang={lang}>
-        <header className="ps-head">
+      <article className="sp-sheet" lang={lang}>
+        <header className="sp-head">
           <p>{study.template ? t[`tplName_${study.template}`] : t.tplBlank} · {date}</p>
           <h1>{study.title}</h1>
         </header>
         {body}
         {legend.length > 0 && (
-          <section className="ps-legend" aria-label={t.studyPrintLegend}>
+          <section className="sp-legend" aria-label={t.studyPrintLegend}>
             <h4>{t.studyPrintLegend}</h4>
             <ul>{legend.map((c) => <li key={c.id}><span className="vs" data-cat={c.id}>{c.name}</span></li>)}</ul>
           </section>
         )}
-        <footer className="ps-foot">
+        <footer className="sp-foot">
           <p>{t.studyPrintMade}</p>
           {items.some((x) => x.d.kind === 'passage') && ver && (
             <p>{pick(ver.credit, lang)} {pick(ver.license, lang)}{ver.licenseUrl ? ` (${ver.licenseUrl})` : ''}.</p>

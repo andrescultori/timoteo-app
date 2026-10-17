@@ -43,17 +43,17 @@ if (pro) {
   ok(await btn.isEnabled(), 'Pro: "Exportar PDF" habilitado');
   ok(await pg.locator('.pro-invite').count() === 0, 'Pro: sem convite');
   await btn.click();
-  await pg.waitForSelector('.ps-sheet');
-  await pg.waitForFunction(() => !document.querySelector('.ps-bar button').disabled);
-  ok(await pg.locator('.ps-bar button').first().evaluate((e) => document.activeElement === e), 'foco vai ao botão de imprimir');
-  ok(await pg.locator('.ps-sheet').evaluate((e) => getComputedStyle(e).backgroundColor) === 'rgb(255, 255, 255)', 'a folha é clara mesmo com site e leitura escuros');
-  ok(await pg.locator('.ps-verses .vs[data-cat]').count() === 6, 'as 6 marcações aparecem na folha');
-  const txt = await pg.locator('.ps-sheet').innerText();
+  await pg.waitForSelector('.sp-sheet');
+  await pg.waitForFunction(() => !document.querySelector('.sp-bar button').disabled);
+  ok(await pg.locator('.sp-bar button').first().evaluate((e) => document.activeElement === e), 'foco vai ao botão de imprimir');
+  ok(await pg.locator('.sp-sheet').evaluate((e) => getComputedStyle(e).backgroundColor) === 'rgb(255, 255, 255)', 'a folha é clara mesmo com site e leitura escuros');
+  ok(await pg.locator('.sp-verses .vs[data-cat]').count() === 6, 'as 6 marcações aparecem na folha');
+  const txt = await pg.locator('.sp-sheet').innerText();
   ok(txt.includes('Porque Deus amou ao mundo'), 'texto bíblico da versão ativa na folha');
   ok(txt.includes('Amor de Deus pelo mundo'), 'nota do versículo na folha');
   ok(txt.includes('Entender o novo nascimento'), 'nota do bloco na folha');
   ok(txt.includes('Feito no Timóteo App · estudo.timoteo.app.br') && txt.includes('Licença Creative Commons'), 'rodapé e licença da versão');
-  ok(await pg.locator('.ps-legend li').count() === 6, 'legenda só com as categorias usadas (6)');
+  ok(await pg.locator('.sp-legend li').count() === 6, 'legenda só com as categorias usadas (6)');
   ok(!/posição acadêmica|scholarly/i.test(txt), 'sem posição acadêmica');
   await pg.screenshot({ path: `${out}/folha-tela.png` });
   await pg.emulateMedia({ media: 'print' });
@@ -61,7 +61,7 @@ if (pro) {
   await pg.pdf({ path: `${out}/estudo.pdf`, format: 'A4', preferCSSPageSize: true, printBackground: true });
   await pg.emulateMedia({ media: 'screen' });
   await pg.keyboard.press('Escape');
-  await pg.waitForSelector('.ps-sheet', { state: 'detached' });
+  await pg.waitForSelector('.sp-sheet', { state: 'detached' });
   ok(await btn.evaluate((e) => document.activeElement === e) || await pg.waitForFunction(() => document.activeElement?.getAttribute('aria-label') === 'Exportar o estudo em PDF').then(() => true), 'Esc fecha e devolve o foco ao botão');
   await ctx.close();
 }
@@ -71,7 +71,7 @@ if (free) {
   const reqs = []; pg.on('request', (r) => reqs.push(r.url()));
   await pg.getByRole('button', { name: 'Exportar o estudo em PDF' }).click();
   await pg.waitForSelector('.pro-invite');
-  ok(await pg.locator('.ps-sheet').count() === 0, 'Essencial: convite ao Pro, sem folha de impressão');
+  ok(await pg.locator('.sp-sheet').count() === 0, 'Essencial: convite ao Pro, sem folha de impressão');
   ok(!reqs.some((u) => /StudyPrint|interlinear/.test(u)), 'Essencial: a folha de impressão nem é baixada');
   await ctx.close();
 }
