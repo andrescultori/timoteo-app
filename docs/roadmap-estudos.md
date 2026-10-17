@@ -1,6 +1,6 @@
 # Roadmap: preparação de estudos (marcações, anotações e "Meus Estudos")
 
-Rascunho de 17/10/2026. Meta: no ar em 31/10/2026, com **go/no-go em 26/10** (ver "Corte"). Decisões de mérito (nomes das categorias, conteúdo dos modelos, limites por plano, texto legal) são do André; o que está em "Decisões" não começa sem ele.
+Decisões do André em 17/10/2026 incorporadas (ver "Decisões tomadas"). Meta: no ar em 31/10/2026, com **go/no-go em 26/10** (ver "Corte"). Decisões de mérito (nomes das categorias, conteúdo dos modelos, limites por plano, texto legal) são do André; o que está em "Decisões" não começa sem ele.
 
 ## Objetivo
 Passar o app de consulta a uso: o estudante marca e anota o que lê; o estudante, o professor de EBD e o líder de célula montam um roteiro de estudo com o conteúdo do app (texto, ficha, personagens, eventos, lugares) mais as próprias notas, veem no app (inclusive offline) e, no Pro, exportam em PDF.
@@ -10,11 +10,12 @@ Passar o app de consulta a uso: o estudante marca e anota o que lê; o estudante
 |---|---|---|
 | Marcar versículos por categoria (cor) e anotar | ✅ | ✅ |
 | Versículos marcados em Favoritos, por categoria | ✅ | ✅ |
-| Meus Estudos | até 2 estudos | ilimitados (teto técnico 200) |
+| Meus Estudos | até **5** estudos | ilimitados (teto técnico 200) |
 | Modelos de roteiro (4) | ✅ | ✅ |
 | Ver e usar estudo offline | ✅ | ✅ |
 | Painel de contexto do item | só o que o plano já mostra | completo |
 | Exportar PDF (impressão) | ❌ | ✅ |
+| Copiar como texto | ❌ (o estudo fica no app) | ❌ no MVP |
 
 Linhas novas na matriz de `plans.json` (a landing e o `check` leem de lá): `marks`, `studies` (com limite), `study-export` (Pro e Premium).
 
@@ -66,7 +67,7 @@ create table public.studies (
   items jsonb not null default '[]',  -- [{k:'ref:joh:3:16-21'|'person:<id>'|..., note, pos}]
   updated_at timestamptz not null default now()
 );
--- limite: Essencial 2 (gatilho confere o plano, mesma regra de can_read_pro()), Pro 200
+-- limite: Essencial 5 (gatilho confere o plano, mesma regra de can_read_pro()), Pro 200
 ```
 Itens guardam **referências** (chaves no formato de `favKeys.js`, mais `ref:<slug>:<cap>:<v1>[-<v2>]`), nunca o texto bíblico: o texto vem do leitor na versão escolhida (nenhum problema de licença no banco).
 
@@ -106,10 +107,10 @@ Em 26/10: se o PR 3 não estiver mesclado e testado, lança só **marcações + 
 ## Fora do MVP
 IA que gera estudo; compartilhar estudo por link (exige leitura pública e pesa na LGPD); comparar versões lado a lado; marcar no modo originais; grupos/turmas; lembretes.
 
-## Decisões (André)
-1. **Categorias padrão** (nomes e cores). Sugestão de partida: Missões (verde), Salvação (amarelo), Oração, Promessa, Obediência, Para memorizar. Editáveis pelo usuário; máx. 6.
-2. **Limite do Essencial:** 2 estudos? "Copiar como texto" livre ou também Pro?
-3. **Os 4 modelos:** aprovar os blocos e as perguntas-guia (rascunho acima).
-4. **Marcação no Essencial:** confirmada como ✅ (gancho de retenção)?
-5. **Go/no-go em 26/10** como corte.
-6. **Texto legal:** avisar o advogado agora.
+## Decisões tomadas (André, 17/10/2026)
+1. **Categorias:** nomes **editáveis pelo usuário** (até 6); as cores seguem os tokens `--mk-1..6` e têm de encaixar em todos os temas (claro, escuro, sépia). Nomes padrão de partida: Missões, Salvação, Oração, Promessa, Obediência, Para memorizar (o usuário renomeia).
+2. **Essencial: 5 estudos.** Sem "copiar como texto": o estudo fica no app (visível e salvo offline). **Pós-lançamento:** modo tela cheia para ajudar a visualização (ex.: apresentar em célula/aula).
+3. **Modelos:** aprovados (blocos e perguntas-guia acima).
+4. **Marcação no Essencial:** grátis.
+5. **Go/no-go em 26/10:** aceito.
+6. **Texto legal:** rascunho feito a pedido do André (PR em rascunho, não mesclar antes dos PRs de estudos); falta o advogado.
