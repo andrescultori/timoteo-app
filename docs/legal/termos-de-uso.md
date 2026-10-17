@@ -19,7 +19,7 @@ Uma ferramenta de **apoio ao estudo bíblico**: tabela dos 66 livros, fichas de 
 - **Essencial:** gratuito.
 - **Pro:** acesso pago, **mensal (1 mês)** ou **anual (12 meses)**, pelo valor anunciado no site e na tela de compra no momento da compra. Os valores podem incluir condição de lançamento por tempo limitado; vale o valor mostrado na tela de compra ao criar o pagamento.
 - O valor, o que cada plano inclui e os meios de pagamento são os mostrados na tela de compra. Parcelamento no cartão (anual) pode ter juros cobrados pela operadora de pagamento, que são informados antes de você confirmar. **Consulte sempre os preços anunciados no site.**
-- **Não há renovação automática.** Quando o período pago termina, sua conta volta ao Essencial. **Seus favoritos e sua posição de leitura continuam guardados.** Se você pagar de novo antes do vencimento, o período novo **soma** ao tempo que restava.
+- **Não há renovação automática.** Quando o período pago termina, sua conta volta ao Essencial. **Seus favoritos, marcações, anotações, estudos e sua posição de leitura continuam guardados**. Se você pagar de novo antes do vencimento, o período novo **soma** ao tempo que restava.
 - Podemos mudar preços e planos no futuro. A mudança **não afeta** o período que você já pagou.
 
 ## 5. Pagamento
@@ -39,6 +39,7 @@ Você concorda em: (a) usar o app só para estudo pessoal e não comercial; (b) 
 - O texto bíblico vem de versões com licenças próprias, indicadas no leitor: **KJV** (domínio público), **WEB**, **ASV**, **Bíblia Livre** (CC BY 3.0 Brasil) e **Almeida 1911 atualizada** (adaptação ortográfica). [Atualizar a lista se entrarem outras versões.] Essas versões seguem as licenças delas.
 - Coordenadas dos lugares do mapa: **OpenBible.info** (CC BY 4.0).
 - Você pode **citar** trechos com a fonte, para estudo e ensino, nos limites da lei.
+- **Suas anotações e seus estudos são seus.** O que você escreve (notas nos versículos, estudos e roteiros) pertence a você; nós só o guardamos para o app funcionar para você, não o lemos para outras finalidades e não o publicamos. Ao **exportar ou imprimir** um estudo, o texto bíblico segue a licença da versão escolhida e o conteúdo do app (fichas, resumos) continua sendo de André Scultori: use para o seu estudo e ensino, não para revender. [Rever com advogado.] Evite escrever nas anotações dados pessoais de **outras pessoas** (por exemplo, nomes de membros da sua célula ou pedidos de oração identificados).
 
 ## 9. Disponibilidade e responsabilidade
 O app é oferecido **"como está"**, por uma pessoa só. Fazemos o possível para mantê-lo no ar e correto, mas **podem ocorrer erros, atrasos e indisponibilidade**. Na medida permitida pela lei (inclusive o Código de Defesa do Consumidor, que continua valendo), **não respondemos** por danos indiretos nem por decisões tomadas com base só no conteúdo do app. Nada aqui retira direitos que a lei garante a você como consumidor.
