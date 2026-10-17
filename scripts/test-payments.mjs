@@ -1392,6 +1392,27 @@ const driftSec = async (user, months) => Number((await q(
     eq(U.getMarks().length, 1, 'cliente sem order/range: o bloco novo falha sozinho e o app segue');
     await U.disconnectAccount();
   }
+  // 11) marcar offline e voltar online: a próxima ação envia junto o que ficou pendente (e o evento `online` do navegador faz o mesmo)
+  {
+    store.clear();
+    const U = await load();
+    const sv = server();
+    await U.connectAccount(sv.client, 'u-1');
+    sv.ctl.net = true;
+    U.markVerses('heb', 11, [1], { cat: 'c1', note: 'fé' });
+    U.saveStudy({ id: sid(61), title: 'Criado sem rede', items: [{ k: 'ref:heb:11:1' }], at: iso(61) });
+    await wait(SEND);
+    eq([sv.db.verse_marks.length, sv.db.studies.length], [0, 0], 'sem rede: nada chegou à conta');
+    eq([U.getMark('heb', 11, 1).note, U.getStudy(sid(61)).title], ['fé', 'Criado sem rede'], 'sem rede: tudo vale no aparelho');
+    sv.ctl.net = false;
+    U.markVerses('heb', 11, [2], { cat: 'c2' });
+    U.saveStudy({ id: sid(62), title: 'Já com rede', items: [], at: iso(62) });
+    await wait(SEND);
+    eq(sv.db.verse_marks.map((r) => r.verse).sort(), [1, 2], 'com a rede de volta, a marcação pendente sobe junto com a nova');
+    eq(sv.db.studies.map((r) => r.title).sort(), ['Criado sem rede', 'Já com rede'], 'com a rede de volta, o estudo criado offline sobe junto');
+    eq([JSON.parse(localStorage.getItem('markQueue')), JSON.parse(localStorage.getItem('studyQueue'))], [[], {}], 'as filas esvaziam');
+    await U.disconnectAccount();
+  }
   delete globalThis.localStorage;
 }
 

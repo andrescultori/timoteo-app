@@ -3,10 +3,11 @@ import { bySlug } from './data/books.js';
 import people from './data/people-index.json'; // só id e nome bastam aqui (público e enxuto; ver src/data/content.js)
 import PageHead from './PageHead.jsx';
 import { HeartIcon } from './icons.jsx';
-import { hrefs } from './route.js';
+import { hrefs, sync } from './route.js';
 import { usePageTitle } from './pageTitle.js';
 import { pick } from './timelineUtil.js';
 import { useUserData, toggleFav, parseFavKey, FAV_TYPES } from './userdata.js';
+import FavVerses from './FavVerses.jsx';
 import { useSession, signInWithGoogle } from './auth.js';
 import { usePlan } from './plan.js';
 import { loadInfo, hasInfoFile, hasProMap } from './data/content.js';
@@ -48,8 +49,13 @@ function resolve(key, lang, maps, can, t) {
   return pl ? { label: `${pick(pl.name, lang)} (${b.ab[lang]})`, href: hrefs.book(b.slug, 'map', pl.name.pt), pro: !can('map', { slug: b.slug }) } : null;
 }
 
-export default function Favorites({ lang, t }) {
-  const { favs } = useUserData();
+export default function Favorites({ lang, t, tab: tabFromRoute }) {
+  const { favs, marks } = useUserData();
+  // abas: Versículos (marcações) e Favoritos (livros, capítulos, personagens e lugares, como sempre). Sem escolha no endereço: Versículos se há marcações.
+  const [chosen, setChosen] = useState(tabFromRoute);
+  useEffect(() => { setChosen(tabFromRoute); }, [tabFromRoute]);
+  const tab = chosen ?? (marks.length > 0 ? 'verses' : 'items');
+  const pickTab = (k) => { setChosen(k); sync(k === 'verses' ? hrefs.favoritesVerses : '#favorites/items'); };
   const { enabled, signedIn } = useSession();
   const plan = usePlan();
   const { can } = plan;
@@ -69,6 +75,12 @@ export default function Favorites({ lang, t }) {
       <PageHead t={t} id="fav-title" title={t.favorites} sub={t.favSub} />
       <div className="pg-card" style={{ '--c': 'var(--s-evangelhos)' }}>
         <div className="body">
+          <div className="bk-tabs fv-tabs" role="tablist" aria-label={t.favTabs}>
+            <button type="button" role="tab" className="tab" aria-selected={tab === 'verses'} onClick={() => pickTab('verses')}>{t.favTabVerses} <span className="fv-count">{marks.length}</span></button>
+            <button type="button" role="tab" className="tab" aria-selected={tab === 'items'} onClick={() => pickTab('items')}>{t.favTabItems} <span className="fv-count">{favs.length}</span></button>
+          </div>
+          {tab === 'verses' && <FavVerses t={t} lang={lang} />}
+          {tab === 'items' && <>
           {!signedIn && (
             <p className="fav-device" role="note">{t.favNotice} {enabled && <button type="button" className="ghost" onClick={signInWithGoogle}>{t.signInGoogle}</button>}</p>
           )}
@@ -91,6 +103,7 @@ export default function Favorites({ lang, t }) {
               </ul>
             </section>
           ))}
+          </>}
         </div>
       </div>
     </div>

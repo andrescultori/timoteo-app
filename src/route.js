@@ -1,54 +1,23 @@
 import { bySlug } from './data/books.js';
+import { parseHash as parse, hrefs } from './routeCore.js';
 
 // Rotas por hash, para o botão voltar do navegador e os links compartilháveis funcionarem sem biblioteca:
 //   #                       início (grade)
 //   #joh  #joh/read         livro (e aba: summary | map | psalms | structure | read; #joh/sheet = summary)
 //   #2ki/map/Laquis         livro, aba Mapa, lugar selecionado (nome em PT)
+//   #joh/read/3/16                 leitor no capítulo 3 com o versículo 16 em foco e selecionado
 //   #psa/psalms/51  #psa/read/23   Salmos: aba da tabela com o salmo selecionado; leitor no capítulo
 //   #timeline  #timeline/exodo     linha do tempo (e evento em foco)
 //   #person  #person/davi          personagens (e pessoa)
 //   #settings                      configurações (#settings/reading = opções de leitura)
-//   #favorites                     meus favoritos
+//   #favorites  #favorites/verses  #favorites/items   meus favoritos (abas Versículos e Favoritos)
 //   #profile                       meu perfil (conta)
 //   #admin                         administração (só admin; quem não é admin volta ao início)
 //   #terms  #privacy               Termos de Uso e Política de Privacidade
 //   #checkout/retorno              volta do pagamento no Mercado Pago (o servidor confere; a URL não libera nada)
 //   #tree/adao-jesus  #tree/adao-jesus/mt-salomao   genealogia (árvore e nó em foco)
-const TABS = ['summary', 'map', 'psalms', 'structure', 'read'];
-const TAB_ALIAS = { sheet: 'summary' }; // endereços antigos (#joh/sheet) abrem a aba única
-
-export function parseHash(hash = location.hash) {
-  const parts = hash.replace(/^#\/?/, '').split('/').map((x) => { try { return decodeURIComponent(x); } catch { return x; } });
-  const [a, b, c] = parts;
-  if (a === 'timeline') return { kind: 'timeline', id: b || null };
-  if (a === 'person') return { kind: 'person', id: b || null };
-  if (a === 'favorites') return { kind: 'favorites' };
-  if (a === 'settings') return { kind: 'settings', view: b === 'reading' ? 'reading' : 'main' };
-  if (a === 'profile') return { kind: 'profile' };
-  if (a === 'admin') return { kind: 'admin' };
-  if (a === 'checkout') return { kind: 'checkout' };
-  if (a === 'terms') return { kind: 'terms' };
-  if (a === 'privacy') return { kind: 'privacy' };
-  if (a === 'tree') return { kind: 'tree', id: b || null, node: c || null };
-  if (bySlug[a]) return { kind: 'book', slug: a, tab: TABS.includes(b) ? b : TAB_ALIAS[b] ?? 'summary', place: c || null };
-  return { kind: 'home' };
-}
-
-export const hrefs = {
-  home: '#',
-  book: (slug, tab, place) => `#${slug}${tab && tab !== 'summary' ? `/${tab}${place ? `/${encodeURIComponent(place)}` : ''}` : ''}`,
-  timeline: (id) => (id ? `#timeline/${id}` : '#timeline'),
-  person: (id) => (id ? `#person/${id}` : '#person'),
-  favorites: '#favorites',
-  settings: '#settings',
-  readingSettings: '#settings/reading',
-  profile: '#profile',
-  admin: '#admin',
-  checkout: '#checkout/retorno',
-  terms: '#terms',
-  privacy: '#privacy',
-  tree: (id = 'adao-jesus', node) => `#tree/${id}${node ? `/${node}` : ''}`,
-};
+export { hrefs };
+export const parseHash = (hash = location.hash) => parse(hash, (slug) => !!bySlug[slug]);
 
 // Volta do Mercado Pago: o back_url é `<app>/?checkout=success|pending|failure` (mais o que o Mercado Pago acrescentar).
 // Vira a rota #checkout/retorno e guarda só a referência do pagamento (id nosso, validado de novo no servidor). O status da URL é ignorado.

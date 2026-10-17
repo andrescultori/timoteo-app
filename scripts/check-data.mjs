@@ -640,10 +640,43 @@ for (const ver of VERSIONS) {
     const v = (k) => t[k];
     const text = [['--fg', '--bg'], ['--fg', '--panel'], ['--muted', '--bg'], ['--muted', '--panel'], ['--accent', '--panel'], ['--accent', '--bg'], ['--accent-2', '--panel'], ['--accent-2', '--bg'],
       ['--danger', '--panel'], ['--on-accent', '--accent-fill'], ['--on-hi', '--card-hi'], ['--green-soft', '--card-hi'], ['--accent', '--chip-bg'], ['--fg', '--panel-2'], ['--muted', '--panel-2']];
+    for (let i = 1; i <= 6; i += 1) text.push(['--fg', `--mk${i}`]); // texto sobre o fundo da marcação de versículo
     for (const [a, b] of text) if (v(a) && v(b) && ratio(v(a), v(b)) < 4.5) err(`styles.css (${name}): contraste ${ratio(v(a), v(b)).toFixed(2)}:1 entre ${a} e ${b} (mínimo 4,5)`);
-    for (const [a, b] of [['--line-strong', '--panel'], ['--line-strong', '--bg'], ['--focus', '--panel'], ['--focus', '--bg']]) if (ratio(v(a), v(b)) < 3) err(`styles.css (${name}): contraste ${ratio(v(a), v(b)).toFixed(2)}:1 entre ${a} e ${b} (controle, mínimo 3)`);
+    for (const [a, b] of [['--line-strong', '--panel'], ['--line-strong', '--bg'], ['--focus', '--panel'], ['--focus', '--bg'], ...[1, 2, 3, 4, 5, 6].flatMap((i) => [[`--mk${i}i`, '--panel'], [`--mk${i}i`, '--bg']])]) if (ratio(v(a), v(b)) < 3) err(`styles.css (${name}): contraste ${ratio(v(a), v(b)).toFixed(2)}:1 entre ${a} e ${b} (controle, mínimo 3)`);
     for (const s of SECTIONS) if (ratio(v('--on-section'), v(`--s-${s}`)) < 4.5) err(`styles.css (${name}): texto sobre a seção ${s} com contraste ${ratio(v('--on-section'), v(`--s-${s}`)).toFixed(2)}:1`);
   }
+}
+
+// Marcações de versículo: o tema de LEITURA (claro, sépia, escuro) é independente do tema do site, então as cores vêm de src/readingPrefs.js (MARK_COLORS).
+// Texto sobre o fundo da marcação ≥ 4,5:1, tinta (sublinhado e bolinha) sobre a página ≥ 3:1, o número do versículo marcado (--r-fg) sobre o fundo ≥ 4,5:1,
+// e os valores do CSS (:root e escuro) iguais aos de MARK_COLORS (claro e escuro).
+{
+  const rp = await import(new URL('../src/readingPrefs.js', import.meta.url).href);
+  const css = fs.readFileSync(path.join(root, 'src/styles.css'), 'utf8');
+  const lum = (h) => { const x = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((y) => (y <= 0.03928 ? y / 12.92 : ((y + 0.055) / 1.055) ** 2.4)); return 0.2126 * x[0] + 0.7152 * x[1] + 0.0722 * x[2]; };
+  const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); };
+  for (const theme of ['light', 'sepia', 'dark']) {
+    const mk = rp.MARK_COLORS[theme];
+    const rc = rp.READ_COLORS[theme];
+    if (!mk || mk.fill.length !== 6 || mk.ink.length !== 6) { err(`readingPrefs.js: MARK_COLORS.${theme} precisa de 6 cores de fundo e 6 de tinta`); continue; }
+    mk.fill.forEach((f, i) => {
+      if (ratio(rc.fg, f) < 4.5) err(`readingPrefs.js: texto sobre a marcação ${i + 1} no tema ${theme} com contraste ${ratio(rc.fg, f).toFixed(2)}:1 (mínimo 4,5)`);
+      if (ratio(mk.ink[i], rc.bg) < 3) err(`readingPrefs.js: tinta da marcação ${i + 1} no tema ${theme} com contraste ${ratio(mk.ink[i], rc.bg).toFixed(2)}:1 sobre a página (mínimo 3)`);
+    });
+  }
+  const blockOf = (head) => { const i = css.indexOf(head); return i < 0 ? '' : css.slice(i + head.length, css.indexOf('\n}', i)); };
+  const vars = (b) => Object.fromEntries([...b.matchAll(/(--[\w-]+):\s*([^;]+);/g)].map((m) => [m[1], m[2].trim()]));
+  const lightVars = vars(blockOf(':root {'));
+  const darkVars = vars(blockOf(":root[data-theme='dark'] {"));
+  for (const [vs, theme, name] of [[lightVars, 'light', 'claro'], [darkVars, 'dark', 'escuro']]) {
+    for (let i = 1; i <= 6; i += 1) {
+      if (vs[`--mk${i}`] !== rp.MARK_COLORS[theme].fill[i - 1]) err(`styles.css (${name}): --mk${i} diverge de MARK_COLORS.${theme}.fill[${i - 1}] (${vs[`--mk${i}`]} x ${rp.MARK_COLORS[theme].fill[i - 1]})`);
+      if (vs[`--mk${i}i`] !== rp.MARK_COLORS[theme].ink[i - 1]) err(`styles.css (${name}): --mk${i}i diverge de MARK_COLORS.${theme}.ink[${i - 1}]`);
+    }
+  }
+  // sinal além da cor: cada categoria tem seu sublinhado (estilo e espessura) no CSS
+  const styles = [...css.matchAll(/\[data-cat='(c[1-6])'\] \{[^}]*--ul: (\w+); --ulw: (\d)px;/g)].map((m) => `${m[2]}/${m[3]}`);
+  if (styles.length !== 6 || new Set(styles).size !== 6) err(`styles.css: as 6 categorias de marcação precisam de sublinhados diferentes (achei ${styles.join(', ')})`);
 }
 
 if (errors.length) {

@@ -5,7 +5,10 @@ import { VERSIONS, loadBook } from './data/bible.js';
 import { useSettings } from './settings.js';
 import BackButton from './BackButton.jsx';
 import FavButton from './FavButton.jsx';
-import { favKey, setPosition, peekResume, getVersionPref, setVersionPref, setPrefs, useUserData } from './userdata.js';
+import { favKey, setPosition, peekResume, getVersionPref, setVersionPref, setPrefs, useUserData, markVerses, dismissMarksLimit } from './userdata.js';
+import { MarkBar, NoteDialog, PencilIcon, useCategories } from './marksUi.jsx';
+import { toggleVerse, selectRange, sortedVerses, refLabel, nextCat } from './verseSelect.js';
+import { LIMITS as MARK_LIMITS } from './marksCore.js';
 import { usePlan } from './plan.js';
 import ProInvite from './ProInvite.jsx';
 import { useLinkIndex, Rich } from './linkify.jsx';
@@ -24,7 +27,7 @@ const MapView = lazy(() => import('./MapView.jsx'));
 const PsalmsView = lazy(() => import('./PsalmsView.jsx'));
 const StructureView = lazy(() => import('./StructureView.jsx'));
 
-export default function BookModal({ book, lang, t, initialTab, initialPlace, onNavigate, onOpenTimeline, onOpenPerson }) {
+export default function BookModal({ book, lang, t, initialTab, initialPlace, initialVerse, onNavigate, onOpenTimeline, onOpenPerson }) {
   const [tab, setTabState] = useState(initialTab ?? 'summary');
   // a aba e o lugar ficam no link (compartilhável), sem criar entrada no histórico
   const setTab = (k) => { setTabState(k); sync(hrefs.book(book.slug, k)); };
@@ -95,7 +98,7 @@ export default function BookModal({ book, lang, t, initialTab, initialPlace, onN
           </div>
         )}
         {tab === 'read' && (
-          <Reader key={initialTab === 'read' ? initialPlace : 'r'} book={book} lang={lang} t={t} info={info} keyChapter={keyChapter} initialChapter={initialTab === 'read' ? Number(initialPlace) : undefined} />
+          <Reader key={initialTab === 'read' ? `${initialPlace}/${initialVerse ?? ''}` : 'r'} book={book} lang={lang} t={t} info={info} keyChapter={keyChapter} initialChapter={initialTab === 'read' ? Number(initialPlace) : undefined} initialVerse={initialTab === 'read' ? initialVerse : undefined} />
         )}
       </div>
 
@@ -247,6 +250,7 @@ function Sheet({ book, lang, t, info, error, keyChapter, facts }) {
 }
 
 const LANG_NAME = { pt: 'Português', en: 'English' };
+const NO_MARKS = new Map();
 
 // Versão preferida por idioma, lembrada entre livros e visitas (localStorage pode falhar; o leitor funciona sem ele).
 const readPref = getVersionPref;
@@ -258,15 +262,21 @@ function pickVersion(versions, lang) {
   return (inLang.find((v) => v.id === readPref(lang)) ?? inLang[0] ?? versions[0]).id;
 }
 
-function Reader({ book, lang, t, info, keyChapter, initialChapter }) {
+function Reader({ book, lang, t, info, keyChapter, initialChapter, initialVerse }) {
   const versions = VERSIONS.filter((v) => v.available && (!v.books || v.books.includes(book.n)));
   const [version, setVersion] = useState(() => { const r = peekResume(book.slug); return versions.some((v) => v.id === r) ? r : pickVersion(versions, lang); });
   const [chapter, setChapter] = useState(initialChapter >= 1 && initialChapter <= book.chapters ? initialChapter : 1);
   const [data, setData] = useState(null);
   const [error, setError] = useState(false);
   const top = useRef(null);
-  const prefs = resolvePrefs(useUserData().prefs);
+  const ud = useUserData();
+  const prefs = resolvePrefs(ud.prefs);
   const site = useResolvedSite();
+  const cats = useCategories(lang);
+  const marksMap = ud.marksIdx.get(`${book.slug}:${chapter}`) ?? NO_MARKS; // versículo → marcação (só o capítulo aberto)
+  const [sel, setSel] = useState(() => (initialVerse ? new Set([initialVerse]) : new Set())); // versículos selecionados (toque no número)
+  const anchor = useRef(initialVerse ?? null);
+  const [noteFor, setNoteFor] = useState(null); // versículo cuja anotação está aberta
   // Originais em hebraico e grego (Pro): quem não tem o plano vê o botão, mas ele só abre o convite e nada é carregado
   const plan = usePlan();
   const canOriginals = !plan.loading && plan.can('originals');
@@ -275,6 +285,8 @@ function Reader({ book, lang, t, info, keyChapter, initialChapter }) {
   const orig = useOriginals(book.n, showOrig);
   const toggleOriginals = () => { if (canOriginals) setPrefs({ originals: !prefs.originals }); else setInvite((x) => !x); };
   const first = useRef(true);
+  const firstSel = useRef(true);
+  const scrolledTo = useRef(false);
 
   useEffect(() => {
     let alive = true;
@@ -285,6 +297,18 @@ function Reader({ book, lang, t, info, keyChapter, initialChapter }) {
 
   // "Continuar de onde parei": grava a posição ao abrir um capítulo no leitor (não ao só abrir a ficha)
   useEffect(() => { setPosition({ version, slug: book.slug, chapter }); }, [version, book.slug, chapter]);
+  // trocar de capítulo ou ligar os originais limpa a seleção (na abertura, vale a do endereço #livro/read/cap/ver)
+  useEffect(() => {
+    if (firstSel.current) { firstSel.current = false; return; }
+    setSel(new Set()); anchor.current = null;
+  }, [chapter, showOrig]);
+  // Esc limpa a seleção
+  useEffect(() => {
+    if (!sel.size) return undefined;
+    const onKey = (e) => { if (e.key === 'Escape' && noteFor === null) { setSel(new Set()); anchor.current = null; } };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [sel.size, noteFor]);
   // ao trocar de capítulo, volta ao topo da leitura (não na abertura da aba)
   useEffect(() => {
     if (first.current) { first.current = false; return; }
@@ -295,6 +319,18 @@ function Reader({ book, lang, t, info, keyChapter, initialChapter }) {
   const groups = [lang, ...Object.keys(LANG_NAME).filter((l) => l !== lang)]
     .map((l) => [l, versions.filter((v) => v.lang === l)]).filter(([, vs]) => vs.length);
   const verses = data?.[chapter - 1];
+  // endereço com versículo: rola até ele quando o texto chega
+  useEffect(() => {
+    if (initialVerse && verses && !scrolledTo.current) { scrolledTo.current = true; document.getElementById(`vs-${initialVerse}`)?.scrollIntoView({ block: 'center' }); }
+  }, [verses]); // eslint-disable-line react-hooks/exhaustive-deps
+  const canSelect = !(showOrig && orig.data); // com os originais ligados as marcas aparecem, mas só para leitura
+  const selected = sortedVerses(sel);
+  const onNum = (e, n) => {
+    const existing = (verses ?? []).map((v, i) => (v === null ? 0 : i + 1)).filter(Boolean);
+    setSel((prev) => (e.shiftKey ? selectRange(prev, anchor.current, n, existing) : toggleVerse(prev, n)));
+    anchor.current = n;
+  };
+  const applyCat = (catId) => markVerses(book.slug, chapter, selected, { cat: nextCat(marksMap, selected, catId) });
 
   const choose = (id) => {
     setVersion(id);
@@ -306,7 +342,7 @@ function Reader({ book, lang, t, info, keyChapter, initialChapter }) {
 
   return (
     <div className="bk-cols reader">
-      <div className="bk-main reader-card" ref={top}>
+      <div className={`bk-main reader-card${canSelect && sel.size ? ' has-bar' : ''}`} ref={top}>
         <div className="reader-bar">
           <span className="pair">
             <label htmlFor="chap">{t.chapter}</label>
@@ -344,7 +380,19 @@ function Reader({ book, lang, t, info, keyChapter, initialChapter }) {
           {verses && !(showOrig && orig.data) && (
             // O número vem da posição: versículo que a versão não tem é null e fica sem texto, sem deslocar os seguintes.
             <div className={`text${prefs.verseLines ? ' lines' : ''}`} lang={current.lang}>
-              <p>{verses.map((v, i) => (v === null ? null : <span key={i}><sup>{i + 1}</sup>{v} </span>))}</p>
+              <p>{verses.map((v, i) => {
+                if (v === null) return null;
+                const n = i + 1;
+                const m = marksMap.get(n);
+                return (
+                  <span key={i} id={`vs-${n}`} data-cat={m?.cat ?? undefined} className={sel.has(n) ? 'vs sel' : 'vs'}>
+                    {/* o próprio <sup> é o botão (role=button): um <button> viraria elemento inline atômico e mudaria as quebras de linha do texto */}
+                    <sup className="vnum" role="button" tabIndex={0} aria-pressed={sel.has(n)} aria-label={t.verseSelect.replace('{n}', n)} onClick={(e) => onNum(e, n)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNum(e, n); } }}>{n}</sup>
+                    {m?.note && <button type="button" className="vnote" aria-label={t.verseNote.replace('{n}', n)} onClick={() => setNoteFor(n)}><PencilIcon /></button>}
+                    {v}{' '}
+                  </span>
+                );
+              })}</p>
             </div>
           )}
           {verses && showOrig && orig.data && (
@@ -358,7 +406,7 @@ function Reader({ book, lang, t, info, keyChapter, initialChapter }) {
                 if (v === null && !words.length) return null;
                 return (
                   <div className="overse" key={i}>
-                    {v !== null && <p className="vtext"><sup>{i + 1}</sup>{v}</p>}
+                    {v !== null && <p className="vtext" data-cat={marksMap.get(i + 1)?.cat ?? undefined}><sup>{i + 1}</sup>{v}</p>}
                     {words.length > 0 && <Strip words={words} lang={orig.data.lang} lex={orig.lex} label={`${t.originals} ${i + 1}`} cantillation={prefs.cantillation} />}
                   </div>
                 );
@@ -381,6 +429,15 @@ function Reader({ book, lang, t, info, keyChapter, initialChapter }) {
         </div>
       </div>
       {info && <Aside book={book} lang={lang} t={t} info={info} keyChapter={keyChapter} chapter={chapter} />}
+      {canSelect && selected.length > 0 && (
+        <MarkBar t={t} cats={cats} label={refLabel(book.name[lang], chapter, selected)} count={selected.length} marks={marksMap} verses={selected}
+          onCat={applyCat} onClear={() => { setSel(new Set()); anchor.current = null; }} onNote={() => setNoteFor(selected[0])}
+          limitHit={ud.marksLimitHit} onDismissLimit={dismissMarksLimit} n={MARK_LIMITS.marksMax} />
+      )}
+      {noteFor !== null && (
+        <NoteDialog key={noteFor} t={t} cats={cats} refText={refLabel(book.name[lang], chapter, [noteFor])} mark={marksMap.get(noteFor)} onClose={() => setNoteFor(null)}
+          onSave={({ cat, note }) => markVerses(book.slug, chapter, [noteFor], { cat, note })} />
+      )}
     </div>
   );
 }
