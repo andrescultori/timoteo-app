@@ -255,7 +255,7 @@ export default function App() {
       )}
       {route.kind === 'favorites' && (
         <Suspense fallback={<p className="soon page-wait">{t.loading}</p>}>
-          <Favorites lang={lang} t={t} />
+          <Favorites lang={lang} t={t} tab={route.tab} />
         </Suspense>
       )}
       {route.kind === 'tree' && plan.loading && <p className="soon page-wait">{t.loading}</p>}
@@ -271,7 +271,7 @@ export default function App() {
         </Suspense>
       )}
       {route.kind === 'book' && (
-        <BookModal key={route.slug} book={bySlug[route.slug]} lang={lang} t={t} initialTab={route.tab} initialPlace={route.place} onNavigate={open} onOpenTimeline={openTimeline} onOpenPerson={openPerson} />
+        <BookModal key={route.slug} book={bySlug[route.slug]} lang={lang} t={t} initialTab={route.tab} initialPlace={route.place} initialVerse={route.verse} onNavigate={open} onOpenTimeline={openTimeline} onOpenPerson={openPerson} />
       )}
       <footer className="assinatura">
         <div className="assinatura-in">

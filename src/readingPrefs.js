@@ -37,4 +37,13 @@ export const READ_COLORS = {
   sepia: { bg: '#f1e7d0', fg: '#3b2f20', accent: '#8a5a2b' },
   dark: { bg: '#181a19', fg: '#e6e4da', accent: '#a9c1b3' },
 };
+// Cores das marcações de versículo (categorias c1..c6) por tema de LEITURA, que é independente do tema do site: `fill` (fundo do versículo) e
+// `ink` (sublinhado e bolinha). O `npm run check` confere o contraste: texto sobre o fundo ≥ 4,5:1 e tinta sobre a página ≥ 3:1.
+// No CSS, os mesmos valores do claro e do escuro estão em :root e :root[data-theme='dark'] (--mk1..6 e --mk1i..6i), para Favoritos e a barra de marcação.
+export const MARK_COLORS = {
+  light: { fill: ['#cfe3fb', '#f9d3df', '#e2d6f5', '#cdebd3', '#fbe9a6', '#c9ebe7'], ink: ['#1f5fa8', '#b02a5b', '#6a3fb0', '#2a7a43', '#8a6a00', '#0f7a72'] },
+  sepia: { fill: ['#c3d6e8', '#efc6c0', '#d9c9e0', '#c4dcb8', '#f2d98b', '#bfdcd2'], ink: ['#1f5a96', '#a3274f', '#62399e', '#2b6b3a', '#7a5a00', '#0f6f66'] },
+  dark: { fill: ['#1f3f66', '#6a2a40', '#46306b', '#1f4d33', '#5a4a12', '#14504c'], ink: ['#7fb2ee', '#f08fb0', '#b99aef', '#6fcb8d', '#e6c34d', '#5fd0c6'] },
+};
 export const readColors = (theme, siteResolved = 'light') => READ_COLORS[theme === 'follow' ? siteResolved : theme] ?? READ_COLORS.light;
+export const markColors = (theme, siteResolved = 'light') => MARK_COLORS[theme === 'follow' ? siteResolved : theme] ?? MARK_COLORS.light;

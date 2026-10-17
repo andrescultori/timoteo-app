@@ -8,6 +8,7 @@ import { SIZES, SPACINGS, WIDTHS, FONTS, READ_THEMES, SITE_THEMES, READ_COLORS, 
 import { useResolvedSite } from './siteTheme.js';
 import { readStyle } from './readStyle.js';
 import OfflineCard from './OfflineCard.jsx';
+import { CategoryEditor } from './marksUi.jsx';
 
 // Grupo de opções excludentes (botões com aria-pressed, 44px)
 function Options({ label, items, value, onPick }) {
@@ -112,7 +113,7 @@ export default function SettingsPage({ t, lang, settings, canAcademic, onChange,
     );
   }
 
-  // uma coluna: Aparência, Uso offline, Estudo (admin) e Onde os ajustes ficam
+  // uma coluna: Aparência, Marcações, Uso offline, Estudo (admin) e Onde os ajustes ficam
   return (
     <div className="page bookpage" style={{ '--c': 'var(--muted)' }}>
       <BackButton t={t} />
@@ -124,6 +125,12 @@ export default function SettingsPage({ t, lang, settings, canAcademic, onChange,
           <Options label={t.cfgSiteTheme} value={p.siteTheme} onPick={(v) => setPrefs({ siteTheme: v })}
             items={SITE_THEMES.map((k) => [k, { light: t.cfgLight, dark: t.cfgDark, auto: t.cfgAuto }[k]])} />
           <p className="cfg-help">{t.cfgSiteThemeHelp}</p>
+        </section>
+
+        <section className="card" aria-labelledby="cfg-marks">
+          <h2 id="cfg-marks">{t.marksCardTitle}</h2>
+          <p className="cfg-help">{t.marksCardHelp}</p>
+          <CategoryEditor t={t} lang={lang} />
         </section>
 
         <OfflineCard t={t} lang={lang} />

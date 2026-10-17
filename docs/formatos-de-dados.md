@@ -202,3 +202,9 @@ Roteiro em `docs/roadmap-estudos.md`; banco em `supabase/migrations/202610200000
 - `block:<id>` (bloco de um modelo, com a nota do usuário; os títulos e as perguntas-guia ficam em `i18n.js`: `tplName_*`, `tplBlock_*`, `tplAsk_*`).
 
 Limites: Essencial 5 estudos (só a criação é limitada), teto técnico de 200. Eles estão na tabela `app_limits` do banco, em `src/data/plans.json` (`essencial.studyLimit`, `limits`) e nos módulos puros; o `npm run check` confere que os três dizem o mesmo.
+
+### Marcações no leitor e rotas
+- Endereço do leitor com versículo: `#<livro>/read/<capítulo>/<versículo>` (versículo de 1 a 176; só vale na aba Ler). Abre o capítulo, seleciona o versículo e rola até ele.
+- `#favorites/verses` e `#favorites/items` escolhem a aba de Favoritos; sem aba no endereço, abre Versículos se há marcações.
+- Cores das 6 categorias por tema de leitura: `MARK_COLORS` em `src/readingPrefs.js` (`fill` = fundo do versículo, `ink` = sublinhado e bolinha); no CSS, `--mk1..6` e `--mk1i..6i`. Cada categoria tem um sublinhado próprio (a cor nunca é o único sinal).
+

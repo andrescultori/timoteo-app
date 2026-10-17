@@ -24,7 +24,7 @@ if (mode === 'shoot') {
   fs.mkdirSync(out, { recursive: true });
   const b = await chromium.launch();
   for (const [w, h] of [[390, 844], [1280, 900]]) {
-    const ctx = await b.newContext({ viewport: { width: w, height: h }, locale: 'pt-BR', reducedMotion: 'reduce' });
+    const ctx = await b.newContext({ viewport: { width: w, height: h }, locale: 'pt-BR', reducedMotion: 'reduce', serviceWorkers: 'block' }); // sem service worker: o aviso do PWA não entra nas capturas
     const pg = await ctx.newPage();
     for (const [name, r] of Object.entries(ROUTES)) {
       const { hash, prefs = {}, position = false } = typeof r === 'string' ? { hash: r } : r;
