@@ -1,12 +1,12 @@
 // "Meus Estudos" (preparação de estudos), sem armazenamento nem rede: testável em Node (scripts/test-studies.mjs).
 // Um estudo: { id (uuid gerado no aparelho), title, template: 'passagem' | 'personagem' | 'sermao' | 'ebd' | null, items: [{ k, note? }], at: ISO }.
-// Itens guardam REFERÊNCIAS (chaves no formato de favKeys.js), nunca o texto bíblico: o texto vem do leitor na versão escolhida.
+// Item: { k, note?, inc? }. Itens guardam REFERÊNCIAS (chaves no formato de favKeys.js), nunca o texto bíblico: o texto vem do leitor na versão escolhida.
 // A ordem dos itens é a do array. A mesma regra das chaves e dos limites está em supabase/migrations/20261020000000_estudos_marcacoes.sql.
 import { cleanText, chunk, versesToRanges } from './marksCore.js';
 import { favKey, parseFavKey } from './favKeys.js';
 export { chunk };
 
-export const LIMITS = { titleMax: 120, noteMax: 2000, itemsMax: 100, studiesMax: 200, essencialMax: 5 };
+export const LIMITS = { titleMax: 120, noteMax: 5000, itemsMax: 100, studiesMax: 200, essencialMax: 5 };
 
 // Blocos de cada modelo (ids). Os títulos e as perguntas-guia ficam no i18n (tplName_*, tplBlock_*, tplAsk_*). Modelos aprovados pelo André.
 export const TEMPLATES = {
@@ -20,13 +20,16 @@ export const TEMPLATES = {
 export const ITEM_KEY_RE = /^(ref:[a-z0-9]{3}:[0-9]{1,3}:[0-9]{1,3}(-[0-9]{1,3})?|book:[a-z0-9]{3}|chapter:[a-z0-9]{3}:[0-9]{1,3}|verse:[a-z0-9]{3}:[0-9]{1,3}:[0-9]{1,3}|person:[a-z0-9-]{1,60}|event:[a-z0-9-]{1,60}|place:[a-z0-9]{3}:[\s\S]{1,80}|block:[a-z0-9-]{1,30})$/u;
 export const isItemKey = (k) => typeof k === 'string' && ITEM_KEY_RE.test(k);
 export const blockKey = (id) => `block:${id}`;
+export const CTX_KEY = 'block:ctx'; // item especial: o Contexto do estudo (com inc, vira bloco do estudo e do PDF)
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const isIso = (s) => typeof s === 'string' && s.length > 0 && !Number.isNaN(Date.parse(s));
 
 export function cleanItem(raw) {
   if (!raw || typeof raw !== 'object' || !isItemKey(raw.k)) return null;
   const note = cleanText(raw.note, LIMITS.noteMax);
-  return note ? { k: raw.k, note } : { k: raw.k };
+  const out = note ? { k: raw.k, note } : { k: raw.k };
+  if (raw.inc === true) out.inc = true; // "Incluir o conteúdo aqui": só a escolha é guardada (o conteúdo vem dos dados do app e do plano de quem vê)
+  return out;
 }
 
 // Estudo válido ou null. Bloco repetido sai (um por id); passa até 100 itens.
@@ -86,8 +89,22 @@ export function moveItem(study, index, dir, now = new Date().toISOString()) {
 }
 export function setItemNote(study, index, note, now = new Date().toISOString()) {
   if (!Number.isInteger(index) || index < 0 || index >= study.items.length) return { error: 'invalid' };
-  const items = study.items.map((x, i) => (i === index ? cleanItem({ k: x.k, note }) : x));
+  const items = study.items.map((x, i) => (i === index ? cleanItem({ k: x.k, note, inc: x.inc }) : x));
   return { study: touch(study, { items }, now) };
+}
+// Liga ou desliga o "Incluir o conteúdo aqui" de um item
+export function setItemInc(study, index, inc, now = new Date().toISOString()) {
+  if (!Number.isInteger(index) || index < 0 || index >= study.items.length) return { error: 'invalid' };
+  const items = study.items.map((x, i) => (i === index ? cleanItem({ k: x.k, note: x.note, inc: !!inc }) : x));
+  return { study: touch(study, { items }, now) };
+}
+// Liga o Contexto no estudo (cria o item block:ctx com inc, no fim) ou desliga (tira o item)
+export function setContextIncluded(study, on, now = new Date().toISOString()) {
+  const i = study.items.findIndex((x) => x.k === CTX_KEY);
+  if (!on) return i < 0 ? { study } : removeItem(study, i, now);
+  if (i >= 0) return setItemInc(study, i, true, now);
+  if (study.items.length >= LIMITS.itemsMax) return { error: 'full' };
+  return { study: touch(study, { items: [...study.items, { k: CTX_KEY, inc: true }] }, now) };
 }
 export function renameStudy(study, title, now = new Date().toISOString()) {
   const t = cleanText(title, LIMITS.titleMax);
@@ -153,6 +170,7 @@ export const isBlockOfTemplate = (template, id) => Object.hasOwn(TEMPLATES, temp
 // Descreve uma chave de item: { kind, ...partes }. kind: block | passage | verse | chapter | book | person | event | place | unknown.
 // `block` ganha `free: true` quando não pertence ao modelo do estudo (nota livre).
 export function describeItem(key, template = null) {
+  if (key === CTX_KEY) return { kind: 'context' };
   if (typeof key === 'string' && key.startsWith('block:')) { const id = key.slice(6); return { kind: 'block', id, free: !isBlockOfTemplate(template, id) }; }
   const k = parseFavKey(key);
   if (!k) return { kind: 'unknown', key };

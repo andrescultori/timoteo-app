@@ -361,6 +361,7 @@ for (const ver of VERSIONS) {
   const marks = await import(new URL('../src/marksCore.js', import.meta.url).href);
   const plansCfg = read('src/data/plans.json');
   const sql = fs.readFileSync(path.join(root, 'supabase/migrations/20261020000000_estudos_marcacoes.sql'), 'utf8');
+  const sqlInc = fs.readFileSync(path.join(root, 'supabase/migrations/20261021000000_estudos_inc.sql'), 'utf8'); // a definição VIGENTE de study_items_valid (aceita "inc", nota de item de 5000)
   const item = (key, expected, where) => {
     const k = parseFavKey(key);
     if (!k || Object.entries(expected).some(([a, b]) => k[a] !== b)) err(`estudos: chave "${key}" não volta igual (${where})`);
@@ -380,7 +381,8 @@ for (const ver of VERSIONS) {
   const maxChapters = Math.max(...books.map(chaptersOf));
   if (maxChapters > 150) err(`estudos: há livro com ${maxChapters} capítulos e o banco aceita até 150 (verse_marks.chapter)`);
   // o regex das chaves é o mesmo no SQL e no cliente (o "." do Postgres é o [\s\S] do JavaScript)
-  const sqlRe = /'(\^\(ref:[^']+\$)'/.exec(sql)?.[1];
+  const sqlRe = /'(\^\(ref:[^']+\$)'/.exec(sqlInc)?.[1];
+  if (/'(\^\(ref:[^']+\$)'/.exec(sql)?.[1] !== sqlRe) err('estudos: o regex das chaves mudou entre as migrations 20261020 e 20261021');
   const jsRe = study.ITEM_KEY_RE.source.replaceAll('[\\s\\S]', '.');
   if (!sqlRe) err('estudos: não achei o regex das chaves em study_items_valid (SQL)');
   else if (sqlRe !== jsRe) err(`estudos: o regex das chaves diverge entre o SQL e src/studiesCore.js\n   SQL: ${sqlRe}\n   JS:  ${jsRe}`);
@@ -393,7 +395,11 @@ for (const ver of VERSIONS) {
   same(marks.LIMITS.marksMax, plansCfg.limits.marksMax, 'marcações: marksCore x plans.json');
   same(study.LIMITS.studiesMax, plansCfg.limits.studiesMax, 'estudos (teto): studiesCore x plans.json');
   same(study.LIMITS.essencialMax, plansCfg.essencial.studyLimit, 'estudos no Essencial: studiesCore x plans.json');
-  same(marks.LIMITS.noteMax, 2000, 'nota (marksCore)'); same(study.LIMITS.noteMax, 2000, 'nota de item (studiesCore)');
+  same(marks.LIMITS.noteMax, 2000, 'nota (marksCore)');
+  same(study.LIMITS.noteMax, Number(/char_length\(e ->> 'note'\) > (\d+)/.exec(sqlInc)?.[1]), 'nota de item: SQL (study_items_valid vigente) x studiesCore');
+  same(study.LIMITS.noteMax, 5000, 'nota de item (studiesCore)');
+  same(Number(/char_length\(note\) between 1 and (\d+)/.exec(sql)?.[1]), marks.LIMITS.noteMax, 'nota de marcação: SQL x marksCore');
+  same(study.LIMITS.itemsMax, Number(/jsonb_array_length\(p\) <= (\d+)/.exec(sqlInc)?.[1]), 'itens por estudo: SQL x studiesCore');
   // textos dos modelos nos dois idiomas
   const i18n = await import(new URL('../src/i18n.js', import.meta.url).href);
   for (const lang of ['pt', 'en']) {

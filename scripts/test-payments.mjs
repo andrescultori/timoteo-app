@@ -1456,10 +1456,38 @@ const driftSec = async (user, months) => Number((await q(
     const row = sv.db.studies.find((r) => r.id === sid(80));
     eq(row.items[0].note, note, 'a nota formatada sobe exatamente como foi escrita');
     eq(R.plainText(row.items[0].note).includes('<b>texto cru</b>'), true, 'HTML cru continua texto');
-    const big = '**' + 'a'.repeat(1990) + '**'; // 1994 caracteres com marcação: cabe; a 2001 não
-    eq(C.setItemNote(st, 0, big, iso(82)).study.items[0].note.length, 1994, 'nota de 1994 caracteres com marcação cabe');
-    eq(C.setItemNote(st, 0, big + 'xxxxxxxxxx', iso(83)).study.items[0].note.length, 2000, 'a marcação conta no limite de 2000');
+    const big = '**' + 'a'.repeat(4990) + '**'; // 4994 caracteres com marcação: cabe; a 5001 não
+    eq(C.setItemNote(st, 0, big, iso(82)).study.items[0].note.length, 4994, 'nota de 4994 caracteres com marcação cabe');
+    eq(C.setItemNote(st, 0, big + 'xxxxxxxxxx', iso(83)).study.items[0].note.length, 5000, 'a marcação conta no limite de 5000');
     await U.disconnectAccount();
+  }
+  // 14) itens com "Incluir o conteúdo aqui" (inc) e o Contexto (block:ctx): ida e volta pelo servidor, offline e online, sem perder o inc nem a ordem
+  {
+    store.clear();
+    const U = await load();
+    const C = await import('../src/studiesCore.js');
+    const sv = server();
+    await U.connectAccount(sv.client, 'u-1');
+    sv.ctl.net = true;
+    let st = C.newStudy({ id: sid(90), title: 'Com inc', template: null, now: iso(90) });
+    st = C.addItem(st, 'person:davi', 'nota', iso(91)).study;
+    st = C.setItemInc(st, 0, true, iso(92)).study;
+    st = C.addItem(st, 'place:gen:Harã', undefined, iso(93)).study;
+    st = C.setContextIncluded(st, true, iso(94)).study;
+    U.saveStudy(st);
+    await wait(SEND);
+    eq(sv.db.studies.length, 0, 'inc: nada chegou à conta sem rede');
+    sv.ctl.net = false;
+    U.saveStudy(C.setItemInc(U.getStudy(sid(90)), 1, true, iso(95)).study);
+    await wait(SEND);
+    const row = sv.db.studies.find((r) => r.id === sid(90));
+    eq(row.items, [{ k: 'person:davi', note: 'nota', inc: true }, { k: 'place:gen:Harã', inc: true }, { k: 'block:ctx', inc: true }], 'o inc e o Contexto sobem na ordem certa');
+    // baixar de volta (outro aparelho): o inc volta igual
+    store.clear();
+    const U2 = await load();
+    await U2.connectAccount(sv.client, 'u-1');
+    eq(U2.getStudy(sid(90)).items, row.items, 'em outro aparelho o inc volta igual');
+    await U2.disconnectAccount();
   }
   delete globalThis.localStorage;
 }

@@ -3,6 +3,9 @@ import PageHead from './PageHead.jsx';
 import ProInvite from './ProInvite.jsx';
 import { NoteEditor } from './NoteText.jsx';
 import { setAddTarget, readerSpot } from './addTarget.js';
+import StudyIncluded from './StudyIncluded.jsx';
+import { useIncludeDeps } from './useIncludeDeps.js';
+import { INCLUDABLE } from './studyInclude.js';
 import { BOOKS, SECTIONS, bySlug } from './data/books.js';
 import people from './data/people-index.json'; // só id e nome (público); o conteúdo Pro de personagem não é carregado aqui
 import { usePageTitle } from './pageTitle.js';
@@ -16,13 +19,14 @@ import { pickVersion, useBookTexts } from './verseText.js';
 import { VERSIONS } from './data/bible.js';
 import { loadPeopleChapters } from './peopleChapters.js';
 import { useContent, getTimeline, loadInfo, useInfoContent, hasInfoFile, hasProMap } from './data/content.js';
-import { addItem, removeItem, moveItem, setItemNote, renameStudy, describeItem, newNoteId, blockKey, passageVerses, LIMITS } from './studiesCore.js';
+import { addItem, removeItem, moveItem, setItemNote, renameStudy, CTX_KEY, setItemInc, setContextIncluded, describeItem, newNoteId, blockKey, passageVerses, LIMITS } from './studiesCore.js';
 import { buildContext, baseOf } from './studyContext.js';
 import { EventName, labelOf, KIND_KEY } from './studyLabels.jsx';
 import { fill, tplLabel, StudiesLimitNotice, useStudyQuota } from './studiesUi.jsx';
 
 
 // Aplica uma edição ao estudo MAIS RECENTE (não ao que a tela renderizou), para campos com atraso não pisarem uns nos outros
+const EMPTY_STUDY = { items: [], template: null };
 const StudyPrint = lazy(() => import('./StudyPrint.jsx')); // só carrega ao exportar (Pro)
 
 const edit = (id, fn) => { const cur = getStudy(id); if (!cur) return null; const r = fn(cur); if (r.study) saveStudy(r.study); return r; };
@@ -45,7 +49,7 @@ function NoteField({ initial, onCommit, label, placeholder, t, max = LIMITS.note
   return <NoteEditor value={v} onChange={change} onBlur={flush} label={label} placeholder={placeholder} max={max} t={t} />;
 }
 
-function Item({ study, index, d, lab, last, t, lang, texts, version, can }) {
+function Item({ study, index, d, lab, last, t, lang, texts, version, can, ctxDeps, incReady }) {
   const item = study.items[index];
   const isBlock = d.kind === 'block';
   const [noteOpen, setNoteOpen] = useState(isBlock || !!item.note);
@@ -58,7 +62,7 @@ function Item({ study, index, d, lab, last, t, lang, texts, version, can }) {
     <li className={`st-item st-${d.kind}`}>
       <div className="st-item-head">
         {kind && <span className="fv-chip">{t[kind]}</span>}
-        {isBlock ? <b>{name}</b> : lab ? (
+        {isBlock ? <b>{name}</b> : lab && !lab.href ? <b>{lab.text}</b> : lab ? (
           <a href={lab.href}>{lab.event && can('timeline') ? <EventName id={d.id} t={t} lang={lang} /> : lab.text}</a>
         ) : <span><code>{item.k}</code></span>}
         {d.kind === 'person' && !can('person', { id: d.id }) && <span className="pro-tag">{t.proTag}</span>}
@@ -74,6 +78,16 @@ function Item({ study, index, d, lab, last, t, lang, texts, version, can }) {
           {loadState === undefined ? <p className="soon">{t.studyTextLoading}</p>
             : loadState === 'erro' ? <p className="soon">{t.studyTextOffline}</p>
               : verses.map((v) => { const m = getMark(d.slug, d.chapter, v.n); return <p key={v.n}><sup>{v.n}</sup> {v.text == null ? <em>{t.studyTextMissing}</em> : <span className="vs" data-cat={m?.cat ?? undefined} style={{ '--r-fg': 'var(--fg)' }}>{v.text}</span>}{m?.note && <span className="st-marknote"> ({t.studyMarkNote}: {m.note})</span>}</p>; })}
+        </div>
+      )}
+      {INCLUDABLE.has(d.kind) && (
+        <div className="inc-row">
+          <label className="inc-switch">
+            <input type="checkbox" role="switch" checked={!!item.inc} onChange={(e) => edit(study.id, (s2) => setItemInc(s2, index, e.target.checked))} aria-describedby={`inc-h-${index}`} />
+            <span>{t.incSwitch}</span>
+          </label>
+          <span id={`inc-h-${index}`} className="st-meta">{t.incSwitchHelp}</span>
+          {item.inc && <StudyIncluded d={d} ctxDeps={ctxDeps} ready={incReady} />}
         </div>
       )}
       {noteOpen && <NoteField t={t} initial={item.note} label={fill(t.studyNoteOf, { name })} placeholder={ask} onCommit={(v) => edit(study.id, (s) => setItemNote(s, index, v))} />}
@@ -243,6 +257,7 @@ function ContextPanel({ study, t, lang, plan }) {
   return (
     <details className="st-ctx" open={wide} onToggle={(e) => setWide(e.currentTarget.open)}>
       <summary aria-label={t.ctxToggle}>{t.ctxTitle}</summary>
+      <label className="inc-switch"><input type="checkbox" role="switch" checked={study.items.some((i) => i.k === CTX_KEY && i.inc)} onChange={(e) => edit(study.id, (s2) => setContextIncluded(s2, e.target.checked))} /><span>{t.incCtxSwitch}</span></label>
       {!base ? <p className="soon">{t.ctxEmpty}</p> : (
         <>
           {bases.length > 1 && (
@@ -329,6 +344,7 @@ export default function StudyPage({ lang, t, id }) {
   const version = pickVersion(lang);
   const slugs = useMemo(() => [...new Set((study?.items ?? []).map((i) => describeItem(i.k, study.template)).filter((d) => d.kind === 'passage' && bySlug[d.slug]).map((d) => d.slug))], [study]);
   const texts = useBookTexts(slugs, version);
+  const { ready: incReady, deps: incDeps } = useIncludeDeps(study ?? EMPTY_STUDY, plan.can, `${plan.plan}|${plan.isAdmin}`);
   const [title, changeTitle, flushTitle] = useAutosave(study?.title ?? '', (v) => { if (v.trim()) edit(id, (s) => renameStudy(s, v)); });
 
   if (!study) {
@@ -339,6 +355,7 @@ export default function StudyPage({ lang, t, id }) {
       </div>
     );
   }
+  const ctxDeps = { lang, t, can: plan.can, plan: plan.plan, books: bySlug, study, peopleIndex: people, ...incDeps };
   const full = study.items.length >= LIMITS.itemsMax;
   const addNote = () => { const r = addItem(study, blockKey(newNoteId())); if (r.study) saveStudy(r.study); };
   const addBar = (where) => (
@@ -371,7 +388,7 @@ export default function StudyPage({ lang, t, id }) {
             <ol className="st-items" aria-label={t.studyItemsList}>
               {study.items.map((it, i) => {
                 const d = describeItem(it.k, study.template);
-                return <Item key={it.k} study={study} index={i} d={d} lab={labelOf(d, t, lang, study)} last={i === study.items.length - 1} t={t} lang={lang} texts={texts} version={version} can={plan.can} />;
+                return <Item key={it.k} study={study} index={i} d={d} lab={labelOf(d, t, lang, study)} last={i === study.items.length - 1} t={t} lang={lang} texts={texts} version={version} can={plan.can} ctxDeps={ctxDeps} incReady={incReady} />;
               })}
             </ol>
             {study.items.some((it) => describeItem(it.k).kind === 'passage') && <p className="st-meta">{fill(t.studyVersion, { v: vName })}</p>}
@@ -394,7 +411,7 @@ export default function StudyPage({ lang, t, id }) {
       </div>
       {printing && canExport && (
         <Suspense fallback={null}>
-          <StudyPrint study={study} t={t} lang={lang} can={plan.can} onClose={() => { setPrinting(false); setTimeout(() => exportBtn.current?.focus(), 0); }} />
+          <StudyPrint study={study} t={t} lang={lang} can={plan.can} planName={plan.plan} onClose={() => { setPrinting(false); setTimeout(() => exportBtn.current?.focus(), 0); }} />
         </Suspense>
       )}
     </div>

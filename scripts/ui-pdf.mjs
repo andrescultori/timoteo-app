@@ -38,6 +38,13 @@ if (pro) {
   const n = pg.locator('.st-add input[type=number]');
   await n.nth(0).fill('3'); await n.nth(1).fill('16'); await n.nth(2).fill('21');
   await pg.getByRole('button', { name: 'Adicionar', exact: true }).click(); await pg.waitForSelector('.st-passage .st-verses p');
+  // itens com "Incluir o conteúdo aqui" (Pro): personagem, lugar, evento, livro e o Contexto
+  await pg.evaluate(() => { const l = JSON.parse(localStorage.getItem('studies')); const st = l[0];
+    st.items.push({ k: 'person:abraao', inc: true }, { k: 'place:gen:Harã', inc: true }, { k: 'event:abraao', inc: true, note: '# Datas\n**c. 2100 a.C.**' }, { k: 'book:joh', inc: true }, { k: 'block:ctx', inc: true });
+    st.at = new Date().toISOString(); localStorage.setItem('studies', JSON.stringify(l)); });
+  await pg.reload(); await pg.waitForSelector('.st-items'); await pg.waitForTimeout(1500);
+  const live = await pg.locator('.st-main').innerText();
+  ok(live.includes('Pai de Israel') && live.includes('Chamada de Abraão'), 'Pro: o estudo mostra o resumo do personagem e o evento incluídos');
   await pg.waitForTimeout(900);
   const btn = pg.getByRole('button', { name: 'Exportar o estudo em PDF' });
   ok(await btn.isEnabled(), 'Pro: "Exportar PDF" habilitado');
@@ -55,6 +62,8 @@ if (pro) {
   ok(txt.includes('Feito no Timóteo App · estudo.timoteo.app.br') && txt.includes('Licença Creative Commons'), 'rodapé e licença da versão');
   ok(await pg.locator('.sp-legend li').count() === 6, 'legenda só com as categorias usadas (6)');
   ok(!/posição acadêmica|scholarly/i.test(txt), 'sem posição acadêmica');
+  ok(txt.includes('Pai de Israel') && txt.includes('Chamada de Abraão') && txt.includes('Datas'), 'PDF: personagem, evento e a nota formatada do item incluído');
+  ok(await pg.locator('.sp-sheet .sp-note h4').count() >= 1 && await pg.locator('.sp-sheet .sp-note strong').count() >= 1, 'PDF: nota formatada (título e negrito)');
   await pg.screenshot({ path: `${out}/folha-tela.png` });
   await pg.emulateMedia({ media: 'print' });
   ok(await pg.locator('#root').evaluate((e) => getComputedStyle(e).display) === 'none', 'impressão: o app some, fica só a folha');
