@@ -102,5 +102,10 @@ eq(readStyle({ theme: 'sepia', size: 21, spacing: 1.7, width: 660, font: 'serif'
 eq(markColors('inexistente', 'light'), MARK_COLORS.light, 'tema desconhecido cai no claro');
 eq(Object.keys(readStyle({ theme: 'light', size: 21, spacing: 1.7, width: 660, font: 'serif' })).filter((k) => /^--r-/.test(k)), ['--r-bg', '--r-fg', '--r-accent', '--r-size', '--r-lead', '--r-width', '--r-font'], 'as variáveis --r-* de antes continuam as mesmas');
 
+// rotas de Meus Estudos
+eq(P('#studies'), { kind: 'studies', id: null }, 'rota: #studies');
+eq(P('#studies/10000000-1000-4000-8000-100000000000'), { kind: 'studies', id: '10000000-1000-4000-8000-100000000000' }, 'rota: #studies/<id>');
+eq([hrefs.studies(), hrefs.studies('abc')], ['#studies', '#studies/abc'], 'hrefs.studies');
+
 console.log(failed ? `\n${failed} teste(s) falharam, ${passed} passaram.` : `OK: ${passed} testes do leitor com marcações passaram.`);
 process.exit(failed ? 1 : 0);

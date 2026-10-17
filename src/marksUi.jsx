@@ -21,7 +21,7 @@ export const PencilIcon = ({ size = 16 }) => (
 );
 
 // <dialog> modal aberto ao montar; fecha com Esc, clique fora ou onClose
-function useDialog(onClose) {
+export function useDialog(onClose) {
   const ref = useRef(null);
   useEffect(() => {
     const d = ref.current;

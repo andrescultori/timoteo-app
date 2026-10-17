@@ -2,7 +2,8 @@
 // Um estudo: { id (uuid gerado no aparelho), title, template: 'passagem' | 'personagem' | 'sermao' | 'ebd' | null, items: [{ k, note? }], at: ISO }.
 // Itens guardam REFERÊNCIAS (chaves no formato de favKeys.js), nunca o texto bíblico: o texto vem do leitor na versão escolhida.
 // A ordem dos itens é a do array. A mesma regra das chaves e dos limites está em supabase/migrations/20261020000000_estudos_marcacoes.sql.
-import { cleanText, chunk } from './marksCore.js';
+import { cleanText, chunk, versesToRanges } from './marksCore.js';
+import { favKey, parseFavKey } from './favKeys.js';
 export { chunk };
 
 export const LIMITS = { titleMax: 120, noteMax: 2000, itemsMax: 100, studiesMax: 200, essencialMax: 5 };
@@ -134,4 +135,70 @@ export function cleanStudyQueue(raw) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return out;
   for (const [id, o] of Object.entries(raw)) if (UUID_RE.test(id) && o && (o.op === 'upsert' || o.op === 'delete') && isIso(o.at)) out[id.toLowerCase()] = { op: o.op, at: new Date(o.at).toISOString() };
   return out;
+}
+
+// ---- itens: descrição, chaves e texto (puros, usados pela tela do estudo) ----
+
+// Chaves `ref:` para os versículos selecionados no leitor: um intervalo contíguo vira um item ([16, 17, 20] → ref ...:16-17 e ref ...:20)
+export function refKeysFor(slug, chapter, verses) {
+  return versesToRanges(verses).map(([a, b]) => favKey.ref(slug, chapter, a, b));
+}
+
+// Bloco livre (nota sem pergunta-guia): id único e curto, só [a-z0-9-] (≤ 30 caracteres, como o banco exige)
+export function newNoteId(now = Date.now(), salt = Math.floor(Math.random() * 1296)) {
+  return `nota-${now.toString(36)}${salt.toString(36)}`.slice(0, 30);
+}
+export const isBlockOfTemplate = (template, id) => Object.hasOwn(TEMPLATES, template) && TEMPLATES[template].includes(id);
+
+// Descreve uma chave de item: { kind, ...partes }. kind: block | passage | verse | chapter | book | person | event | place | unknown.
+// `block` ganha `free: true` quando não pertence ao modelo do estudo (nota livre).
+export function describeItem(key, template = null) {
+  if (typeof key === 'string' && key.startsWith('block:')) { const id = key.slice(6); return { kind: 'block', id, free: !isBlockOfTemplate(template, id) }; }
+  const k = parseFavKey(key);
+  if (!k) return { kind: 'unknown', key };
+  if (k.type === 'ref') return { kind: 'passage', slug: k.slug, chapter: k.n, v1: k.v1, v2: k.v2 };
+  if (k.type === 'verse') return { kind: 'passage', slug: k.slug, chapter: k.n, v1: k.v, v2: k.v };
+  if (k.type === 'chapter') return { kind: 'chapter', slug: k.slug, chapter: k.n };
+  if (k.type === 'book') return { kind: 'book', slug: k.slug };
+  if (k.type === 'person') return { kind: 'person', id: k.id };
+  if (k.type === 'event') return { kind: 'event', id: k.id };
+  if (k.type === 'place') return { kind: 'place', slug: k.slug, name: k.name };
+  return { kind: 'unknown', key };
+}
+
+// Versículos de uma passagem a partir dos dados do livro (array de capítulos; posição i = versículo i+1; null = ausente na versão).
+// Devolve [{ n, text }] (text null = a versão não tem o versículo). Nunca guarda texto: o texto vem do leitor na versão ativa.
+export function passageVerses(bookData, chapter, v1, v2 = v1) {
+  const ch = Array.isArray(bookData) ? bookData[chapter - 1] : null;
+  if (!Array.isArray(ch)) return [];
+  const out = [];
+  for (let n = v1; n <= Math.min(v2, ch.length); n += 1) out.push({ n, text: ch[n - 1] ?? null });
+  return out;
+}
+
+// "há 5 minutos" / "5 minutes ago" (para "editado há…" na lista de estudos)
+export function relativeTime(iso, now = Date.now(), lang = 'pt') {
+  const sec = Math.round((now - Date.parse(iso)) / 1000);
+  if (!Number.isFinite(sec)) return '';
+  if (sec < 60) return lang === 'pt' ? 'agora há pouco' : 'just now';
+  const rtf = new Intl.RelativeTimeFormat(lang === 'pt' ? 'pt-BR' : 'en', { numeric: 'auto' });
+  const units = [['minute', 60], ['hour', 3600], ['day', 86400], ['month', 2592000], ['year', 31536000]];
+  let best = units[0];
+  for (const u of units) if (sec >= u[1]) best = u;
+  return rtf.format(-Math.floor(sec / best[1]), best[0]);
+}
+
+
+// Acrescenta várias chaves de uma vez ("Adicionar ao estudo" do leitor). Repetida e inválida são puladas; para ao chegar em 100.
+// Devolve { study, added, skipped, full }; `full` = sobrou item sem caber.
+export function addKeys(study, keys, now = new Date().toISOString()) {
+  let cur = study;
+  let added = 0;
+  let skipped = 0;
+  let full = false;
+  for (const k of keys) {
+    const r = addItem(cur, k, undefined, now);
+    if (r.study) { cur = r.study; added += 1; } else if (r.error === 'full') { full = true; skipped += 1; } else skipped += 1;
+  }
+  return { study: cur, added, skipped, full };
 }

@@ -201,6 +201,8 @@ Roteiro em `docs/roadmap-estudos.md`; banco em `supabase/migrations/202610200000
 - `person:<id>`, `event:<id>` (linha do tempo), `place:<slug>:<nome em PT>` (lugar do mapa);
 - `block:<id>` (bloco de um modelo, com a nota do usuário; os títulos e as perguntas-guia ficam em `i18n.js`: `tplName_*`, `tplBlock_*`, `tplAsk_*`).
 
+Na tela (`#studies/<id>`) os blocos de modelo aparecem pelo id (`tplBlock_<modelo>_<id com _>` no i18n, com a pergunta-guia `tplAsk_…` como placeholder); bloco fora do modelo é nota livre (`block:nota-…`, gerado por `newNoteId`). Itens `ref:` viram texto na versão ativa do leitor; `person`, `place`, `event`, `chapter` e `book` viram links.
+
 Limites: Essencial 5 estudos (só a criação é limitada), teto técnico de 200. Eles estão na tabela `app_limits` do banco, em `src/data/plans.json` (`essencial.studyLimit`, `limits`) e nos módulos puros; o `npm run check` confere que os três dizem o mesmo.
 
 ### Marcações no leitor e rotas

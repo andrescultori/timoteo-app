@@ -72,7 +72,7 @@ export default function Favorites({ lang, t, tab: tabFromRoute }) {
 
   return (
     <div className="page bookpage" role="region" aria-labelledby="fav-title">
-      <PageHead t={t} id="fav-title" title={t.favorites} sub={t.favSub} />
+      <PageHead t={t} id="fav-title" title={t.favorites} sub={t.favSub} actions={<a className="ghost" href={hrefs.studies()}>{t.studiesTitle}</a>} />
       <div className="pg-card" style={{ '--c': 'var(--s-evangelhos)' }}>
         <div className="body">
           <div className="bk-tabs fv-tabs" role="tablist" aria-label={t.favTabs}>

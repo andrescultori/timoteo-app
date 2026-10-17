@@ -21,6 +21,7 @@ const Timeline = lazy(() => import('./Timeline.jsx'));
 const People = lazy(() => import('./People.jsx'));
 const Genealogy = lazy(() => import('./Genealogy.jsx'));
 const Favorites = lazy(() => import('./Favorites.jsx'));
+const Studies = lazy(() => import('./Studies.jsx'));
 const Profile = lazy(() => import('./Profile.jsx'));
 const Admin = lazy(() => import('./Admin.jsx'));
 const Checkout = lazy(() => import('./Checkout.jsx'));
@@ -256,6 +257,11 @@ export default function App() {
       {route.kind === 'favorites' && (
         <Suspense fallback={<p className="soon page-wait">{t.loading}</p>}>
           <Favorites lang={lang} t={t} tab={route.tab} />
+        </Suspense>
+      )}
+      {route.kind === 'studies' && (
+        <Suspense fallback={<p className="soon page-wait">{t.loading}</p>}>
+          <Studies lang={lang} t={t} id={route.id} />
         </Suspense>
       )}
       {route.kind === 'tree' && plan.loading && <p className="soon page-wait">{t.loading}</p>}
