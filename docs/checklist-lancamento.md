@@ -26,6 +26,15 @@ Pendências do André e do projeto, em ordem aproximada. `[x]` feito, `[ ]` aber
 - [ ] **Teste logado no Supabase real** (nunca provado fora do ambiente de testes): marcar um versículo e ver em outro aparelho; criar o 6º estudo no Essencial (mensagem amigável, estudo fica no aparelho); estudo criado e editado em modo avião subindo depois; exportar PDF no Pro (celular e computador) e conferir o convite no Essencial.
 - [ ] **Publicar o texto legal** (PR #149, `LEGAL_VERSION` com data) junto com o lançamento de marcações e estudos: anotações e estudos entram na Política.
 
+## Estudos: próximos passos (a partir de terça, 20/10/2026)
+- [ ] **Bug: "Imprimir ou salvar como PDF" não faz nada no app instalado no iPhone** (Tela de Início). O iOS não oferece `window.print()` a apps instalados. Corrigir (ver PR do fix) e testar no iPhone instalado, no Safari, no Android e no computador.
+- [ ] **ETAPA 6: originais (hebraico e grego) no estudo** (Pro; fonte Cardo na folha de impressão; pode precisar de migration).
+- [ ] Teste logado completo (item acima) e teste de segunda 19/10 do Mercado Pago (parcela mínima da anual em 10x; se recusar, baixar `maxInstallments` em `plans.json` e `MAX_INSTALLMENTS` em `supabase/functions/_shared/pricing.js`).
+- [ ] Fase 8: revisar LICENSE/NOTICE com o advogado, apagar deploys antigos do Cloudflare Pages, tornar o repositório privado (só depois de confirmar que o Cloudflare mantém acesso).
+- [ ] Revisão do André: textos EN das categorias padrão (Missions, Salvation, Prayer, Promise, Obedience, To memorize) e do i18n dos estudos.
+- [ ] Texto legal (PR #149): só mesclar com a revisão do advogado e a `LEGAL_VERSION` publicada.
+- [ ] **Depois do lançamento:** títulos de seção editáveis no estudo; template de estudo próprio (Pro); alternância ver/editar; seleção de vários versículos (arrastar); marcar em uma versão vale para todas (com opção para desligar); pesquisa de texto completo; "Adicionar ao estudo" em lugares do mapa e eventos da linha do tempo; atualizar capturas da landing com as telas de estudos.
+
 ## Portfólio (decidido em 15/10/2026)
 - [ ] Repositório público separado, só com um recorte sem o conteúdo Pro (landing, camada de dados e testes) e mockup com telas de exemplo. Fazer depois de o repositório principal virar privado.
 
