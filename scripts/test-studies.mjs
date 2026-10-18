@@ -52,7 +52,7 @@ for (const [tpl, blocks] of Object.entries(TEMPLATES)) {
 eq(cleanItem({ k: 'ref:joh:3:16', note: '  ok  ' }), { k: 'ref:joh:3:16', note: 'ok' }, 'item com nota aparada');
 eq(cleanItem({ k: 'ref:joh:3:16', note: '   ' }), { k: 'ref:joh:3:16' }, 'nota vazia some');
 eq(cleanItem({ k: 'lixo' }), null, 'chave inválida');
-eq(cleanItem({ k: 'ref:joh:3:16', note: 'x'.repeat(3000) }).note.length, LIMITS.noteMax, 'nota cortada em 2000');
+eq(cleanItem({ k: 'ref:joh:3:16', note: 'x'.repeat(6000) }).note.length, LIMITS.noteMax, 'nota cortada em 5000');
 {
   const c = cleanStudy({ id: ID(1).toUpperCase(), title: 'T', template: 'ebd', at: T(1), items: [{ k: 'block:objetivo' }, { k: 'block:objetivo', note: 'repetido' }, { k: 'ref:joh:3:16' }, { k: 'ref:joh:3:16' }, { k: 'lixo' }, null] });
   eq(c.id, ID(1), 'id em minúsculas');
@@ -209,7 +209,7 @@ const ids = (r) => r.studies.map((s) => s.id).sort();
   eq([rf.added, rf.full, rf.study.items.length], [0, true, 100], 'addKeys: estudo cheio não passa de 100');
   const rm = removeItem(r.study, 0, T(5));
   eq(rm.study.items.length, r.study.items.length - 1, 'removeItem tira um');
-  eq(setItemNote(r.study, 0, 'x'.repeat(2500), T(6)).study.items[0].note.length, LIMITS.noteMax, 'nota cortada em 2000');
+  eq(setItemNote(r.study, 0, 'x'.repeat(6500), T(6)).study.items[0].note.length, LIMITS.noteMax, 'nota cortada em 5000');
   // cota: Essencial 5, Pro sem limite de plano, teto técnico 200
   eq(studyQuota({ count: 4, pro: false }), { ok: true, reason: null }, 'cota: 4 no Essencial pode criar');
   eq(studyQuota({ count: 5, pro: false }), { ok: false, reason: 'plan' }, 'cota: 5 no Essencial bloqueia');

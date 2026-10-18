@@ -10,6 +10,9 @@ import { pick } from './timelineUtil.js';
 import { EventName, labelOf, peopleById } from './studyLabels.jsx';
 import { tplLabel } from './studiesUi.jsx';
 import NoteText from './NoteText.jsx';
+import StudyIncluded from './StudyIncluded.jsx';
+import { useIncludeDeps } from './useIncludeDeps.js';
+import { INCLUDABLE } from './studyInclude.js';
 
 const LIGHT = MARK_COLORS.light;
 // Tokens do tema claro, fixos: a folha não segue o tema do site nem o da leitura
@@ -22,14 +25,16 @@ const SHEET_VARS = {
 
 // Folha de impressão do estudo (Pro): visualização na tela e, em @media print, só a folha (A4, margem de 20 mm). "Salvar como PDF" é o do navegador:
 // sem servidor, sem biblioteca, funciona offline. Todo o conteúdo vem do aparelho (estudo, marcações, texto da versão ativa).
-export default function StudyPrint({ study, t, lang, can, onClose }) {
+export default function StudyPrint({ study, t, lang, can, planName, onClose }) {
   const printBtn = useRef(null);
   const version = pickVersion(lang);
   const ver = VERSIONS.find((v) => v.id === version);
   const items = useMemo(() => study.items.map((it) => ({ it, d: describeItem(it.k, study.template) })), [study]);
   const slugs = useMemo(() => [...new Set(items.filter((x) => x.d.kind === 'passage' && bySlug[x.d.slug]).map((x) => x.d.slug))], [items]);
   const texts = useBookTexts(slugs, version);
-  const ready = slugs.every((s) => texts[`${version}/${s}`] !== undefined);
+  const inc = useIncludeDeps(study, can, planName);
+  const ctxDeps = { lang, t, can, plan: planName, books: bySlug, study, peopleIndex: Object.values(peopleById), ...inc.deps };
+  const ready = inc.ready && slugs.every((s) => texts[`${version}/${s}`] !== undefined);
   const failed = slugs.some((s) => texts[`${version}/${s}`] === 'erro');
   const cats = getCategories(lang);
   const used = new Set();
@@ -44,6 +49,7 @@ export default function StudyPrint({ study, t, lang, can, onClose }) {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (ready) printBtn.current?.focus(); }, [ready]); // o botão só habilita com o texto carregado
 
+  const included = (it, d) => (it.inc && INCLUDABLE.has(d.kind) ? <StudyIncluded d={d} ctxDeps={ctxDeps} ready={inc.ready} print /> : null);
   const body = items.map(({ it, d }) => {
     const lab = labelOf(d, t, lang, study);
     if (d.kind === 'block') {
@@ -79,8 +85,9 @@ export default function StudyPrint({ study, t, lang, can, onClose }) {
     const books = d.kind === 'person' ? (peopleById[d.id]?.books ?? []).map((s) => bySlug[s]?.ab[lang]).filter(Boolean) : [];
     return (
       <section key={it.k} className="sp-item">
-        <h3><span className="sp-kind">{kindKey ? t[kindKey] : ''}</span> {d.kind === 'event' ? (can('timeline') ? <EventName id={d.id} t={t} lang={lang} /> : t.studyEventName) : lab ? lab.text : it.k}</h3>
+        <h3><span className="sp-kind">{kindKey || d.kind === 'context' ? t[kindKey ?? 'studyKindContext'] : ''}</span> {d.kind === 'context' ? '' : d.kind === 'event' ? (can('timeline') ? <EventName id={d.id} t={t} lang={lang} /> : t.studyEventName) : lab ? lab.text : it.k}</h3>
         {books.length > 0 && <p className="sp-refs">{books.join(' · ')}</p>}
+        {included(it, d)}
         {it.note && <NoteText className="sp-note" text={it.note} />}
       </section>
     );

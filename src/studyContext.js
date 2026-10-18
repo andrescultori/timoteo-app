@@ -63,3 +63,18 @@ export function buildContext({ slug, chapter = null, lang = 'pt', book, info = n
   }
   return out;
 }
+
+// Textos-base distintos do estudo, na ordem dos itens: [{ id, slug, chapter }]. Serve ao seletor do Contexto e ao "incluir o contexto" (usa o 1º).
+export function studyBases(items, timeline = null, books = null) {
+  const seen = new Set();
+  const out = [];
+  for (const it of items) {
+    const b = baseOf(it.k, timeline);
+    if (!b || (books && !books[b.slug])) continue;
+    const id = `${b.slug}:${b.chapter ?? ''}`;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    out.push({ id, ...b });
+  }
+  return out;
+}

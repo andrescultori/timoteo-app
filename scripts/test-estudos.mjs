@@ -36,6 +36,8 @@ await db.exec(`grant select, insert, update on public.entitlements to service_ro
 // a migration pode ser reaplicada sem erro e sem duplicar nada
 await db.exec(fs.readFileSync(path.join(root, 'supabase/migrations/20261020000000_estudos_marcacoes.sql'), 'utf8'));
 ok(true, 'a migration reaplicada não dá erro');
+await db.exec(fs.readFileSync(path.join(root, 'supabase/migrations/20261021000000_estudos_inc.sql'), 'utf8'));
+ok(true, 'a migration do inc reaplicada não dá erro');
 
 const q = async (sql, params) => (await db.query(sql, params)).rows;
 const n = async (sql, params) => Number((await q(sql, params))[0].n);
@@ -208,7 +210,11 @@ const inPast = new Date(Date.now() - DAY).toISOString();
     ['campo extra', [{ k: 'book:gen', x: 1 }]],
     ['sem chave', [{ note: 'x' }]],
     ['chave que não é texto', [{ k: 5 }]],
-    ['nota de 2001 caracteres', [{ k: 'book:gen', note: 'x'.repeat(2001) }]],
+    ['nota de 5001 caracteres', [{ k: 'book:gen', note: 'x'.repeat(5001) }]],
+    ['inc que não é booleano', [{ k: 'person:davi', inc: 'sim' }]],
+    ['inc numérico', [{ k: 'person:davi', inc: 1 }]],
+    ['inc nulo', [{ k: 'person:davi', inc: null }]],
+    ['campo extra ao lado do inc', [{ k: 'person:davi', inc: true, x: 1 }]],
     ['nota que não é texto', [{ k: 'book:gen', note: 5 }]],
     ['item que não é objeto', ['book:gen']],
     ['não é lista', { k: 'book:gen' }],
@@ -217,6 +223,10 @@ const inPast = new Date(Date.now() - DAY).toISOString();
     ['JSON grande', Array.from({ length: 60 }, (_, i) => ({ k: `chapter:gen:${i + 1}`, note: 'y'.repeat(2000) }))],
   ]) ok(!(await items(j)), `itens: o banco recusa ${label}`);
   ok(await items([{ k: 'book:gen', note: 'x'.repeat(2000) }]), 'nota de 2000 caracteres vale');
+  ok(await items([{ k: 'book:gen', note: 'x'.repeat(5000) }]), 'nota de 5000 caracteres vale (item de estudo)');
+  ok(await items([{ k: 'person:davi', inc: true }, { k: 'place:gen:Harã', inc: false, note: 'n' }, { k: 'block:ctx', inc: true }]), 'inc booleano vale, com ou sem nota; block:ctx é uma chave válida');
+  ok(await items([{ k: 'event:abraao', note: 'a'.repeat(5000), inc: true }, { k: 'book:gen', note: 'b'.repeat(5000) }]), 'itens de nota longa com inc passam abaixo de 100000 caracteres');
+  ok(!(await items(Array.from({ length: 21 }, (_, i) => ({ k: `chapter:gen:${i + 1}`, note: 'z'.repeat(5000) })))), 'o teto de 100000 caracteres do JSON continua valendo');
 
   // as chaves: o banco e o cliente (isItemKey) concordam
   const corpus = [
@@ -234,6 +244,10 @@ const inPast = new Date(Date.now() - DAY).toISOString();
   const tplStudy = newStudy({ id: '00000000-0000-4000-8000-000000000001', title: 'Passagem', template: 'passagem' });
   await as(a, () => q(`insert into public.studies (id, user_id, title, template, items) values ($1, $2, $3, $4, $5::jsonb)`, [tplStudy.id, a, tplStudy.title, tplStudy.template, JSON.stringify(tplStudy.items)]));
   eq(await as(a, async () => n(`select count(*) as n from public.studies`)), 1, 'dono lê os próprios estudos');
+  await as(a, () => study(a, 'Com inc', JSON.stringify([{ k: 'person:davi', inc: true }, { k: 'block:ctx', inc: true }, { k: 'book:gen', note: 'n'.repeat(5000) }])));
+  eq(await as(a, async () => (await q(`select items from public.studies where title = 'Com inc'`))[0].items.map((x) => x.inc ?? null)), [true, true, null], 'a tabela guarda e devolve o inc');
+  await rejects(() => as(a, () => study(a, 'Inc ruim', JSON.stringify([{ k: 'person:davi', inc: 'sim' }]))), 'a tabela recusa inc que não é booleano');
+  await as(a, () => q(`delete from public.studies where title = 'Com inc'`));
   eq(await as(b, async () => n(`select count(*) as n from public.studies`)), 0, 'outro usuário não vê');
   await rejects(() => as(b, () => study(a)), 'ninguém grava estudo para outro usuário');
   await rejects(() => as(b, () => q(`insert into public.studies (id, user_id, title) values ($1, $2, 'roubo') on conflict (id) do update set title = excluded.title`, [tplStudy.id, b])), 'não dá para tomar o estudo de outro pelo id');

@@ -135,6 +135,21 @@ for (const [label, vp] of [['desktop', { width: 1280, height: 900 }], ['mobile',
   await ctx.close();
 }
 
+{ // PR B: o Essencial nunca recebe conteúdo Pro nos itens incluídos
+  const [ctx, pg] = await fresh({ viewport: { width: 1280, height: 900 } }, '#studies', '.st-tpl');
+  await pg.evaluate(() => localStorage.setItem('studies', JSON.stringify([{ id: '00000000-0000-4000-8000-0000000000b1', title: 'Inc Essencial', template: null, at: new Date().toISOString(),
+    items: [{ k: 'person:josue-sacerdote', inc: true }, { k: 'event:abraao', inc: true }, { k: 'place:rom:Roma', inc: true }, { k: 'book:joh', inc: true }, { k: 'block:ctx', inc: true }, { k: 'ref:joh:3:16' }] }])));
+  await pg.goto(`${url}/#studies/00000000-0000-4000-8000-0000000000b1`); await pg.reload(); await pg.waitForSelector('.st-items');
+  await pg.waitForTimeout(1200);
+  const body = await pg.locator('.st-main').innerText();
+  ok(!body.includes('Chamada de Abraão') && !body.includes('Sumo sacerdote no tempo'), 'Essencial: nenhum texto Pro nos itens incluídos');
+  ok(await pg.locator('.st-main .pro-invite').count() >= 1, 'Essencial: convite ao Pro no lugar do conteúdo Pro');
+  ok(body.includes('Evangelhos') || body.includes('Teologia') || body.includes('Tema') || body.includes('Jesus'), 'Essencial: o livro incluído mostra o resumo da ficha');
+  ok(await pg.getByRole('switch', { name: /Incluir o conteúdo aqui/ }).first().isChecked(), 'o interruptor mostra o estado');
+  await pg.screenshot({ path: out ? `${out}/inc-essencial.png` : '/dev/null' }).catch(() => {});
+  await ctx.close();
+}
+
 await b.close();
 if (failed) { console.error(`\n${failed} verificação(ões) falharam.`); process.exit(1); }
 console.log('\nOK: Meus Estudos no navegador.');

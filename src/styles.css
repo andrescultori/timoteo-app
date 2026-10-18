@@ -1006,3 +1006,17 @@ a.ghost[aria-disabled='true'] { opacity: 0.4; pointer-events: none; }
 .sp-note h4 { font-size: 12pt; } .sp-note h5 { font-size: 11pt; }
 .sp-note p:last-child { margin-bottom: 0; }
 .st-addbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
+
+/* "Incluir o conteúdo aqui" */
+.inc-row { display: grid; gap: 6px; margin-top: 8px; }
+.inc-switch { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; cursor: pointer; font-weight: 600; }
+.inc-switch input { width: 22px; height: 22px; accent-color: var(--accent); }
+.inc { padding: 8px 12px; border: 1px solid var(--line); border-radius: var(--radius-ctl); background: var(--panel-2); }
+.inc p, .inc ul { margin: 0 0 6px; } .inc ul { padding-left: 18px; }
+.inc-h { margin: 8px 0 2px; font: 700 0.95rem var(--f-display); }
+.sp-locked { color: #6b736d; font-style: italic; }
+.inc-print { padding: 4pt 8pt; border: 0; border-left: 3px solid #c9cfca; border-radius: 0; background: #fff; break-inside: avoid; }
+.inc-print .inc-h { color: #1b1f1c; font-size: 10.5pt; }
+.inc-print .st-dl dt { font-weight: 700; }
+.st-ctx .inc-switch { display: flex; }
+.st-ctx > label:not(.inc-switch) { display: grid; gap: 4px; margin: 4px 0 8px; }
